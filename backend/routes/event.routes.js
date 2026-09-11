@@ -1,5 +1,5 @@
 import express from 'express';
-import { getEvents, getEvent, getGroupEvents, createNewEvent, updateExistingEvent, deleteExistingEvent, rsvpEvent, getEventAttendees, getEventCities, getMyOrganizerEvents, getMyOrganizerRSVPs } from '../controllers/event.controller.js';
+import { getEvents, getEvent, getGroupEvents, createNewEvent, updateExistingEvent, deleteExistingEvent, rsvpEvent, getEventAttendees, getEventCities, getMyOrganizerEvents, getMyOrganizerRSVPs, checkinAttendee } from '../controllers/event.controller.js';
 import { userAuth } from '../middleware/auth.middleware.js';
 
 const eventRouter = express.Router();
@@ -11,6 +11,7 @@ eventRouter.get('/organizer/rsvps',  userAuth, getMyOrganizerRSVPs);  // protect
 eventRouter.get('/:id',             getEvent);              // public — single event
 eventRouter.get('/:id/rsvps',    getEventAttendees);  // public — event attendees
 eventRouter.post('/:id/rsvp',    userAuth, rsvpEvent); // protected — RSVP to event
+eventRouter.patch('/:id/rsvps/:rsvpId/checkin', userAuth, checkinAttendee); // protected — check in attendee
 eventRouter.get('/group/:groupId', getGroupEvents);   // public — events by group
 eventRouter.post('/',            userAuth, createNewEvent);          // protected
 eventRouter.put('/:id',          userAuth, updateExistingEvent);     // protected

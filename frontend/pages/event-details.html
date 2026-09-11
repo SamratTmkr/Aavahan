@@ -46,10 +46,10 @@
         <div class="container" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.5rem;">
             <div>
                 <div id="topEventDate" style="font-size: 0.9rem; font-weight: 700; color: #8c5300; margin-bottom: 0.35rem;">
-                    SAT, SEP 12 · 9:30 AM NPT
+                    Loading date…
                 </div>
                 <h1 id="topEventTitle" style="font-size: 2.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.2;">
-                    Loading Event...
+                    Loading Event…
                 </h1>
                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                     <!-- Host initials avatar -->
@@ -76,7 +76,7 @@
             <!-- Left Column: Media, Details, Attendees & Comments -->
             <div>
                 <!-- Cover Image -->
-                <img id="eventCoverImg" src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80" alt="Event Cover" class="meetup-details-cover">
+                <img id="eventCoverImg" src="assets/images/community-banner.jpg" alt="Event Cover" class="meetup-details-cover">
 
                 <!-- Details Block -->
                 <div style="margin-bottom: 2.5rem;">
@@ -89,8 +89,7 @@
                 <!-- Attendees Box (Meetup Member Faces) -->
                 <div class="meetup-attendees-box">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 id="attendeesHeaderCount" style="font-size: 1.25rem; font-weight: 800;">Attendees (142)</h3>
-                        <a href="#" class="section-header-link" onclick="showToast('Showing all attendee list', 'info')">See all</a>
+                        <h3 id="attendeesHeaderCount" style="font-size: 1.25rem; font-weight: 800;">Attendees</h3>
                     </div>
                     <div id="attendeesFacesGrid" class="meetup-attendees-grid">
                         <!-- Injected -->
@@ -123,10 +122,10 @@
                 <!-- Group Info Widget -->
                 <div class="meetup-sidebar-widget">
                     <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
-                        <div id="sidebarGroupAvatar" style="width:54px;height:54px;border-radius:var(--radius-md);background:linear-gradient(135deg,#00999e,#006e73);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">💻</div>
+                        <div id="sidebarGroupAvatar" style="width:54px;height:54px;border-radius:var(--radius-md);background:linear-gradient(135deg,#00999e,#006e73);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">👥</div>
                         <div>
-                            <h4 id="sidebarGroupName" style="font-size: 1rem; font-weight: 700; line-height: 1.3;">Kathmandu Tech Innovators</h4>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">Public group • 2,450 members</div>
+                            <h4 id="sidebarGroupName" style="font-size: 1rem; font-weight: 700; line-height: 1.3;">Community Group</h4>
+                            <div id="sidebarGroupSub" style="font-size: 0.8rem; color: var(--text-muted);">Public group</div>
                         </div>
                     </div>
                     <button class="btn btn-outline-teal btn-pill btn-block btn-sm" onclick="showToast('Joined group!', 'success'); this.textContent='Joined';">Join this group</button>
@@ -137,9 +136,8 @@
                     <div style="display: flex; gap: 0.9rem; align-items: flex-start;">
                         <span class="material-symbols-outlined" style="color: var(--teal); font-size: 22px;">schedule</span>
                         <div>
-                            <div id="sidebarDateText" style="font-weight: 700; font-size: 0.95rem;">Saturday, Sep 12, 2026</div>
-                            <div id="sidebarTimeText" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">9:30 AM to 5:30 PM NPT</div>
-                            <a href="#" onclick="showToast('Added to calendar', 'success')" style="font-size: 0.825rem; color: var(--teal); font-weight: 600;">+ Add to calendar</a>
+                            <div id="sidebarDateText" style="font-weight: 700; font-size: 0.95rem;">Date TBD</div>
+                            <div id="sidebarTimeText" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Time TBD</div>
                         </div>
                     </div>
                 </div>
@@ -149,9 +147,8 @@
                     <div style="display: flex; gap: 0.9rem; align-items: flex-start;">
                         <span class="material-symbols-outlined" style="color: var(--teal); font-size: 22px;">pin_drop</span>
                         <div>
-                            <div id="sidebarVenueName" style="font-weight: 700; font-size: 0.95rem;">Heritage Convention Hall</div>
-                            <div id="sidebarAddressText" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Durbar Marg, Kathmandu, Nepal</div>
-                            <a href="https://maps.google.com" target="_blank" rel="noopener" style="font-size: 0.825rem; color: var(--teal); font-weight: 600;">View map</a>
+                            <div id="sidebarVenueName" style="font-weight: 700; font-size: 0.95rem;">Location</div>
+                            <div id="sidebarAddressText" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">—</div>
                         </div>
                     </div>
                 </div>
@@ -160,10 +157,10 @@
                 <div class="meetup-sidebar-widget" style="background-color: var(--bg-subtle);">
                     <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
                         <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Price</span>
-                        <span id="sidebarPriceText" style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary);">NPR 1,000</span>
+                        <span id="sidebarPriceText" style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary);">Free</span>
                     </div>
                     <div id="sidebarSpotsText" style="font-size: 0.8rem; color: var(--primary); font-weight: 600; margin-bottom: 1.25rem;">
-                        18 spots left
+                        Open admission
                     </div>
                     <button class="btn btn-primary btn-pill btn-block btn-lg btn-attend-trigger">
                         <span>Attend</span>

@@ -108,6 +108,20 @@ async function getEventAttendees(eventId) {
     return res.json();
 }
 
+async function checkinEventAttendee(eventId, rsvpId) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/rsvps/${rsvpId}/checkin`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            credentials: 'include'
+        });
+        return await res.json();
+    } catch (e) {
+        console.warn('API checkinEventAttendee error:', e);
+        return { success: false, message: 'Check-in failed' };
+    }
+}
+
 async function searchEvents(query, city = null) {
     return getEvents(city, query);
 }
@@ -224,4 +238,17 @@ async function adminDeleteGroup(groupId) {
         credentials: 'include',
     });
     return res.json();
+}
+
+async function getAdminTransactions() {
+    try {
+        const res = await fetch(`${API}/users/admin/transactions`, {
+            headers: getHeaders(),
+            credentials: 'include'
+        });
+        return await res.json();
+    } catch (e) {
+        console.warn('API getAdminTransactions error:', e);
+        return { success: false, data: [] };
+    }
 }

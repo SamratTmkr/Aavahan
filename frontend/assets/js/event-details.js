@@ -347,21 +347,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch(e) {}
 
-        // Fallback roster faces for prototype demonstration
-        const mockRoster = [
-            'Alex Shrestha', 'Prabhat Gurung', 'Pooja Manandhar', 'Roshan Adhikari',
-            'Anjali Karki', 'Samrat Tamrakar', 'Kripa Sharma', 'Sujan Thapa'
-        ];
-        grid.innerHTML = mockRoster.map(name => {
-            const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-            return `
-                <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.3rem;" title="${name}">
-                    <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#00828a,#0f766e);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-                        ${initials}
-                    </div>
-                    <span style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;">${name.split(' ')[0]}</span>
-                </div>
-            `;
-        }).join('');
+        // If no attendees registered yet, display clean empty state
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; color: var(--text-muted); font-size: 0.88rem; padding: 0.5rem 0;">
+                No attendees registered yet. Be the first to RSVP!
+            </div>
+        `;
     }
 });

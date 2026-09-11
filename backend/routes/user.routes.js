@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import pool from '../src/db.js';
 import { userAuth, adminAuth } from '../middleware/auth.middleware.js';
 
@@ -63,6 +63,26 @@ userRouter.delete('/:id', userAuth, adminAuth, async (req, res) => {
         }
         await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id]);
         return res.json({ success: true, message: 'User deleted' });
+    } catch (error) {
+        return res.json({ success: false, message: error.message });
+    }
+});
+
+// GET /api/v1/users/admin/transactions — admin only: list registrations & transactions
+userRouter.get('/admin/transactions', userAuth, adminAuth, async (req, res) => {
+    try {
+        const [rows] = await pool.execute(
+            `SELECT r.id, r.status, r.created_at, u.name AS buyer, e.title AS event, 
+                    CASE WHEN e.is_free = 1 OR e.min_price IS NULL OR e.min_price = 0 THEN 'Free' 
+                         ELSE CONCAT('NPR ', FORMAT(e.min_price, 0)) END AS amount,
+                    'Direct RSVP' AS gateway
+             FROM rsvps r
+             JOIN users u ON r.user_id = u.id
+             JOIN events e ON r.event_id = e.id
+             ORDER BY r.created_at DESC
+             LIMIT 50`
+        );
+        return res.json({ success: true, data: rows });
     } catch (error) {
         return res.json({ success: false, message: error.message });
     }
