@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create and host events on Aavahan. Discover and organize local meetups, workshops, and activities.">
+    <title>Create an Event — Aavahan</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet">
+
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/pages.css">
+    <style>
+        .topic-tag-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-full);
+            background-color: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+            transition: all var(--transition-fast);
+        }
+
+        .topic-tag-pill:hover {
+            border-color: var(--teal);
+        }
+
+        .topic-tag-pill.selected {
+            background-color: var(--teal-light);
+            border-color: var(--teal);
+            color: var(--teal);
+        }
+
+        .event-summary-card {
+            background-color: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <a href="../index.html" class="brand">
+                    <span>Aavahan</span>
+                    <span class="brand-dot"></span>
+                </a>
+            </div>
+
+            <div class="nav-right">
+                <a href="explore.html" class="nav-link-group">Explore</a>
+                <a id="navLogin" href="login.html" class="nav-link-group">Log in</a>
+                <a id="navSignup" href="signup.html" class="btn btn-primary btn-pill btn-sm">Sign up</a>
+                <button id="navLogout" class="btn btn-outline btn-pill btn-sm" style="display:none;">Log out</button>
+                <a href="../index.html" class="btn btn-outline btn-pill btn-sm">Cancel</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="meetup-wizard-step">
+            <!-- Wizard Step Header & Progress -->
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--teal); text-transform: uppercase;">Host an Event</span>
+                <span id="wizardStepIndicator"
+                    style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Step 1 of 3</span>
+            </div>
+            <div class="wizard-progress-bar">
+                <div id="wizardProgressFill" class="wizard-progress-fill" style="width: 33.3%;"></div>
+            </div>
+
+            <!-- STEP 1: Event Basics & Category -->
+            <div class="wizard-step-pane" id="stepPane1">
+                <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.5rem;">What is your event about?</h1>
+                <p style="color: var(--text-muted); margin-bottom: 1.75rem;">Give your event a clear title, pick a category, and let attendees know what to expect.</p>
+
+                <div class="form-group">
+                    <label class="form-label" for="eventTitle">Event Title *</label>
+                    <input type="text" id="eventTitle" class="form-input"
+                        placeholder="e.g. Kathmandu Tech Meetup & AI Demos" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Event Category *</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 0.35rem;">
+                        <span class="topic-tag-pill selected">💻 Software Engineering</span>
+                        <span class="topic-tag-pill">🤖 Artificial Intelligence</span>
+                        <span class="topic-tag-pill">🚀 Startup & Business</span>
+                        <span class="topic-tag-pill">🎸 Music & Concerts</span>
+                        <span class="topic-tag-pill">🏔️ Outdoor & Hiking</span>
+                        <span class="topic-tag-pill">🎨 Design & Creative</span>
+                        <span class="topic-tag-pill">🧘 Wellness & Fitness</span>
+                        <span class="topic-tag-pill">🍕 Social & Networking</span>
+                        <span class="topic-tag-pill">📚 Workshop & Training</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="eventDesc">Event Description *</label>
+                    <textarea id="eventDesc" class="form-textarea" rows="4"
+                        placeholder="Describe what will happen, agenda, who should attend, and any preparation..." required></textarea>
+                </div>
+            </div>
+
+            <!-- STEP 2: Location & Schedule -->
+            <div class="wizard-step-pane" id="stepPane2" style="display: none;">
+                <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.5rem;">When and where will it take place?</h1>
+                <p style="color: var(--text-muted); margin-bottom: 1.75rem;">Set the date, time, and physical venue or virtual link.</p>
+
+                <div class="form-group">
+                    <label class="form-label" for="eventCity">City or Region *</label>
+                    <input type="text" id="eventCity" class="form-input" value="Kathmandu, Nepal"
+                        placeholder="e.g. Kathmandu, Pokhara, Lalitpur" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="eventVenue">Venue / Address *</label>
+                    <input type="text" id="eventVenue" class="form-input"
+                        placeholder="e.g. Hub Innovation Studio, Jhamsikhel or Google Meet" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="eventDate">Date *</label>
+                        <input type="date" id="eventDate" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="eventStartTime">Start Time *</label>
+                        <input type="time" id="eventStartTime" class="form-input" value="11:00" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="eventEndTime">End Time (Optional)</label>
+                        <input type="time" id="eventEndTime" class="form-input" value="14:00">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; padding-top: 1.75rem;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+                            <input type="checkbox" id="eventIsOnline" style="accent-color: var(--teal); width: 18px; height: 18px;">
+                            This is an Online / Virtual event
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Tickets & Publishing -->
+            <div class="wizard-step-pane" id="stepPane3" style="display: none;">
+                <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.5rem;">Ticketing & Review</h1>
+                <p style="color: var(--text-muted); margin-bottom: 1.75rem;">Configure ticket pricing and confirm your event details.</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="eventPrice">Ticket Price (NPR)</label>
+                        <input type="number" id="eventPrice" class="form-input" value="0" min="0" placeholder="0 for Free">
+                        <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; display: block;">Set to 0 if this event is free for all attendees.</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="eventCapacity">Attendee Capacity (Optional)</label>
+                        <input type="number" id="eventCapacity" class="form-input" min="1" placeholder="e.g. 50 (leave empty for unlimited)">
+                    </div>
+                </div>
+
+                <!-- Live Summary Box -->
+                <div class="event-summary-card">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--teal); text-transform: uppercase; margin-bottom: 0.5rem;">Event Summary Preview</div>
+                    <h3 id="summaryTitle" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">—</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                        <span id="summaryCategory">📂 General</span>
+                        <span id="summaryLocation">📍 Kathmandu, Nepal</span>
+                        <span id="summaryDateTime">📅 Not set</span>
+                        <span id="summaryPrice" style="font-weight: 700; color: var(--teal);">🎟️ Free</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wizard Bottom Action Controls -->
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                <button type="button" id="btnWizardBack" class="btn btn-outline" style="display: none;">Back</button>
+                <div style="margin-left: auto;">
+                    <button type="button" id="btnWizardNext" class="btn btn-primary btn-pill btn-lg">Continue</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <div>© 2026 Aavahan, Inc. An event management platform prototype.</div>
+                <div style="display: flex; gap: 1.5rem;">
+                    <a href="#" class="footer-link">Terms of Service</a>
+                    <a href="#" class="footer-link">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/create-event.js"></script>
+</body>
+
+</html>

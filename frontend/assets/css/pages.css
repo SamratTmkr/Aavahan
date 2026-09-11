@@ -1,0 +1,454 @@
+/* ==========================================================================
+   Aavahan - Meetup.com Flow Page-Specific Stylesheet
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. HOMEPAGE SPECIFIC (MEETUP FLOW)
+   -------------------------------------------------------------------------- */
+
+/* Meetup Hero Section */
+.meetup-hero {
+    padding: 3.5rem 0 4rem;
+    background-color: #ffffff;
+}
+
+.meetup-hero-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 3rem;
+    align-items: center;
+}
+
+.meetup-hero-title {
+    font-size: 2.75rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--text-primary);
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.02em;
+}
+
+.meetup-hero-desc {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.meetup-hero-media {
+    position: relative;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.meetup-hero-media img {
+    width: 100%;
+    height: 380px;
+    object-fit: cover;
+}
+
+/* Meetup "How Aavahan Works" 3 Cards */
+.meetup-how-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.meetup-how-card {
+    background-color: var(--bg-subtle);
+    border-radius: var(--radius-lg);
+    padding: 2rem 1.75rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform var(--transition-fast);
+}
+
+.meetup-how-card:hover {
+    transform: translateY(-3px);
+}
+
+.meetup-how-icon-box {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-full);
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    color: var(--teal);
+}
+
+.meetup-how-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+}
+
+.meetup-how-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+
+.meetup-how-link {
+    color: var(--teal);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.meetup-how-link:hover {
+    text-decoration: underline;
+}
+
+/* Meetup Stories / "Friendships are made on Aavahan" */
+.stories-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.story-card {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.story-card-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.story-card-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.story-card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    color: var(--text-primary);
+}
+
+.story-card-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 1rem;
+}
+
+.story-card-author {
+    margin-top: auto;
+    font-size: 0.825rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Popular Cities Cards */
+.cities-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.25rem;
+}
+
+.city-card {
+    text-align: center;
+    transition: transform var(--transition-fast);
+}
+
+.city-card:hover {
+    transform: translateY(-3px);
+}
+
+.city-card-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    margin: 0 auto 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.city-card-name {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   2. EXPLORE / FIND EVENTS PAGE (MEETUP FLOW)
+   -------------------------------------------------------------------------- */
+
+/* Top Switcher Tabs (Events vs Groups) */
+.meetup-explore-tabs {
+    display: flex;
+    gap: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+.meetup-explore-tab {
+    padding: 0.85rem 0.2rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    position: relative;
+}
+
+.meetup-explore-tab.active {
+    color: var(--teal);
+}
+
+.meetup-explore-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--teal);
+    border-radius: 3px 3px 0 0;
+}
+
+/* Meetup Filter Pills Dropdown Bar */
+.meetup-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.meetup-filter-dropdown {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    background-color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+}
+
+.meetup-filter-dropdown:focus, .meetup-filter-dropdown.active {
+    border-color: var(--teal);
+    background-color: var(--teal-light);
+}
+
+/* Date Grouping Rows (Meetup Signature Event Feed) */
+.meetup-date-group {
+    margin-bottom: 2.5rem;
+}
+
+.meetup-date-header {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meetup-event-list-item {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 1.5rem;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background-color var(--transition-fast);
+}
+
+.meetup-event-list-item:hover {
+    background-color: #fafafa;
+}
+
+.meetup-list-item-media {
+    width: 220px;
+    height: 140px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--bg-subtle);
+}
+
+.meetup-list-item-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* --------------------------------------------------------------------------
+   3. EVENT DETAILS PAGE (MEETUP FLOW)
+   -------------------------------------------------------------------------- */
+
+.meetup-details-top-bar {
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.5rem 0;
+}
+
+.meetup-details-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 3.5rem;
+    padding-top: 2rem;
+    padding-bottom: 5rem;
+}
+
+.meetup-details-cover {
+    width: 100%;
+    height: 380px;
+    border-radius: var(--radius-lg);
+    object-fit: cover;
+    margin-bottom: 2rem;
+}
+
+/* Meetup Attendee Faces Roster */
+.meetup-attendees-box {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-top: 2.5rem;
+}
+
+.meetup-attendees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.meetup-attendee-item {
+    text-align: center;
+}
+
+.meetup-attendee-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    margin: 0 auto 0.35rem;
+}
+
+.meetup-attendee-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.meetup-attendee-badge {
+    font-size: 0.7rem;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* Discussion Board */
+.meetup-comments-section {
+    margin-top: 3rem;
+}
+
+.meetup-comment-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.meetup-comment-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.meetup-comment-author {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+}
+
+.meetup-comment-time {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-weight: normal;
+    margin-left: 0.4rem;
+}
+
+.meetup-comment-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Meetup Right Sticky Widgets */
+.meetup-sidebar-widget {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* --------------------------------------------------------------------------
+   4. START A GROUP & ORGANIZER STUDIO (MEETUP FLOW)
+   -------------------------------------------------------------------------- */
+
+.meetup-wizard-step {
+    max-width: 680px;
+    margin: 3rem auto;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.wizard-progress-bar {
+    height: 4px;
+    background-color: var(--bg-subtle);
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.wizard-progress-fill {
+    height: 100%;
+    background-color: var(--primary);
+    transition: width var(--transition-base);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .meetup-hero-grid { grid-template-columns: 1fr; }
+    .meetup-how-grid { grid-template-columns: 1fr; }
+    .stories-grid { grid-template-columns: 1fr; }
+    .cities-grid { grid-template-columns: repeat(3, 1fr); }
+    .meetup-details-layout { grid-template-columns: 1fr; }
+    .meetup-event-list-item { grid-template-columns: 1fr; }
+    .meetup-list-item-media { width: 100%; height: 180px; }
+}
+
+@media (max-width: 600px) {
+    .meetup-hero-title { font-size: 2.1rem; }
+    .cities-grid { grid-template-columns: repeat(2, 1fr); }
+}
