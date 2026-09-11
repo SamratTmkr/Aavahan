@@ -41,16 +41,6 @@ window.handleDeleteOrganizerEvent = async function(eventId, eventTitle) {
 
 // Main loader function
 async function loadDashboardData() {
-    // 1. Check for demo flag in URL to facilitate direct preview
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('demo') === '1' || urlParams.get('demo') === 'true') {
-        if (!localStorage.getItem('aavahan_token')) {
-            const demoUser = { id: 1, name: 'Aarav Sharma', email: 'aarav.sharma@example.com', role: 'user' };
-            localStorage.setItem('aavahan_token', 'demo-organizer-token');
-            localStorage.setItem('aavahan_user', JSON.stringify(demoUser));
-        }
-    }
-
     // Guard — Require authentication
     const token = localStorage.getItem('aavahan_token') || sessionStorage.getItem('aavahan_token');
     if (!token && window.location.pathname.includes('dashboard.html')) {
@@ -124,40 +114,6 @@ async function loadDashboardData() {
         console.warn('Error fetching organizer events:', e);
     }
 
-    // Fallback: If in demo mode without DB events, provide a helpful demo set so user can preview UI
-    const isDemoMode = !token || (token && token.startsWith('demo-')) || isDemoParam;
-    if (events.length === 0 && isDemoMode) {
-        events = [
-            {
-                id: 'evt-001',
-                title: 'Kathmandu Tech Summit 2026: AI & Microservices',
-                event_date: '2026-09-12',
-                start_time: '09:30:00',
-                venue: 'Heritage Convention Hall, Durbar Marg',
-                city: 'Kathmandu',
-                is_free: false,
-                min_price: 1500,
-                attendee_count: 142
-            },
-            {
-                id: 'evt-002',
-                title: 'Community Open Source & Python AI Hacknight',
-                event_date: '2026-10-16',
-                start_time: '18:00:00',
-                venue: 'DevSpace Hub, Baneshwor',
-                city: 'Kathmandu',
-                is_free: true,
-                min_price: 0,
-                attendee_count: 52
-            }
-        ];
-        stats = {
-            totalEvents: events.length,
-            totalRSVPs: 194,
-            grossVolume: 213000
-        };
-    }
-
     // 4. Update Quick Stats Overview
     const statEventsEl = document.getElementById('statUpcomingEvents');
     const statMembersEl = document.getElementById('statGroupMembers');
@@ -173,8 +129,7 @@ async function loadDashboardData() {
             : `NPR ${stats.grossVolume.toLocaleString()}`;
     }
     if (statMembersEl) {
-        // Estimate community reach as RSVPs + base
-        const reach = Math.max(stats.totalRSVPs, events.length > 0 ? stats.totalRSVPs + 45 : 0);
+        const reach = stats.totalRSVPs;
         statMembersEl.textContent = reach.toLocaleString();
     }
     if (countBadgeEl) {
@@ -259,14 +214,6 @@ async function loadDashboardData() {
             }
         } catch (e) {
             console.warn('Error fetching recent RSVPs:', e);
-        }
-
-        if (rsvps.length === 0 && isDemoMode) {
-            rsvps = [
-                { id: 1042, user_name: 'Pooja Manandhar', user_email: 'pooja.m@example.com', event_title: 'Kathmandu Tech Summit 2026', status: 'checked_in' },
-                { id: 1043, user_name: 'Roshan Adhikari', user_email: 'roshan.a@example.com', event_title: 'Kathmandu Tech Summit 2026', status: 'confirmed' },
-                { id: 1044, user_name: 'Anjali Karki', user_email: 'anjali.k@example.com', event_title: 'Community Open Source & Python AI Hacknight', status: 'confirmed' }
-            ];
         }
 
         if (rsvps.length === 0) {

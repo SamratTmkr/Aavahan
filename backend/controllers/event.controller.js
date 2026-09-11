@@ -201,3 +201,23 @@ export const getMyOrganizerRSVPs = async (req, res) => {
         return res.json({ success: false, message: error.message });
     }
 };
+
+// PATCH /api/v1/events/:id/rsvps/:rsvpId/checkin — Check in an attendee (organizer only)
+export const checkinAttendee = async (req, res) => {
+    try {
+        const { id, rsvpId } = req.params;
+        const [events] = await pool.execute('SELECT organizer_id FROM events WHERE id = ?', [id]);
+        if (!events.length) return res.json({ success: false, message: 'Event not found' });
+        if (events[0].organizer_id !== req.user.id && req.user.role !== 'admin') {
+            return res.json({ success: false, message: 'Not authorized' });
+        }
+        await pool.execute(
+            'UPDATE rsvps SET status = ? WHERE id = ? AND event_id = ?',
+            ['checked_in', rsvpId, id]
+        );
+        return res.json({ success: true, message: 'Attendee marked as checked in' });
+    } catch (error) {
+        return res.json({ success: false, message: error.message });
+    }
+};
+

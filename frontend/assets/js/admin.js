@@ -390,30 +390,42 @@ if (globalSearchEl) {
     });
 }
 
-// ── Transactions Tab (placeholder) ───────────────────────────
-function loadAdminTransactions() {
+// ── Transactions & Registrations Tab ──────────────────────────
+async function loadAdminTransactions() {
     var tbody = document.getElementById('adminTransactionsTableBody');
     if (!tbody) return;
-    // Placeholder data since no transactions table exists yet
-    var mockTx = [
-        { id: 'TXN-0041', buyer: 'Samrat Tamrakar', event: 'Kathmandu AI Summit', amount: 'NPR 1,500', gateway: 'eSewa', status: 'completed' },
-        { id: 'TXN-0040', buyer: 'Prabhat', event: 'React & TypeScript Workshop', amount: 'NPR 2,000', gateway: 'Khalti', status: 'completed' },
-        { id: 'TXN-0039', buyer: 'Demo User', event: 'Business Networking Kathmandu', amount: 'NPR 500', gateway: 'eSewa', status: 'refunded' },
-    ];
-    tbody.innerHTML = mockTx.map(function(tx) {
-        var statusBadge = tx.status === 'completed'
-            ? '<span class="mod-badge mod-badge-published">Completed</span>'
-            : '<span class="mod-badge mod-badge-flagged">Refunded</span>';
-        return '<tr>' +
-            '<td style="font-family:monospace;font-size:0.8rem;color:var(--admin-text-muted);">' + tx.id + '</td>' +
-            '<td>' + tx.buyer + '</td>' +
-            '<td>' + tx.event + '</td>' +
-            '<td style="font-weight:700;">' + tx.amount + '</td>' +
-            '<td>' + tx.gateway + '</td>' +
-            '<td>' + statusBadge + '</td>' +
-            '<td><button class="btn btn-outline btn-sm" style="font-size:0.78rem;padding:0.2rem 0.6rem;" onclick="showToast(\'Refund issued for ' + tx.id + '\', \'info\')">Refund</button></td>' +
-        '</tr>';
-    }).join('');
+    tableLoading('adminTransactionsTableBody', 7);
+
+    try {
+        var res = await getAdminTransactions();
+        var txList = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+
+        if (!txList.length) {
+            tableEmpty('adminTransactionsTableBody', 7, 'No registrations or transactions recorded yet.');
+            return;
+        }
+
+        tbody.innerHTML = txList.map(function(tx) {
+            var isConfirmed = tx.status === 'confirmed' || tx.status === 'checked_in';
+            var statusBadge = isConfirmed
+                ? '<span class="mod-badge mod-badge-published">' + (tx.status === 'checked_in' ? 'Checked In' : 'Confirmed') + '</span>'
+                : '<span class="mod-badge mod-badge-flagged">' + tx.status + '</span>';
+            var formattedId = 'RSVP-' + String(tx.id).padStart(4, '0');
+
+            return '<tr>' +
+                '<td style="font-family:monospace;font-size:0.8rem;color:var(--admin-text-muted);">' + formattedId + '</td>' +
+                '<td style="font-weight:600;">' + (tx.buyer || 'Community Member') + '</td>' +
+                '<td>' + (tx.event || 'Meetup') + '</td>' +
+                '<td style="font-weight:700;">' + tx.amount + '</td>' +
+                '<td>' + (tx.gateway || 'Direct RSVP') + '</td>' +
+                '<td>' + statusBadge + '</td>' +
+                '<td><span style="font-size:0.75rem;color:var(--admin-text-muted);">' + fmtDate(tx.created_at) + '</span></td>' +
+            '</tr>';
+        }).join('');
+    } catch (e) {
+        console.warn('Error loading admin transactions:', e);
+        tableEmpty('adminTransactionsTableBody', 7, 'Failed to load transaction records.');
+    }
 }
 
 // ── Boot ──────────────────────────────────────────────────────
