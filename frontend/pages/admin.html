@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aavahan Platform Admin & Operations Dashboard. Superadmin moderation, events, groups, and analytics.">
+    <title>Platform Admin Panel — Aavahan</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/pages.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin-body">
+    <!-- 1. Fixed Admin Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="admin-sidebar-header">
+            <div class="admin-brand">
+                <span>Aavahan</span>
+                <span class="admin-badge">Admin</span>
+            </div>
+        </div>
+
+        <nav class="admin-nav">
+            <a class="admin-nav-item active" data-tab="tabAdminOverview">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>Overview</span>
+            </a>
+            <a class="admin-nav-item" data-tab="tabAdminEvents">
+                <span class="material-symbols-outlined">event</span>
+                <span>Events</span>
+                <span class="nav-count">6</span>
+            </a>
+            <a class="admin-nav-item" data-tab="tabAdminGroups">
+                <span class="material-symbols-outlined">groups</span>
+                <span>Groups</span>
+                <span class="nav-count">5</span>
+            </a>
+            <a class="admin-nav-item" data-tab="tabAdminUsers">
+                <span class="material-symbols-outlined">person</span>
+                <span>Users</span>
+                <span class="nav-count">12.4K</span>
+            </a>
+            <a class="admin-nav-item" data-tab="tabAdminTransactions">
+                <span class="material-symbols-outlined">receipt_long</span>
+                <span>Transactions</span>
+            </a>
+            <a class="admin-nav-item" data-tab="tabAdminSettings">
+                <span class="material-symbols-outlined">settings</span>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="admin-sidebar-footer">
+            <!-- Initials avatar — no random photo -->
+            <div id="adminSidebarAvatar" style="width:36px;height:36px;border-radius:50%;background:#00999e;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">AS</div>
+            <div style="flex: 1; min-width: 0;">
+                <div id="adminSidebarName" style="font-size: 0.85rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Admin</div>
+                <div style="display:flex;align-items:center;gap:0.35rem;margin-top:0.1rem;">
+                    <span style="font-size: 0.7rem; color: #ffffff; background: rgba(255,255,255,0.15); border-radius: 4px; padding: 1px 6px; font-weight: 700; letter-spacing: 0.03em;">ADMIN</span>
+                </div>
+            </div>
+            <a href="login.html" title="Log out" onclick="logoutUser(); return false;" style="color: #94a3b8; display: flex;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 2. Admin Main Wrapper -->
+    <div class="admin-main">
+        <!-- Top Admin Header -->
+        <header class="admin-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="btn btn-ghost btn-sm" id="btnToggleSidebar" style="display: none; padding: 0.25rem;">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <div class="admin-search-box">
+                    <span class="material-symbols-outlined" style="color: var(--admin-text-muted); font-size: 18px;">search</span>
+                    <input type="text" id="globalAdminSearch" class="admin-search-input" placeholder="Search events, groups, or users...">
+                </div>
+            </div>
+
+            <div class="admin-header-actions">
+                <a href="../index.html" target="_blank" class="btn btn-outline btn-pill btn-sm">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">open_in_new</span>
+                    <span>View Public Site</span>
+                </a>
+                <button class="btn btn-ghost btn-sm" onclick="showToast('No new unread platform alerts', 'info')">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Admin Content Panes -->
+        <main class="admin-content">
+            <!-- TAB 1: OVERVIEW -->
+            <div class="admin-tab-pane active" id="tabAdminOverview">
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Platform Overview</h1>
+                        <p class="admin-page-subtitle">Real-time metrics, active communities, and platform moderation queue.</p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-outline btn-pill btn-sm" onclick="showToast('Exporting platform report CSV (demo)', 'info')">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span>
+                            <span>Export CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Metric Cards -->
+                <div class="admin-metrics-grid">
+                    <div class="admin-metric-card">
+                        <div class="admin-metric-icon" style="background-color: #e6f4f6; color: var(--teal);">
+                            <span class="material-symbols-outlined">groups</span>
+                        </div>
+                        <div id="kpiTotalUsers" class="admin-metric-val">—</div>
+                        <div class="admin-metric-label">Total Registered Members</div>
+                        <div class="admin-metric-trend" style="color: var(--teal);">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">trending_up</span>
+                            <span>+18.4% this month</span>
+                        </div>
+                    </div>
+
+                    <div class="admin-metric-card">
+                        <div class="admin-metric-icon" style="background-color: #fef0f2; color: var(--primary);">
+                            <span class="material-symbols-outlined">event_available</span>
+                        </div>
+                        <div id="kpiTotalEvents" class="admin-metric-val">—</div>
+                        <div class="admin-metric-label">Live Events Hosted</div>
+                        <div class="admin-metric-trend" style="color: var(--primary);">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">trending_up</span>
+                            <span>+24 new this week</span>
+                        </div>
+                    </div>
+
+                    <div class="admin-metric-card">
+                        <div class="admin-metric-icon" style="background-color: #f0fdf4; color: #16a34a;">
+                            <span class="material-symbols-outlined">payments</span>
+                        </div>
+                        <div class="admin-metric-val">NPR 4.8M</div>
+                        <div class="admin-metric-label">Gross Ticket GMV</div>
+                        <div class="admin-metric-trend" style="color: #16a34a;">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">trending_up</span>
+                            <span>+12.6% vs last month</span>
+                        </div>
+                    </div>
+
+                    <div class="admin-metric-card">
+                        <div class="admin-metric-icon" style="background-color: #fffbeb; color: #d97706;">
+                            <span class="material-symbols-outlined">verified</span>
+                        </div>
+                        <div id="kpiTotalGroups" class="admin-metric-val">—</div>
+                        <div class="admin-metric-label">Active Meetup Groups</div>
+                        <div class="admin-metric-trend" style="color: #d97706;">
+                            <span>98% active community rate</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Platform Activity & Moderation Queue -->
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <div>
+                            <h2 class="admin-card-title">Pending Moderation Queue</h2>
+                            <p style="font-size: 0.825rem; color: var(--admin-text-muted); margin-bottom: 0;">New events and community submissions requiring review.</p>
+                        </div>
+                        <span class="badge" style="background-color: #fffbeb; color: #d97706;">Needs Review</span>
+                    </div>
+
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Event Title & Group</th>
+                                <th>Event Date</th>
+                                <th>Status</th>
+                                <th>Moderation Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPendingQueue">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2: EVENTS MANAGEMENT -->
+            <div class="admin-tab-pane" id="tabAdminEvents">
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Events Management</h1>
+                        <p class="admin-page-subtitle">Moderate, feature, or remove events across all cities.</p>
+                    </div>
+                    <div class="admin-search-box" style="width: 280px;">
+                        <span class="material-symbols-outlined" style="color: var(--admin-text-muted); font-size: 18px;">search</span>
+                        <input type="text" id="searchAdminEvents" class="admin-search-input" placeholder="Search event title...">
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Event Details</th>
+                                <th>Location</th>
+                                <th>Attendees</th>
+                                <th>Revenue</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminEventsTableBody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 3: GROUPS MANAGEMENT -->
+            <div class="admin-tab-pane" id="tabAdminGroups">
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Groups & Communities</h1>
+                        <p class="admin-page-subtitle">Manage organizer communities, verify badges, and oversee member health.</p>
+                    </div>
+                    <div class="admin-search-box" style="width: 280px;">
+                        <span class="material-symbols-outlined" style="color: var(--admin-text-muted); font-size: 18px;">search</span>
+                        <input type="text" id="searchAdminGroups" class="admin-search-input" placeholder="Search group name...">
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Group Name</th>
+                                <th>Category</th>
+                                <th>Members</th>
+                                <th>Hosted Events</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminGroupsTableBody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 4: USERS MANAGEMENT -->
+            <div class="admin-tab-pane" id="tabAdminUsers">
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">User Accounts</h1>
+                        <p class="admin-page-subtitle">Overview of all attendees, organizers, and platform administrators.</p>
+                    </div>
+                    <div class="admin-search-box" style="width: 280px;">
+                        <span class="material-symbols-outlined" style="color: var(--admin-text-muted); font-size: 18px;">search</span>
+                        <input type="text" id="searchAdminUsers" class="admin-search-input" placeholder="Search by name or email...">
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                                <th>Total RSVPs</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersTableBody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 5: TRANSACTIONS & TICKETS -->
+            <div class="admin-tab-pane" id="tabAdminTransactions">
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Transactions & Refunds</h1>
+                        <p class="admin-page-subtitle">Track ticket purchases, payment gateways, and issue customer refunds.</p>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>Buyer</th>
+                                <th>Event</th>
+                                <th>Amount</th>
+                                <th>Gateway</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTransactionsTableBody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 6: SETTINGS -->
+            <div class="admin-tab-pane" id="tabAdminSettings">
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Platform Settings</h1>
+                        <p class="admin-page-subtitle">Global configuration, ticketing commission, and operational switches.</p>
+                    </div>
+                </div>
+
+                <div class="admin-card" style="max-width: 680px; padding: 2rem;">
+                    <div class="form-group">
+                        <label class="form-label">Platform Service Commission (%)</label>
+                        <input type="number" class="form-input" value="3.5" min="0" max="20" step="0.1">
+                        <div style="font-size: 0.8rem; color: var(--admin-text-muted); margin-top: 0.25rem;">Standard fee deducted per paid ticket transaction.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Default Currency</label>
+                        <select class="form-select">
+                            <option value="NPR" selected>NPR (Nepalese Rupee)</option>
+                            <option value="USD">USD (US Dollar)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Homepage Global Announcement Banner</label>
+                        <input type="text" class="form-input" value="🎉 Welcome to Aavahan — Nepal's community event platform!">
+                    </div>
+
+                    <div style="padding-top: 1.5rem; border-top: 1px solid var(--admin-border); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 700;">Automatic Event Publishing</div>
+                            <div style="font-size: 0.8rem; color: var(--admin-text-muted);">Auto-approve verified organizer submissions.</div>
+                        </div>
+                        <input type="checkbox" class="checkbox-custom" checked>
+                    </div>
+
+                    <button class="btn btn-teal btn-pill" style="margin-top: 2rem;" onclick="showToast('Platform settings saved!', 'success')">Save Changes</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/admin.js"></script>
+</body>
+</html>

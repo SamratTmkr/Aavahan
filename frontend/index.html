@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aavahan - The people platform. Where interests become friendships. Discover events and groups near you.">
+    <title>Aavahan — The People Platform | Where Interests Become Friendships</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body>
+    <!-- 1. Meetup Top Navigation Bar -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <!-- Meetup Logo -->
+                <a href="index.html" class="brand">
+                    <span>Aavahan</span>
+                    <span class="brand-dot"></span>
+                </a>
+
+                <!-- Integrated Search Bar (Meetup signature) -->
+                <form class="header-search-bar" action="pages/explore.html" method="GET">
+                    <div class="header-search-input-group">
+                        <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 18px;">search</span>
+                        <input type="text" name="search" class="header-search-input" placeholder="Search events">
+                    </div>
+                    <div class="header-search-input-group">
+                        <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 18px;">location_on</span>
+                        <input type="text" name="city" class="header-search-input" value="Kathmandu" placeholder="City or location">
+                    </div>
+                    <button type="submit" class="header-search-btn" aria-label="Search">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="nav-right">
+                <a href="pages/create-event.html" class="nav-link-group">Start an Event</a>
+                <a href="pages/explore.html" class="nav-link-group">Explore</a>
+                <a id="navLogin" href="pages/login.html" class="nav-link-group">Log in</a>
+                <a id="navSignup" href="pages/signup.html" class="btn btn-primary btn-pill btn-sm">Sign up</a>
+                <button id="navLogout" class="btn btn-outline btn-pill btn-sm" style="display:none;">Log out</button>
+            </div>
+
+            <!-- Mobile Hamburger Button -->
+            <button class="nav-toggle-btn" aria-label="Toggle navigation">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer -->
+    <div class="mobile-nav-drawer">
+        <div class="mobile-nav-links">
+            <a href="index.html" class="mobile-nav-link">Home</a>
+            <a href="pages/explore.html" class="mobile-nav-link">Find Events</a>
+            <a href="pages/create-event.html" class="mobile-nav-link">Start an Event</a>
+            <a href="pages/dashboard.html" class="mobile-nav-link">Organizer Hub</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <a href="pages/login.html" class="btn btn-outline btn-block">Log in</a>
+            <a href="pages/signup.html" class="btn btn-primary btn-block">Sign up</a>
+        </div>
+    </div>
+
+    <main>
+        <!-- 2. Meetup Hero Section -->
+        <section class="meetup-hero">
+            <div class="container">
+                <div class="meetup-hero-grid">
+                    <div>
+                        <h1 class="meetup-hero-title">
+                            The people platform—Where interests become friendships
+                        </h1>
+                        <p class="meetup-hero-desc">
+                            Whatever your interest, from hiking and coding to networking and skill sharing, there are thousands of people who share it on Aavahan. Events are happening every day—sign up to join the fun.
+                        </p>
+                        <a href="pages/signup.html" class="btn btn-teal btn-pill btn-lg">
+                            <span>Join Aavahan</span>
+                        </a>
+                    </div>
+                    <div class="meetup-hero-media">
+                        <img src="assets/images/community-banner.jpg" alt="People meeting up in community">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Category Exploration Badges -->
+        <section class="section" style="padding-top: 1rem; padding-bottom: 2rem;">
+            <div class="container">
+                <div class="category-badges-scroll" id="categoryPillsScroll">
+                    <a href="pages/explore.html?category=technology" class="category-pill-item">
+                        <span>💻</span>
+                        <span>Technology & AI</span>
+                    </a>
+                    <a href="pages/explore.html?category=music" class="category-pill-item">
+                        <span>🎸</span>
+                        <span>Live Music & Concerts</span>
+                    </a>
+                    <a href="pages/explore.html?category=business" class="category-pill-item">
+                        <span>💼</span>
+                        <span>Career & Business</span>
+                    </a>
+                    <a href="pages/explore.html?category=outdoor" class="category-pill-item">
+                        <span>🏔️</span>
+                        <span>Nature & Outdoors</span>
+                    </a>
+                    <a href="pages/explore.html?category=social" class="category-pill-item">
+                        <span>🍕</span>
+                        <span>Social & Dining</span>
+                    </a>
+                    <a href="pages/explore.html?category=culture" class="category-pill-item">
+                        <span>🎨</span>
+                        <span>Arts & Culture</span>
+                    </a>
+                    <a href="pages/explore.html?category=fitness" class="category-pill-item">
+                        <span>🧘</span>
+                        <span>Fitness & Wellness</span>
+                    </a>
+                    <a href="pages/explore.html?category=games" class="category-pill-item">
+                        <span>🎲</span>
+                        <span>Games & Hobbies</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Events near Kathmandu, Nepal -->
+        <section class="section" style="padding-top: 1rem;">
+            <div class="container">
+                <div class="section-header-row">
+                    <div>
+                        <h2 class="section-header-title">Events near Kathmandu, Nepal</h2>
+                    </div>
+                    <a href="pages/explore.html" class="section-header-link">See all events</a>
+                </div>
+
+                <!-- Event Cards Grid -->
+                <div class="meetup-event-grid" id="homepageEventsGrid">
+                    <!-- Populated dynamically from API -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. How Aavahan Works (Meetup 3 Core Cards) -->
+        <section class="section">
+            <div class="container">
+                <h2 class="section-header-title" style="text-align: center; margin-bottom: 0.5rem;">How Aavahan works</h2>
+                <p style="text-align: center; color: var(--text-muted); max-width: 600px; margin: 0 auto 2.5rem;">
+                    Meet new people who share your interests through online and in-person events. It’s free to create an account.
+                </p>
+
+                <div class="meetup-how-grid">
+                    <div class="meetup-how-card">
+                        <div class="meetup-how-icon-box">
+                            <span class="material-symbols-outlined" style="font-size: 36px;">search</span>
+                        </div>
+                        <h3 class="meetup-how-title">Discover events</h3>
+                        <p class="meetup-how-desc">See who’s hosting local events for all the things you love, from tech and outdoor hikes to music.</p>
+                        <a href="pages/explore.html" class="meetup-how-link">Search events</a>
+                    </div>
+
+                    <div class="meetup-how-card">
+                        <div class="meetup-how-icon-box">
+                            <span class="material-symbols-outlined" style="font-size: 36px;">confirmation_number</span>
+                        </div>
+                        <h3 class="meetup-how-title">Attend an event</h3>
+                        <p class="meetup-how-desc">Meet people who share your passions, learn something new, and make genuine connections in your city.</p>
+                        <a href="pages/explore.html" class="meetup-how-link">Find an event to attend</a>
+                    </div>
+
+                    <div class="meetup-how-card">
+                        <div class="meetup-how-icon-box">
+                            <span class="material-symbols-outlined" style="font-size: 36px;">calendar_add_on</span>
+                        </div>
+                        <h3 class="meetup-how-title">Start an event</h3>
+                        <p class="meetup-how-desc">You don’t have to be an expert to gather people together and host a memorable event.</p>
+                        <a href="pages/create-event.html" class="meetup-how-link">Start an event</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Friendships are made on Aavahan (Community Stories) -->
+        <section class="section section-subtle">
+            <div class="container">
+                <div class="section-header-row">
+                    <div>
+                        <h2 class="section-header-title">Friendships are made on Aavahan</h2>
+                    </div>
+                </div>
+
+                <div class="stories-grid" id="homepageStoriesGrid">
+                    <!-- Populated from API -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Popular Cities on Aavahan -->
+        <section class="section">
+            <div class="container">
+                <h2 class="section-header-title" style="margin-bottom: 2rem;">Popular cities on Aavahan</h2>
+                <div class="cities-grid" id="homepageCitiesGrid">
+                    <!-- Populated from API -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Start an Event Organizer CTA Banner -->
+        <section class="section" style="padding-top: 0;">
+            <div class="container">
+                <div style="background-color: var(--teal-light); border-radius: var(--radius-lg); padding: 3rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
+                    <div style="max-width: 600px;">
+                        <h2 style="font-size: 2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem;">
+                            Do what you love, meet others who love it, host your community.
+                        </h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 0;">
+                            Host events on Aavahan to bring people together, share knowledge, and grow your local network.
+                        </p>
+                    </div>
+                    <a href="pages/create-event.html" class="btn btn-teal btn-pill btn-lg">
+                        <span>Start an event</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 9. Meetup Signature Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-top-banner">
+                <div class="footer-top-title">Host your own event on Aavahan.</div>
+                <a href="pages/create-event.html" class="btn btn-outline" style="color: #ffffff; border-color: #ffffff;">Get Started</a>
+            </div>
+
+            <div class="footer-grid">
+                <div>
+                    <h4 class="footer-col-title">Your Account</h4>
+                    <div class="footer-links">
+                        <a href="pages/signup.html" class="footer-link">Sign up</a>
+                        <a href="pages/login.html" class="footer-link">Log in</a>
+                        <a href="#" class="footer-link">Help</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-col-title">Discover</h4>
+                    <div class="footer-links">
+                        <a href="pages/explore.html" class="footer-link">All Events</a>
+                        <a href="pages/explore.html" class="footer-link">Calendar</a>
+                        <a href="pages/explore.html?category=technology" class="footer-link">Topics</a>
+                        <a href="pages/explore.html?city=Kathmandu" class="footer-link">Cities</a>
+                        <a href="pages/explore.html?type=online" class="footer-link">Online Events</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-col-title">Aavahan</h4>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">About</a>
+                        <a href="#" class="footer-link">Blog</a>
+                        <a href="pages/dashboard.html" class="footer-link">Organizer Hub</a>
+                        <a href="pages/admin.html" class="footer-link" style="color: var(--primary); font-weight: 600;">Superadmin Panel</a>
+                        <a href="#" class="footer-link">Careers</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-col-title">Follow us</h4>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">Facebook</a>
+                        <a href="#" class="footer-link">Twitter / X</a>
+                        <a href="#" class="footer-link">Instagram</a>
+                        <a href="#" class="footer-link">YouTube</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div>© 2026 Aavahan, Inc. An event management platform prototype.</div>
+                <div style="display: flex; gap: 1.5rem;">
+                    <a href="#" class="footer-link">Terms of Service</a>
+                    <a href="#" class="footer-link">Privacy Policy</a>
+                    <a href="#" class="footer-link">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Category cover mapper using local high-res assets with clean fallbacks
+            function getCoverImage(cat) {
+                if (!cat) return 'assets/images/tech-summit.jpg';
+                const lower = cat.toLowerCase();
+                if (lower.includes('tech') || lower.includes('software') || lower.includes('ai') || lower.includes('code')) {
+                    return 'assets/images/tech-summit.jpg';
+                }
+                if (lower.includes('music') || lower.includes('concert') || lower.includes('live')) {
+                    return 'assets/images/music-jam.jpg';
+                }
+                if (lower.includes('outdoor') || lower.includes('hiking') || lower.includes('nature') || lower.includes('trail')) {
+                    return 'assets/images/outdoor-hiking.jpg';
+                }
+                if (lower.includes('business') || lower.includes('pitch') || lower.includes('career') || lower.includes('startup')) {
+                    return 'assets/images/startup-pitch.jpg';
+                }
+                return 'assets/images/community-banner.jpg';
+            }
+
+            function formatEventDate(dateStr, timeStr) {
+                if (!dateStr) return 'UPCOMING EVENT';
+                try {
+                    const d = new Date(dateStr);
+                    const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+                    const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+                    const day = d.getDate();
+                    const timeFormatted = timeStr ? ` · ${timeStr.slice(0, 5)} NPT` : '';
+                    return `${weekday}, ${month} ${day}${timeFormatted}`;
+                } catch (e) {
+                    return 'UPCOMING EVENT';
+                }
+            }
+
+            // 1. Render Meetup Events Grid
+            const eventsGrid = document.getElementById('homepageEventsGrid');
+            if (eventsGrid) {
+                let events = [];
+                try {
+                    if (typeof getEvents === 'function') {
+                        const res = await getEvents();
+                        if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+                            events = res.data;
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[Home] Could not load events from API, falling back to curated highlights:', err);
+                }
+
+                // Curated fallback events if database is empty or server is offline
+                if (events.length === 0) {
+                    events = [
+                        {
+                            id: 'evt-001',
+                            title: 'Kathmandu Tech Summit 2026: AI & Microservices',
+                            category: 'Technology & AI',
+                            group_name: 'Kathmandu Tech & AI Innovators',
+                            event_date: '2026-09-12',
+                            start_time: '09:30:00',
+                            is_online: false,
+                            is_free: false,
+                            min_price: 1500,
+                            attendee_count: 142,
+                            venue: 'Heritage Convention Hall, Durbar Marg'
+                        },
+                        {
+                            id: 'evt-002',
+                            title: 'Pokhara Sunrise Trail Run & Lakeside Camp',
+                            category: 'Nature & Outdoors',
+                            group_name: 'Pokhara Trail Running Club',
+                            event_date: '2026-09-19',
+                            start_time: '06:00:00',
+                            is_online: false,
+                            is_free: true,
+                            min_price: 0,
+                            attendee_count: 86,
+                            venue: 'Phewa Lake North Shore, Pokhara'
+                        },
+                        {
+                            id: 'evt-003',
+                            title: 'Nepal Indie Acoustic & Folk Fusion Night',
+                            category: 'Live Music',
+                            group_name: 'Patan Live Music Circle',
+                            event_date: '2026-09-25',
+                            start_time: '18:00:00',
+                            is_online: false,
+                            is_free: false,
+                            min_price: 500,
+                            attendee_count: 210,
+                            venue: 'Patan Museum Courtyard, Lalitpur'
+                        },
+                        {
+                            id: 'evt-004',
+                            title: 'Himalayan Founders Pitch: Angel & VC Demo Day',
+                            category: 'Career & Business',
+                            group_name: 'Nepal Startup Network',
+                            event_date: '2026-10-03',
+                            start_time: '14:00:00',
+                            is_online: true,
+                            is_free: true,
+                            min_price: 0,
+                            attendee_count: 320,
+                            venue: 'Online Zoom Webinar'
+                        }
+                    ];
+                }
+
+                eventsGrid.innerHTML = events.slice(0, 4).map(evt => {
+                    const group = evt.group_name || (evt.category ? `${evt.category} Community` : 'Kathmandu Community Group');
+                    const count = evt.attendee_count || 1;
+                    const isFree = evt.is_free || !evt.min_price || Number(evt.min_price) === 0;
+                    const priceStr = isFree ? 'Free' : `NPR ${Number(evt.min_price).toLocaleString()}`;
+                    const imgUrl = getCoverImage(evt.category);
+                    const dateDisplay = formatEventDate(evt.event_date, evt.start_time);
+                    const linkUrl = `pages/event-details.html?id=${evt.id}`;
+
+                    return `
+                    <div class="meetup-event-card">
+                        <a href="${linkUrl}" class="meetup-card-media">
+                            <img src="${imgUrl}" alt="${evt.title}" class="meetup-card-img" loading="lazy">
+                            ${evt.is_online ? '<span class="meetup-card-badge">ONLINE EVENT</span>' : ''}
+                        </a>
+                        <div class="meetup-card-content">
+                            <div class="meetup-card-date">${dateDisplay}</div>
+                            <h3 class="meetup-card-title">
+                                <a href="${linkUrl}">${evt.title}</a>
+                            </h3>
+                            <div class="meetup-card-group">${group}</div>
+                            <div class="meetup-card-meta-row">
+                                <span>👥 ${count} attendee${count === 1 ? '' : 's'}</span>
+                                <span class="meetup-card-price ${isFree ? 'free' : ''}">
+                                    ${priceStr}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            }
+
+            // 2. Render Community Stories ("Friendships are made on Aavahan")
+            const storiesGrid = document.getElementById('homepageStoriesGrid');
+            if (storiesGrid) {
+                const stories = [
+                    {
+                        title: "From 5 coders in a cafe to a 2,500-strong tech collective",
+                        desc: "We started gathering on weekends to learn distributed systems and AI. Through Aavahan, we scaled into a vibrant network hosting monthly hackathons across the valley.",
+                        author: "Dr. Pratigya Sharma · Lead, Kathmandu Tech Innovators",
+                        img: "assets/images/tech-summit.jpg"
+                    },
+                    {
+                        title: "Founding the Himalayan trail running circle in Pokhara",
+                        desc: "Aavahan helped us connect 400+ trail runners, from beginners to ultra-marathoners. Every Saturday we hit the Sarangkot ridges and bond over dal bhat.",
+                        author: "Kripa Gurung · Organizer, Pokhara Trail Runners",
+                        img: "assets/images/outdoor-hiking.jpg"
+                    },
+                    {
+                        title: "Reviving local acoustics & indie music in Patan",
+                        desc: "Finding jamming partners in the city used to be tough. Through our weekly open-mic events, 12 new indie bands have formed and recorded their first tracks.",
+                        author: "Rohan Shrestha · Founder, Patan Music Circle",
+                        img: "assets/images/music-jam.jpg"
+                    }
+                ];
+
+                storiesGrid.innerHTML = stories.map(st => `
+                    <div class="story-card">
+                        <img src="${st.img}" alt="${st.title}" class="story-card-img" loading="lazy">
+                        <div class="story-card-body">
+                            <h3 class="story-card-title">${st.title}</h3>
+                            <p class="story-card-desc">${st.desc}</p>
+                            <div class="story-card-author">${st.author}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 3. Render Popular Cities on Aavahan
+            const citiesGrid = document.getElementById('homepageCitiesGrid');
+            if (citiesGrid) {
+                let cityStats = {};
+                try {
+                    if (typeof getEventCities === 'function') {
+                        const cityRes = await getEventCities();
+                        if (cityRes && cityRes.success && Array.isArray(cityRes.data)) {
+                            cityRes.data.forEach(item => {
+                                if (item.city) cityStats[item.city.toLowerCase().trim()] = item.count;
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[Home] Could not fetch city statistics:', e);
+                }
+
+                const popularCities = [
+                    {
+                        name: 'Kathmandu',
+                        img: 'assets/images/city-kathmandu.jpg',
+                        count: cityStats['kathmandu'] ? `${cityStats['kathmandu']} events` : '120+ events'
+                    },
+                    {
+                        name: 'Pokhara',
+                        img: 'assets/images/city-pokhara.jpg',
+                        count: cityStats['pokhara'] ? `${cityStats['pokhara']} events` : '45+ events'
+                    },
+                    {
+                        name: 'Lalitpur',
+                        img: 'assets/images/city-lalitpur.jpg',
+                        count: cityStats['lalitpur'] ? `${cityStats['lalitpur']} events` : '60+ events'
+                    },
+                    {
+                        name: 'Bhaktapur',
+                        img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=300&q=80',
+                        count: cityStats['bhaktapur'] ? `${cityStats['bhaktapur']} events` : '25+ events'
+                    },
+                    {
+                        name: 'Chitwan',
+                        img: 'https://images.unsplash.com/photo-1570783350280-d667c9c0f994?auto=format&fit=crop&w=300&q=80',
+                        count: cityStats['chitwan'] ? `${cityStats['chitwan']} events` : '18+ events'
+                    }
+                ];
+
+                citiesGrid.innerHTML = popularCities.map(c => `
+                    <a href="pages/explore.html?city=${encodeURIComponent(c.name)}" class="city-card">
+                        <img src="${c.img}" alt="${c.name}" class="city-card-avatar" loading="lazy">
+                        <div class="city-card-name">${c.name}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">${c.count}</div>
+                    </a>
+                `).join('');
+            }
+        });
+    </script>
+</body>
+</html>
