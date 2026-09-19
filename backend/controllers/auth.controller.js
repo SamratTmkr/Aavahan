@@ -24,11 +24,12 @@ export const register = async (req, res) => {
             });
         }
 
-        // Check password length
-        if (password.length < 6) {
+        // Check password complexity (at least 6 characters, uppercase, lowercase, and number)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
+        if (!passwordRegex.test(password)) {
             return res.status(400).json({
                 success: false,
-                message: "Password must be at least 6 characters long"
+                message: "Password must be at least 6 characters and contain uppercase, lowercase, and a number"
             });
         }
 
