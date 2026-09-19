@@ -1,0 +1,50 @@
+<!-- 1. Meetup Top Navigation Bar -->
+<header class="navbar">
+    <div class="container nav-container">
+        <div class="nav-left">
+            <!-- Meetup Logo -->
+            <a href="{{ROOT}}index.html" class="brand">
+                <span>Aavahan</span>
+                <span class="brand-dot"></span>
+            </a>
+
+            <!-- Integrated Search Bar -->
+            <form class="header-search-bar" action="{{PAGES}}explore.html" method="GET">
+                <div class="header-search-input-group">
+                    <span class="material-symbols-outlined header-search-icon">search</span>
+                    <input type="text" id="meetupSearchInput" name="search" class="header-search-input" placeholder="Search events">
+                </div>
+                <button type="submit" class="header-search-btn" aria-label="Search">
+                    <span class="material-symbols-outlined header-search-submit-icon">search</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="nav-right">
+            <a href="{{PAGES}}create-event.html" class="nav-link-group">Start an Event</a>
+            <a href="{{PAGES}}explore.html" class="nav-link-group">Explore</a>
+            <a id="navLogin" href="{{PAGES}}login.html" class="nav-link-group">Log in</a>
+            <a id="navSignup" href="{{PAGES}}signup.html" class="btn btn-primary btn-pill btn-sm">Sign up</a>
+            <button id="navLogout" class="btn btn-outline btn-pill btn-sm is-hidden">Log out</button>
+        </div>
+
+        <!-- Mobile Hamburger Button -->
+        <button class="nav-toggle-btn" aria-label="Toggle navigation">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+    </div>
+</header>
+
+<!-- Mobile Drawer -->
+<div class="mobile-nav-drawer">
+    <div class="mobile-nav-links">
+        <a href="{{ROOT}}index.html" class="mobile-nav-link">Home</a>
+        <a href="{{PAGES}}explore.html" class="mobile-nav-link">Find Events</a>
+        <a href="{{PAGES}}create-event.html" class="mobile-nav-link">Start an Event</a>
+        <a href="{{PAGES}}dashboard.html" class="mobile-nav-link">Organizer Hub</a>
+    </div>
+    <div class="mobile-drawer-auth">
+        <a href="{{PAGES}}login.html" class="btn btn-outline btn-block">Log in</a>
+        <a href="{{PAGES}}signup.html" class="btn btn-primary btn-block">Sign up</a>
+    </div>
+</div>

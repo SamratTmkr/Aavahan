@@ -1,6 +1,4 @@
-/* ==========================================================================
-   Aavahan - Admin Panel Stylesheet
-   ========================================================================== */
+/* Admin panel stylesheet */
 
 :root {
     --admin-sidebar-width: 260px;
@@ -23,7 +21,7 @@ body.admin-body {
     overflow-x: hidden;
 }
 
-/* --- Admin Sidebar --- */
+/* Admin sidebar */
 .admin-sidebar {
     width: var(--admin-sidebar-width);
     background-color: var(--admin-sidebar-bg);
@@ -126,7 +124,7 @@ body.admin-body {
     object-fit: cover;
 }
 
-/* --- Admin Main Area --- */
+/* Admin main area */
 .admin-main {
     margin-left: var(--admin-sidebar-width);
     flex: 1;
@@ -351,6 +349,78 @@ body.admin-body {
     position: relative;
 }
 
+/* Admin UI helpers */
+.admin-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--teal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.admin-table-empty {
+    text-align: center;
+    padding: 2.5rem;
+    color: var(--admin-text-muted);
+}
+
+.admin-table-title {
+    font-weight: 700;
+}
+
+.admin-table-title-truncate {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-table-sub {
+    font-size: 0.78rem;
+    color: var(--admin-text-muted);
+}
+
+.admin-user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.btn-danger-light {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.btn-danger-light:hover {
+    background: #fee2e2;
+}
+
+.admin-btn-xs {
+    font-size: 0.78rem;
+    padding: 0.2rem 0.6rem;
+}
+
+.admin-mono-id {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--admin-text-muted);
+}
+
+.admin-cell-semibold {
+    font-weight: 600;
+}
+
+.admin-cell-bold {
+    font-weight: 700;
+}
+
 /* Responsive */
 @media (max-width: 992px) {
     .admin-sidebar { transform: translateX(-100%); }
@@ -359,3 +429,132 @@ body.admin-body {
     .admin-header { padding: 0 1rem; }
     .admin-content { padding: 1rem; }
 }
+
+/* Admin UI utility classes */
+.admin-sidebar-avatar-initials {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #00999e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.admin-sidebar-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-sidebar-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-sidebar-role-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.1rem;
+}
+
+.admin-sidebar-role-tag {
+    font-size: 0.7rem;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.admin-sidebar-logout {
+    color: #94a3b8;
+    display: flex;
+}
+
+.icon-14 { font-size: 14px; }
+.icon-16 { font-size: 16px; }
+.icon-18 { font-size: 18px; }
+
+.admin-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-toggle-sidebar {
+    display: none;
+    padding: 0.25rem;
+}
+
+.admin-search-icon {
+    color: var(--admin-text-muted);
+    font-size: 18px;
+}
+
+.admin-btn-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin-metric-icon.teal { background-color: #e6f4f6; color: var(--teal); }
+.admin-metric-trend.teal { color: var(--teal); }
+.admin-metric-icon.primary { background-color: #fef0f2; color: var(--primary); }
+.admin-metric-trend.primary { color: var(--primary); }
+.admin-metric-icon.success { background-color: #f0fdf4; color: #16a34a; }
+.admin-metric-trend.success { color: #16a34a; }
+.admin-metric-icon.amber { background-color: #fffbeb; color: #d97706; }
+.admin-metric-trend.amber { color: #d97706; }
+
+.admin-card-subtitle {
+    font-size: 0.825rem;
+    color: var(--admin-text-muted);
+    margin-bottom: 0;
+}
+
+.badge-needs-review {
+    background-color: #fffbeb;
+    color: #d97706;
+}
+
+.admin-search-box.w-280 {
+    width: 280px;
+}
+
+.admin-settings-card {
+    max-width: 680px;
+    padding: 2rem;
+}
+
+.admin-input-hint {
+    font-size: 0.8rem;
+    color: var(--admin-text-muted);
+    margin-top: 0.25rem;
+}
+
+.admin-setting-row {
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--admin-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-setting-desc {
+    font-size: 0.8rem;
+    color: var(--admin-text-muted);
+}
+
+.admin-save-btn {
+    margin-top: 2rem;
+}
+

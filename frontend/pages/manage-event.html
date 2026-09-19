@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Manage event details, attendee check-ins, ticket inventory, and live performance.">
-    <title>Manage Event — Kathmandu Tech Summit 2026</title>
+    <title>Manage Event — Aavahan</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +29,7 @@
 
             <div class="nav-right">
                 <a href="dashboard.html" class="nav-link-group">Organizer Hub</a>
-                <a href="event-details.html?id=evt-001" class="btn btn-outline btn-pill btn-sm">View Public Event</a>
+                <a id="navBtnViewPublic" href="event-details.html" class="btn btn-outline btn-pill btn-sm">View Public Event</a>
                 <a href="create-event.html" class="btn btn-primary btn-pill btn-sm">+ Create Event</a>
             </div>
 
@@ -39,26 +39,24 @@
         </div>
     </header>
 
-    <main class="container" style="padding-top: 2.5rem; padding-bottom: 5rem;">
+    <main class="container dashboard-main">
         <!-- Event Header Card -->
-        <div style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-xl); padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+        <div class="manage-header-card">
             <div>
-                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+                <div class="manage-status-row">
                     <span class="badge badge-status-confirmed">Published Event</span>
-                    <span id="manageEventIdBadge" style="font-size: 0.825rem; color: var(--text-muted); font-weight: 600;">Loading…</span>
+                    <span id="manageEventIdBadge" class="manage-id-badge"></span>
                 </div>
-                <h1 id="manageEventTitle" style="font-size: 1.85rem; margin-bottom: 0.35rem;">Loading Event Details…</h1>
-                <p id="manageEventDate" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">
-                    Please wait while event information is retrieved…
-                </p>
+                <h1 id="manageEventTitle" class="manage-event-title">Loading Event…</h1>
+                <p id="manageEventDate" class="manage-event-date"></p>
             </div>
 
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <div class="manage-header-actions">
                 <a id="btnViewPublicPage" href="#" target="_blank" class="btn btn-outline btn-sm">
                     <span class="material-symbols-outlined">visibility</span>
                     <span>View Public Page</span>
                 </a>
-                <button class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText(window.location.origin + '/pages/event-details.html?id=' + new URLSearchParams(window.location.search).get('id')); showToast('Public event URL copied!', 'success');">
+                <button id="btnShareManageEvent" class="btn btn-outline btn-sm">
                     <span class="material-symbols-outlined">share</span>
                     <span>Share Event</span>
                 </button>
@@ -66,7 +64,7 @@
         </div>
 
         <!-- Metric Summary Cards -->
-        <div class="metrics-row" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+        <div class="metrics-row manage-metrics-row">
             <div class="metric-card">
                 <div class="metric-header">
                     <div class="metric-icon-box">
@@ -80,10 +78,10 @@
 
             <div class="metric-card">
                 <div class="metric-header">
-                    <div class="metric-icon-box" style="background-color: #ecfdf5; color: #10b981;">
+                    <div class="metric-icon-box icon-box-emerald">
                         <span class="material-symbols-outlined">payments</span>
                     </div>
-                    <span class="metric-trend" style="color: var(--success);">Net Gross</span>
+                    <span class="metric-trend text-success">Net Gross</span>
                 </div>
                 <div id="metricGrossSales" class="metric-number">NPR 0</div>
                 <div class="metric-label">Gross Ticket Sales</div>
@@ -91,7 +89,7 @@
 
             <div class="metric-card">
                 <div class="metric-header">
-                    <div class="metric-icon-box" style="background-color: #f0f9ff; color: #0ea5e9;">
+                    <div class="metric-icon-box icon-box-sky">
                         <span class="material-symbols-outlined">qr_code_scanner</span>
                     </div>
                     <span id="metricTrendCheckin" class="metric-trend">Gate Check-in</span>
@@ -104,42 +102,42 @@
         <!-- Manage Hub Tabs -->
         <div class="manage-tabs-bar">
             <div class="manage-tab-item active" data-tab-target="tabAttendees">
-                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: -2px;">badge</span>
+                <span class="material-symbols-outlined icon-tab">badge</span>
                 <span>Registrations & Gate Check-in</span>
             </div>
             <div class="manage-tab-item" data-tab-target="tabTickets">
-                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: -2px;">confirmation_number</span>
+                <span class="material-symbols-outlined icon-tab">confirmation_number</span>
                 <span>Ticket Tiers & Capacity</span>
             </div>
             <div class="manage-tab-item" data-tab-target="tabSchedule">
-                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: -2px;">schedule</span>
+                <span class="material-symbols-outlined icon-tab">schedule</span>
                 <span>Schedule & Stages</span>
             </div>
             <div class="manage-tab-item" data-tab-target="tabSettings">
-                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: -2px;">settings</span>
+                <span class="material-symbols-outlined icon-tab">settings</span>
                 <span>Event Settings</span>
             </div>
         </div>
 
         <!-- TAB 1: Registrations & Attendees -->
-        <div class="manage-tab-pane" id="tabAttendees" style="display: block;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+        <div class="manage-tab-pane active" id="tabAttendees">
+            <div class="manage-filter-bar">
                 <!-- Search & Status Filter -->
-                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; flex-grow: 1; max-width: 600px;">
-                    <div class="input-icon-wrapper" style="flex: 1; min-width: 240px;">
+                <div class="manage-filter-inputs">
+                    <div class="input-icon-wrapper manage-search-wrap">
                         <span class="material-symbols-outlined input-icon-left">search</span>
                         <input type="text" id="attendeeSearchInput" class="form-input" placeholder="Search by name, email, or order ID...">
                     </div>
-                    <select id="attendeeStatusFilter" class="form-select" style="width: 160px;">
+                    <select id="attendeeStatusFilter" class="form-select select-w-160">
                         <option value="all">All Statuses</option>
                         <option value="Confirmed">Confirmed</option>
                         <option value="Checked In">Checked In</option>
                     </select>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span id="attendeeTotalCount" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">6 attendees</span>
-                    <button class="btn btn-outline btn-sm" onclick="showToast('Exporting attendee roster as CSV (demo)...', 'info')">
+                <div class="d-flex items-center gap-0-75">
+                    <span id="attendeeTotalCount" class="attendee-total-count">0 attendees</span>
+                    <button id="exportAttendeesBtn" class="btn btn-outline btn-sm">
                         <span class="material-symbols-outlined">download</span>
                         <span>Export CSV</span>
                     </button>
@@ -160,112 +158,43 @@
                         </tr>
                     </thead>
                     <tbody id="attendeesTableBody">
-                        <!-- Populated dynamically by dashboard.js -->
+                        <!-- Populated dynamically by manage-event.js -->
                     </tbody>
                 </table>
             </div>
         </div>
 
         <!-- TAB 2: Ticket Tiers & Capacity -->
-        <div class="manage-tab-pane" id="tabTickets" style="display: none;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-                <div style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div>
-                            <h3 style="font-size: 1.15rem;">General Delegate Pass</h3>
-                            <span style="font-weight: 700; color: var(--primary);">NPR 1,000</span>
-                        </div>
-                        <span class="badge badge-status-confirmed">Active</span>
-                    </div>
-                    <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; font-size: 0.85rem;">
-                        <span>Sold: 358 / 500</span>
-                        <strong>71.6%</strong>
-                    </div>
-                    <div style="width: 100%; height: 8px; background-color: var(--bg-subtle); border-radius: 4px; overflow: hidden; margin-bottom: 1.25rem;">
-                        <div style="width: 71.6%; height: 100%; background-color: var(--primary);"></div>
-                    </div>
-                    <button class="btn btn-outline btn-block btn-sm" onclick="showToast('Tier settings updated', 'info')">Edit Capacity</button>
-                </div>
-
-                <div style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div>
-                            <h3 style="font-size: 1.15rem;">VIP Executive Pass</h3>
-                            <span style="font-weight: 700; color: var(--primary);">NPR 2,500</span>
-                        </div>
-                        <span class="badge badge-featured">Almost Full</span>
-                    </div>
-                    <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; font-size: 0.85rem;">
-                        <span>Sold: 72 / 100</span>
-                        <strong>72%</strong>
-                    </div>
-                    <div style="width: 100%; height: 8px; background-color: var(--bg-subtle); border-radius: 4px; overflow: hidden; margin-bottom: 1.25rem;">
-                        <div style="width: 72%; height: 100%; background-color: #f59e0b;"></div>
-                    </div>
-                    <button class="btn btn-outline btn-block btn-sm" onclick="showToast('Tier settings updated', 'info')">Edit Capacity</button>
-                </div>
-
-                <div style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div>
-                            <h3 style="font-size: 1.15rem;">Student Pass</h3>
-                            <span style="font-weight: 700; color: var(--primary);">NPR 500</span>
-                        </div>
-                        <span class="badge badge-status-confirmed">Active</span>
-                    </div>
-                    <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; font-size: 0.85rem;">
-                        <span>Sold: 155 / 200</span>
-                        <strong>77.5%</strong>
-                    </div>
-                    <div style="width: 100%; height: 8px; background-color: var(--bg-subtle); border-radius: 4px; overflow: hidden; margin-bottom: 1.25rem;">
-                        <div style="width: 77.5%; height: 100%; background-color: #10b981;"></div>
-                    </div>
-                    <button class="btn btn-outline btn-block btn-sm" onclick="showToast('Tier settings updated', 'info')">Edit Capacity</button>
-                </div>
+        <div class="manage-tab-pane" id="tabTickets">
+            <div class="manage-tiers-grid" id="manageTicketTiersGrid">
+                <!-- Populated dynamically by manage-event.js -->
             </div>
         </div>
 
         <!-- TAB 3: Schedule -->
-        <div class="manage-tab-pane" id="tabSchedule" style="display: none;">
-            <div style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h3 style="font-size: 1.25rem;">Event Schedule & Stages</h3>
-                    <button class="btn btn-outline-primary btn-sm" onclick="showToast('Added session (demo)', 'info')">
+        <div class="manage-tab-pane" id="tabSchedule">
+            <div class="manage-schedule-card">
+                <div class="manage-schedule-header">
+                    <h3 class="manage-schedule-title">Event Schedule & Stages</h3>
+                    <button class="btn btn-outline-primary btn-sm" onclick="showToast('Session agenda updated', 'info')">
                         <span class="material-symbols-outlined">add</span>
                         <span>Add Agenda Item</span>
                     </button>
                 </div>
-                <div class="timeline-list">
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-time">09:00 AM - 09:45 AM • Main Foyer</div>
-                        <div class="timeline-title">Registration & Welcome Coffee</div>
-                        <div class="timeline-speaker">Organizing Committee</div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-time">09:45 AM - 10:30 AM • Main Stage</div>
-                        <div class="timeline-title">Keynote: The Next Frontier of AI in Developing Economies</div>
-                        <div class="timeline-speaker">Dr. Pratigya Sharma, Chief AI Scientist</div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-time">10:45 AM - 12:15 PM • Hall Alpha</div>
-                        <div class="timeline-title">Track 1: High-Throughput Distributed Microservices</div>
-                        <div class="timeline-speaker">Aarav Shrestha, Principal Architect</div>
-                    </div>
+                <div class="timeline-list" id="manageScheduleTimeline">
+                    <!-- Populated dynamically by manage-event.js -->
                 </div>
             </div>
         </div>
 
         <!-- TAB 4: Settings -->
-        <div class="manage-tab-pane" id="tabSettings" style="display: none;">
-            <div style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; max-width: 700px;">
-                <h3 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Event Settings & Policies</h3>
+        <div class="manage-tab-pane" id="tabSettings">
+            <div class="manage-settings-card">
+                <h3 class="manage-settings-title">Event Settings & Policies</h3>
 
                 <div class="form-group">
-                    <label class="form-label">Event Status</label>
-                    <select class="form-select">
+                    <label class="form-label" for="manageEventStatusSelect">Event Status</label>
+                    <select id="manageEventStatusSelect" class="form-select">
                         <option value="published">Published & Accepting Registrations</option>
                         <option value="paused">Pause Ticket Sales</option>
                         <option value="completed">Mark as Completed</option>
@@ -281,12 +210,12 @@
                     </select>
                 </div>
 
-                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div class="manage-danger-row">
                     <div>
-                        <div style="font-weight: 700; color: var(--accent);">Cancel Event</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">Notify all registered attendees and initiate refund processes.</div>
+                        <div class="manage-danger-title">Cancel Event</div>
+                        <div class="manage-danger-desc">Notify all registered attendees and permanently delete this event listing.</div>
                     </div>
-                    <button class="btn btn-outline" style="color: var(--accent); border-color: var(--accent);" onclick="confirm('Are you sure you want to cancel this event demo?') && showToast('Cancellation processed', 'error')">
+                    <button type="button" id="btnCancelManageEvent" class="btn btn-outline btn-outline-danger">
                         Cancel Event
                     </button>
                 </div>
@@ -294,22 +223,12 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-bottom">
-                <div>© 2026 Aavahan Events Inc. All rights reserved. Frontend Prototype.</div>
-                <div class="footer-legal-links">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer Component -->
+    <div id="site-footer"></div>
 
     <!-- Scripts -->
-    <script src="../assets/js/api.js"></script>
-    <script src="../assets/js/main.js"></script>
-    <script src="../assets/js/manage-event.js"></script>
+    <script type="module" src="../assets/js/api.js"></script>
+    <script type="module" src="../assets/js/main.js"></script>
+    <script type="module" src="../assets/js/manage-event.js"></script>
 </body>
 </html>

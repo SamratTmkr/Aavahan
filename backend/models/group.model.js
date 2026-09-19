@@ -30,10 +30,24 @@ export async function createGroup({ name, description = null, category = null, c
 // Get all groups, optionally filtered by city
 export async function getAllGroups(city = null) {
     if (city) {
-        const [rows] = await pool.execute('SELECT * FROM `groups` WHERE city = ? ORDER BY created_at DESC', [city]);
+        const [rows] = await pool.execute(
+            `SELECT g.*, COUNT(e.id) AS hosted_events_count 
+             FROM \`groups\` g 
+             LEFT JOIN events e ON g.id = e.group_id 
+             WHERE g.city = ? 
+             GROUP BY g.id 
+             ORDER BY g.created_at DESC`,
+            [city]
+        );
         return rows;
     }
-    const [rows] = await pool.execute('SELECT * FROM `groups` ORDER BY created_at DESC');
+    const [rows] = await pool.execute(
+        `SELECT g.*, COUNT(e.id) AS hosted_events_count 
+         FROM \`groups\` g 
+         LEFT JOIN events e ON g.id = e.group_id 
+         GROUP BY g.id 
+         ORDER BY g.created_at DESC`
+    );
     return rows;
 }
 

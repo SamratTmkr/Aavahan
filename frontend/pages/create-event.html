@@ -20,41 +20,6 @@
     <!-- CSS Stylesheets -->
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/pages.css">
-    <style>
-        .topic-tag-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-full);
-            background-color: var(--bg-subtle);
-            border: 1px solid var(--border-color);
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            cursor: pointer;
-            user-select: none;
-            transition: all var(--transition-fast);
-        }
-
-        .topic-tag-pill:hover {
-            border-color: var(--teal);
-        }
-
-        .topic-tag-pill.selected {
-            background-color: var(--teal-light);
-            border-color: var(--teal);
-            color: var(--teal);
-        }
-
-        .event-summary-card {
-            background-color: var(--bg-subtle);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 1.25rem;
-            margin-top: 1.5rem;
-        }
-    </style>
 </head>
 
 <body>
@@ -72,7 +37,7 @@
                 <a href="explore.html" class="nav-link-group">Explore</a>
                 <a id="navLogin" href="login.html" class="nav-link-group">Log in</a>
                 <a id="navSignup" href="signup.html" class="btn btn-primary btn-pill btn-sm">Sign up</a>
-                <button id="navLogout" class="btn btn-outline btn-pill btn-sm" style="display:none;">Log out</button>
+                <button id="navLogout" class="btn btn-outline btn-pill btn-sm is-hidden">Log out</button>
                 <a href="../index.html" class="btn btn-outline btn-pill btn-sm">Cancel</a>
             </div>
         </div>
@@ -81,19 +46,18 @@
     <main class="container">
         <div class="meetup-wizard-step">
             <!-- Wizard Step Header & Progress -->
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
-                <span style="font-size: 0.8rem; font-weight: 700; color: var(--teal); text-transform: uppercase;">Host an Event</span>
-                <span id="wizardStepIndicator"
-                    style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Step 1 of 3</span>
+            <div class="wizard-header-row">
+                <span class="wizard-subtitle">Host an Event</span>
+                <span id="wizardStepIndicator" class="wizard-step-indicator">Step 1 of 3</span>
             </div>
             <div class="wizard-progress-bar">
-                <div id="wizardProgressFill" class="wizard-progress-fill" style="width: 33.3%;"></div>
+                <div id="wizardProgressFill" class="wizard-progress-fill progress-step-1"></div>
             </div>
 
             <!-- STEP 1: Event Basics & Category -->
             <div class="wizard-step-pane" id="stepPane1">
-                <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.5rem;">What is your event about?</h1>
-                <p style="color: var(--text-muted); margin-bottom: 1.75rem;">Give your event a clear title, pick a category, and let attendees know what to expect.</p>
+                <h1 class="wizard-pane-title">What is your event about?</h1>
+                <p class="wizard-pane-desc">Give your event a clear title, pick a category, and let attendees know what to expect.</p>
 
                 <div class="form-group">
                     <label class="form-label" for="eventTitle">Event Title *</label>
@@ -103,7 +67,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Event Category *</label>
-                    <div style="display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 0.35rem;">
+                    <div class="tag-pills-row">
                         <span class="topic-tag-pill selected">💻 Software Engineering</span>
                         <span class="topic-tag-pill">🤖 Artificial Intelligence</span>
                         <span class="topic-tag-pill">🚀 Startup & Business</span>
@@ -121,16 +85,24 @@
                     <textarea id="eventDesc" class="form-textarea" rows="4"
                         placeholder="Describe what will happen, agenda, who should attend, and any preparation..." required></textarea>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="eventBanner">Event Banner (Optional)</label>
+                    <input type="file" id="eventBanner" class="form-input" accept="image/*">
+                    <div id="bannerPreviewWrapper" class="banner-preview-wrapper is-hidden">
+                        <img id="bannerPreview" class="banner-preview-img" alt="Banner Preview">
+                    </div>
+                </div>
             </div>
 
             <!-- STEP 2: Location & Schedule -->
-            <div class="wizard-step-pane" id="stepPane2" style="display: none;">
-                <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.5rem;">When and where will it take place?</h1>
-                <p style="color: var(--text-muted); margin-bottom: 1.75rem;">Set the date, time, and physical venue or virtual link.</p>
+            <div class="wizard-step-pane is-hidden" id="stepPane2">
+                <h1 class="wizard-pane-title">When and where will it take place?</h1>
+                <p class="wizard-pane-desc">Set the date, time, and physical venue or virtual link.</p>
 
                 <div class="form-group">
                     <label class="form-label" for="eventCity">City or Region *</label>
-                    <input type="text" id="eventCity" class="form-input" value="Kathmandu, Nepal"
+                    <input type="text" id="eventCity" class="form-input"
                         placeholder="e.g. Kathmandu, Pokhara, Lalitpur" required>
                 </div>
 
@@ -140,41 +112,54 @@
                         placeholder="e.g. Hub Innovation Studio, Jhamsikhel or Google Meet" required>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="tba-toggle-wrapper">
+                    <label class="checkbox-label-styled" for="dateTBA">
+                        <input type="checkbox" id="dateTBA" class="checkbox-styled">
+                        Date to be Announced
+                    </label>
+                </div>
+
+                <div class="form-grid-2">
                     <div class="form-group">
                         <label class="form-label" for="eventDate">Date *</label>
                         <input type="date" id="eventDate" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="eventStartTime">Start Time *</label>
-                        <input type="time" id="eventStartTime" class="form-input" value="11:00" required>
+                        <input type="time" id="eventStartTime" class="form-input" required>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-grid-2">
                     <div class="form-group">
                         <label class="form-label" for="eventEndTime">End Time (Optional)</label>
-                        <input type="time" id="eventEndTime" class="form-input" value="14:00">
+                        <input type="time" id="eventEndTime" class="form-input">
                     </div>
-                    <div class="form-group" style="display: flex; align-items: center; padding-top: 1.75rem;">
-                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
-                            <input type="checkbox" id="eventIsOnline" style="accent-color: var(--teal); width: 18px; height: 18px;">
+                    <div class="form-group checkbox-align-group">
+                        <label class="checkbox-label-styled">
+                            <input type="checkbox" id="eventIsOnline" class="checkbox-styled">
                             This is an Online / Virtual event
                         </label>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="registrationDeadline">Registration Deadline (Optional)</label>
+                    <input type="datetime-local" id="registrationDeadline" class="form-input">
+                    <small class="form-hint">Must be before the event date and start time.</small>
+                </div>
             </div>
 
             <!-- STEP 3: Tickets & Publishing -->
-            <div class="wizard-step-pane" id="stepPane3" style="display: none;">
-                <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.5rem;">Ticketing & Review</h1>
-                <p style="color: var(--text-muted); margin-bottom: 1.75rem;">Configure ticket pricing and confirm your event details.</p>
+            <div class="wizard-step-pane is-hidden" id="stepPane3">
+                <h1 class="wizard-pane-title">Ticketing & Review</h1>
+                <p class="wizard-pane-desc">Configure ticket pricing and confirm your event details.</p>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-grid-2">
                     <div class="form-group">
                         <label class="form-label" for="eventPrice">Ticket Price (NPR)</label>
-                        <input type="number" id="eventPrice" class="form-input" value="0" min="0" placeholder="0 for Free">
-                        <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; display: block;">Set to 0 if this event is free for all attendees.</small>
+                        <input type="number" id="eventPrice" class="form-input" min="0" placeholder="0 for Free">
+                        <small class="form-hint">Set to 0 if this event is free for all attendees.</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="eventCapacity">Attendee Capacity (Optional)</label>
@@ -184,45 +169,35 @@
 
                 <!-- Live Summary Box -->
                 <div class="event-summary-card">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--teal); text-transform: uppercase; margin-bottom: 0.5rem;">Event Summary Preview</div>
-                    <h3 id="summaryTitle" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">—</h3>
-                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                    <div class="summary-preview-badge">Event Summary Preview</div>
+                    <h3 id="summaryTitle" class="summary-preview-title">—</h3>
+                    <div class="summary-meta-row">
                         <span id="summaryCategory">📂 General</span>
-                        <span id="summaryLocation">📍 Kathmandu, Nepal</span>
+                        <span id="summaryLocation">📍 Location TBD</span>
                         <span id="summaryDateTime">📅 Not set</span>
-                        <span id="summaryPrice" style="font-weight: 700; color: var(--teal);">🎟️ Free</span>
+                        <span id="summaryDeadline" class="is-hidden">⏰ Deadline: Not set</span>
+                        <span id="summaryPrice" class="summary-price-badge">🎟️ Free</span>
                     </div>
                 </div>
             </div>
 
             <!-- Wizard Bottom Action Controls -->
-            <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-                <button type="button" id="btnWizardBack" class="btn btn-outline" style="display: none;">Back</button>
-                <div style="margin-left: auto;">
+            <div class="wizard-footer-actions">
+                <button type="button" id="btnWizardBack" class="btn btn-outline is-hidden">Back</button>
+                <div class="wizard-next-wrapper">
                     <button type="button" id="btnWizardNext" class="btn btn-primary btn-pill btn-lg">Continue</button>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-bottom">
-                <div>© 2026 Aavahan, Inc. An event management platform prototype.</div>
-                <div style="display: flex; gap: 1.5rem;">
-                    <a href="#" class="footer-link">Terms of Service</a>
-                    <a href="#" class="footer-link">Privacy Policy</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer Component -->
+    <div id="site-footer"></div>
 
     <!-- Scripts -->
-    <script src="../assets/js/api.js"></script>
-    <script src="../assets/js/main.js"></script>
-    <script src="../assets/js/create-event.js"></script>
+    <script type="module" src="../assets/js/api.js"></script>
+    <script type="module" src="../assets/js/main.js"></script>
+    <script type="module" src="../assets/js/create-event.js"></script>
 </body>
 
 </html>

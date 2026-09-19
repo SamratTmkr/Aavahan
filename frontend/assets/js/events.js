@@ -1,6 +1,6 @@
-// ============================================================
-// Events Explorer Logic â€” explore.html
-// ============================================================
+import { getEvents, getEventCities } from './api.js';
+
+// events.js
 
 document.addEventListener('DOMContentLoaded', () => {
     const feedContainer  = document.getElementById('meetupEventsFeedSection');
@@ -12,12 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterDay      = document.getElementById('filterDaySelect');
     const filterSort     = document.getElementById('filterSortSelect');
 
-    let allEvents   = [];   // raw events from server (already filtered by search + city)
+    let allEvents   = [];
     let debounceTimer = null;
 
-    // ----------------------------------------------------------
-    // 1. Read URL params and pre-fill controls
-    // ----------------------------------------------------------
+    // Read URL params and pre-fill controls
     const urlParams    = new URLSearchParams(window.location.search);
     const initSearch   = urlParams.get('search')   || '';
     const initCity     = urlParams.get('city')      || '';
@@ -40,15 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ----------------------------------------------------------
-    // 2. Date helpers
-    // ----------------------------------------------------------
-    function formatDate(dateStr, timeStr) {
-        if (!dateStr) return 'Date TBD';
+    // Date helpers
+    function formatDate(dateStr, timeStr, isTba) {
+        if (isTba || !dateStr) return 'Date TBA';
         const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return 'Date TBA';
         const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
         let formatted = d.toLocaleDateString('en-US', options);
-        if (timeStr) formatted += ' \u00b7 ' + timeStr.slice(0, 5);
+        if (timeStr) formatted += ' · ' + timeStr.slice(0, 5);
         return formatted;
     }
 
@@ -82,18 +79,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return d >= start && d <= end;
     }
 
-    // ----------------------------------------------------------
-    // 3. Render events
-    // ----------------------------------------------------------
+    // Render events list
     function renderEvents(events) {
         if (!feedContainer) return;
 
         if (events.length === 0) {
             feedContainer.innerHTML =
-                '<div style="text-align:center;padding:5rem 1rem;color:var(--text-muted);">' +
-                '<span class="material-symbols-outlined" style="font-size:52px;color:var(--border-color);margin-bottom:1rem;display:block;">search_off</span>' +
-                '<h3 style="font-size:1.3rem;font-weight:800;color:var(--text-primary);margin-bottom:0.5rem;">No events found</h3>' +
-                '<p style="margin-bottom:1.75rem;max-width:380px;margin-left:auto;margin-right:auto;">Try adjusting your search terms or filters â€” or be the first to host an event!</p>' +
+                '<div class="event-feed-empty-state">' +
+                '<span class="material-symbols-outlined event-feed-empty-icon">search_off</span>' +
+                '<h3 class="event-feed-empty-title">No events found</h3>' +
+                '<p class="event-feed-empty-desc">Try adjusting your search terms or filters — or be the first to host an event!</p>' +
                 '<a href="create-event.html" class="btn btn-primary btn-pill">Start an Event</a>' +
                 '</div>';
             if (countEl) countEl.textContent = '0 events found';
@@ -104,56 +99,51 @@ document.addEventListener('DOMContentLoaded', () => {
             countEl.textContent = 'Showing ' + events.length + ' event' + (events.length === 1 ? '' : 's');
         }
 
-        feedContainer.innerHTML = '<div style="display:flex;flex-direction:column;gap:1.25rem;">' +
+        feedContainer.innerHTML = '<div class="event-feed-list">' +
             events.map(function(event) {
                 const priceBadge = (event.is_free || !event.min_price || event.min_price == 0)
-                    ? '<span class="badge" style="background-color:#e6f7f7;color:#00828a;font-weight:700;">FREE</span>'
-                    : '<span class="badge" style="background-color:#f1f5f9;color:var(--text-primary);font-weight:700;">NPR ' + Number(event.min_price).toLocaleString() + '</span>';
+                    ? '<span class="badge event-badge-free">FREE</span>'
+                    : '<span class="badge event-badge-paid">NPR ' + Number(event.min_price).toLocaleString() + '</span>';
 
                 const onlineBadge = event.is_online
-                    ? '<span class="badge" style="background-color:#e0f2fe;color:#0284c7;font-weight:600;">Online</span>'
+                    ? '<span class="badge event-badge-online">Online</span>'
                     : '';
 
                 const attendeesBit = event.attendee_count
-                    ? '<span style="display:inline-flex;align-items:center;gap:0.35rem;"><span class="material-symbols-outlined" style="font-size:15px;color:var(--teal);">group</span>' + event.attendee_count + ' going</span>'
+                    ? '<span class="event-feed-meta-item"><span class="material-symbols-outlined event-feed-meta-icon">group</span>' + event.attendee_count + ' going</span>'
                     : '';
 
                 const capacityBit = event.capacity
-                    ? '<span style="display:inline-flex;align-items:center;gap:0.35rem;margin-left:auto;"><span class="material-symbols-outlined" style="font-size:15px;">chair</span>Limit: ' + event.capacity + '</span>'
+                    ? '<span class="event-feed-capacity"><span class="material-symbols-outlined event-feed-meta-icon-muted">chair</span>Limit: ' + event.capacity + '</span>'
                     : '';
 
-                return '<div class="card event-list-card"' +
-                    ' style="padding:1.5rem;display:flex;flex-direction:column;gap:0.75rem;border-radius:var(--radius-md);border:1px solid var(--border-color);background:#ffffff;transition:box-shadow 0.2s ease,transform 0.2s ease;cursor:pointer;"' +
-                    ' onclick="window.location.href=\'event-details.html?id=' + event.id + '\'"' +
-                    ' onmouseenter="this.style.boxShadow=\'0 6px 24px rgba(0,0,0,0.10)\';this.style.transform=\'translateY(-2px)\'"' +
-                    ' onmouseleave="this.style.boxShadow=\'\';this.style.transform=\'\'">' +
-
-                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">' +
-                        '<div style="flex:1;min-width:0;">' +
-                            '<div style="font-size:0.75rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">' +
+                return '<div class="card event-feed-card" data-event-id="' + event.id + '">' +
+                    '<div class="event-feed-top">' +
+                        '<div class="flex-1">' +
+                            '<div class="event-feed-category">' +
                                 (event.category || 'General') +
                             '</div>' +
-                            '<h2 style="font-size:1.2rem;font-weight:800;color:var(--text-primary);margin-bottom:0.35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+                            '<h2 class="event-feed-title">' +
                                 event.title +
                             '</h2>' +
                         '</div>' +
-                        '<div style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;">' +
+                        '<div class="top-actions-wrap">' +
                             onlineBadge + priceBadge +
                         '</div>' +
                     '</div>' +
 
-                    '<p style="color:var(--text-secondary);font-size:0.875rem;line-height:1.55;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' +
+                    '<p class="event-feed-desc">' +
                         (event.description || 'No description provided.') +
                     '</p>' +
 
-                    '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;font-size:0.82rem;color:var(--text-muted);margin-top:0.25rem;padding-top:0.75rem;border-top:1px solid var(--border-color);">' +
-                        '<span style="display:inline-flex;align-items:center;gap:0.35rem;">' +
-                            '<span class="material-symbols-outlined" style="font-size:15px;color:var(--teal);">calendar_today</span>' +
-                            formatDate(event.event_date, event.start_time) +
+                    '<div class="event-feed-meta">' +
+                        '<span class="event-feed-meta-item">' +
+                            '<span class="material-symbols-outlined event-feed-meta-icon">calendar_today</span>' +
+                            formatDate(event.event_date, event.start_time, event.is_date_tba) +
                         '</span>' +
-                        '<span style="display:inline-flex;align-items:center;gap:0.35rem;">' +
-                            '<span class="material-symbols-outlined" style="font-size:15px;color:var(--teal);">' + (event.is_online ? 'videocam' : 'location_on') + '</span>' +
-                            (event.is_online ? 'Online Event' : (event.venue || event.city || 'Kathmandu, Nepal')) +
+                        '<span class="event-feed-meta-item">' +
+                            '<span class="material-symbols-outlined event-feed-meta-icon">' + (event.is_online ? 'videocam' : 'location_on') + '</span>' +
+                            (event.is_online ? 'Online Event' : (event.venue || event.city || 'Location TBD')) +
                         '</span>' +
                         attendeesBit + capacityBit +
                     '</div>' +
@@ -162,9 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '</div>';
     }
 
-    // ----------------------------------------------------------
-    // 4. Client-side filter + sort (applied on top of server results)
-    // ----------------------------------------------------------
+    // Client-side filter and sort
     function applyLocalFilters() {
         const category = filterCategory ? filterCategory.value : 'all';
         const type     = filterType     ? filterType.value     : 'all';
@@ -189,22 +177,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (sort === 'price-high') {
             filtered.sort(function(a, b) { return Number(b.min_price || 0) - Number(a.min_price || 0); });
         } else {
-            filtered.sort(function(a, b) { return new Date(a.event_date) - new Date(b.event_date); });
+            filtered.sort(function(a, b) {
+                if (a.is_date_tba && !b.is_date_tba) return 1;
+                if (!a.is_date_tba && b.is_date_tba) return -1;
+                return new Date(a.event_date) - new Date(b.event_date);
+            });
         }
 
         renderEvents(filtered);
         updateActiveFiltersBar();
     }
 
-    // ----------------------------------------------------------
-    // 5. Active Filters indicator bar
-    // ----------------------------------------------------------
+    // Active filters bar
     function updateActiveFiltersBar() {
         var bar = document.getElementById('activeFiltersBar');
         if (!bar) {
             bar = document.createElement('div');
             bar.id = 'activeFiltersBar';
-            bar.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;margin-bottom:1rem;min-height:1px;';
+            bar.className = 'active-filters-bar';
             if (feedContainer && feedContainer.parentNode) {
                 feedContainer.parentNode.insertBefore(bar, feedContainer);
             }
@@ -234,17 +224,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (active.length === 0) { bar.innerHTML = ''; return; }
 
         var chipsHTML = active.map(function(f, i) {
-            return '<button data-filter-idx="' + i + '" class="active-filter-chip"' +
-                ' style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.2rem 0.65rem;border-radius:var(--radius-full);background:var(--primary-light);color:var(--primary);border:1px solid var(--primary);font-size:0.78rem;font-weight:600;cursor:pointer;">' +
+            return '<button data-filter-idx="' + i + '" class="active-filter-chip">' +
                 f.label +
-                '<span class="material-symbols-outlined" style="font-size:13px;">close</span>' +
+                '<span class="material-symbols-outlined fs-13">close</span>' +
                 '</button>';
         }).join('');
 
         bar.innerHTML =
-            '<span style="font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-right:0.25rem;">Active filters:</span>' +
+            '<span class="active-filters-label">Active filters:</span>' +
             chipsHTML +
-            '<button id="clearAllFiltersBtn" style="font-size:0.78rem;font-weight:600;color:var(--text-muted);background:none;border:none;cursor:pointer;margin-left:0.25rem;text-decoration:underline;">Clear all</button>';
+            '<button id="clearAllFiltersBtn" class="active-filters-clear-btn">Clear all</button>';
 
         bar.querySelectorAll('.active-filter-chip').forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -266,22 +255,12 @@ document.addEventListener('DOMContentLoaded', () => {
         triggerServerSearch();
     }
 
-    // ----------------------------------------------------------
-    // 6. Server-side fetch (search + city)
-    // ----------------------------------------------------------
+    // Server-side fetch
     async function fetchAndRender() {
         var query = searchInput ? searchInput.value.trim() : '';
         var city  = (filterCity && filterCity.value !== 'all') ? filterCity.value : null;
 
-        if (countEl) countEl.textContent = 'Searching\u2026';
-        if (feedContainer) {
-            feedContainer.innerHTML =
-                '<div style="display:flex;justify-content:center;padding:4rem 1rem;">' +
-                '<div style="text-align:center;color:var(--text-muted);">' +
-                '<span class="material-symbols-outlined" style="font-size:40px;display:block;margin-bottom:0.75rem;animation:aav-spin 1s linear infinite;">sync</span>' +
-                '<p>Loading events\u2026</p>' +
-                '</div></div>';
-        }
+        if (countEl) countEl.textContent = '';
 
         try {
             var data = await getEvents(city, query || null);
@@ -297,8 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error fetching events:', error);
             if (feedContainer) {
                 feedContainer.innerHTML =
-                    '<div style="text-align:center;padding:3rem 1rem;color:var(--text-muted);">' +
-                    '<span class="material-symbols-outlined" style="font-size:40px;display:block;margin-bottom:0.75rem;color:var(--border-color);">cloud_off</span>' +
+                    '<div class="event-feed-empty-state">' +
+                    '<span class="material-symbols-outlined event-feed-empty-icon fs-40">cloud_off</span>' +
                     '<p>Could not load events. Please check that the server is running.</p>' +
                     '</div>';
             }
@@ -311,29 +290,50 @@ document.addEventListener('DOMContentLoaded', () => {
         debounceTimer = setTimeout(fetchAndRender, 350);
     }
 
-    // ----------------------------------------------------------
-    // 7. Attach listeners
-    // ----------------------------------------------------------
+    // Event listeners
     if (searchInput)    searchInput.addEventListener('input',  triggerServerSearch);
     if (filterCity)     filterCity.addEventListener('change',  fetchAndRender);
     if (filterCategory) filterCategory.addEventListener('change', applyLocalFilters);
     if (filterType)     filterType.addEventListener('change',     applyLocalFilters);
     if (filterDay)      filterDay.addEventListener('change',      applyLocalFilters);
     if (filterSort)     filterSort.addEventListener('change',     applyLocalFilters);
-
-    // ----------------------------------------------------------
-    // 8. Spin animation for loading indicator
-    // ----------------------------------------------------------
-    if (!document.getElementById('aavSpinStyle')) {
-        var style = document.createElement('style');
-        style.id = 'aavSpinStyle';
-        style.textContent = '@keyframes aav-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
-        document.head.appendChild(style);
+    async function populateCityFilter() {
+        if (!filterCity) return;
+        try {
+            if (typeof getEventCities === 'function') {
+                const res = await getEventCities();
+                if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+                    const currentVal = filterCity.value;
+                    filterCity.innerHTML = '<option value="all">All Locations</option>';
+                    res.data.forEach(function(item) {
+                        if (item.city && item.city.trim()) {
+                            const opt = document.createElement('option');
+                            opt.value = item.city.trim();
+                            opt.textContent = item.city.trim() + ' (' + item.count + ')';
+                            filterCity.appendChild(opt);
+                        }
+                    });
+                    if (currentVal && currentVal !== 'all') filterCity.value = currentVal;
+                    if (initCity) setSelectByValue(filterCity, initCity);
+                }
+            }
+        } catch (e) {
+            console.warn('Could not dynamically load cities:', e);
+        }
     }
 
-    // ----------------------------------------------------------
-    // 9. Initial load
-    // ----------------------------------------------------------
+    // Delegated click handler for event cards
+    if (feedContainer) {
+        feedContainer.addEventListener('click', (e) => {
+            const card = e.target.closest('.event-feed-card[data-event-id]');
+            if (card) {
+                const eventId = card.getAttribute('data-event-id');
+                window.location.href = `event-details.html?id=${eventId}`;
+            }
+        });
+    }
+
+    // Initial load
+    populateCityFilter();
     fetchAndRender();
 });
-

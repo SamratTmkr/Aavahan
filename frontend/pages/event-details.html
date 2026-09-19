@@ -17,49 +17,26 @@
     <link rel="stylesheet" href="../assets/css/pages.css">
 </head>
 <body>
-    <!-- Top Navigation Bar -->
-    <header class="navbar">
-        <div class="container nav-container">
-            <div class="nav-left">
-                <a href="../index.html" class="brand">
-                    <span>Aavahan</span>
-                    <span class="brand-dot"></span>
-                </a>
-            </div>
-
-            <div class="nav-right">
-                <a href="explore.html" class="nav-link-group">Explore Events</a>
-                <a href="create-event.html" class="nav-link-group">Start an Event</a>
-                <a id="navLogin" href="login.html" class="nav-link-group">Log in</a>
-                <a id="navSignup" href="signup.html" class="btn btn-primary btn-pill btn-sm">Sign up</a>
-                <button id="navLogout" class="btn btn-outline btn-pill btn-sm" style="display:none;">Log out</button>
-            </div>
-
-            <button class="nav-toggle-btn" aria-label="Toggle navigation">
-                <span class="material-symbols-outlined">menu</span>
-            </button>
-        </div>
-    </header>
+    <!-- Header Component -->
+    <div id="site-header"></div>
 
     <!-- Meetup Top Event Title Banner -->
     <div class="meetup-details-top-bar">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.5rem;">
+        <div class="container meetup-top-container">
             <div>
-                <div id="topEventDate" style="font-size: 0.9rem; font-weight: 700; color: #8c5300; margin-bottom: 0.35rem;">
-                    Loading date…
-                </div>
-                <h1 id="topEventTitle" style="font-size: 2.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.2;">
-                    Loading Event…
+                <div id="topEventDate" class="top-event-date"></div>
+                <h1 id="topEventTitle" class="top-event-title">
+                    Event Details
                 </h1>
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <div class="top-host-wrap">
                     <!-- Host initials avatar -->
-                    <div id="topHostAvatar" style="width:32px;height:32px;border-radius:50%;background:#00999e;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">O</div>
-                    <span id="topHostName" style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">Hosted by Organizer</span>
+                    <div id="topHostAvatar" class="top-host-avatar">O</div>
+                    <span id="topHostName" class="top-host-name">Hosted by Organizer</span>
                 </div>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <button class="btn btn-outline-teal btn-pill" onclick="navigator.clipboard.writeText(window.location.href); showToast('Event link copied!', 'success');">
+            <div class="top-actions-wrap">
+                <button id="btnShareEventDetails" class="btn btn-outline-teal btn-pill">
                     <span class="material-symbols-outlined">share</span>
                     <span>Share</span>
                 </button>
@@ -79,17 +56,17 @@
                 <img id="eventCoverImg" src="assets/images/community-banner.jpg" alt="Event Cover" class="meetup-details-cover">
 
                 <!-- Details Block -->
-                <div style="margin-bottom: 2.5rem;">
-                    <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">Details</h2>
-                    <div id="eventDetailsText" style="font-size: 1rem; color: var(--text-secondary); line-height: 1.7;">
+                <div class="mb-2-5">
+                    <h2 class="section-title-lg mb-1">Details</h2>
+                    <div id="eventDetailsText" class="event-details-body">
                         <!-- Injected -->
                     </div>
                 </div>
 
                 <!-- Attendees Box (Meetup Member Faces) -->
                 <div class="meetup-attendees-box">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 id="attendeesHeaderCount" style="font-size: 1.25rem; font-weight: 800;">Attendees</h3>
+                    <div class="d-flex justify-between items-center">
+                        <h3 id="attendeesHeaderCount" class="attendees-header-title">Attendees</h3>
                     </div>
                     <div id="attendeesFacesGrid" class="meetup-attendees-grid">
                         <!-- Injected -->
@@ -98,15 +75,15 @@
 
                 <!-- Discussion & Comments Board -->
                 <div class="meetup-comments-section">
-                    <h3 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 1.5rem;">Discussion</h3>
+                    <h3 class="discussion-header-title">Discussion</h3>
 
                     <!-- Post Comment Box -->
-                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                    <div class="comment-input-wrap">
                         <!-- Current user initials avatar -->
-                        <div id="commentUserAvatar" style="width:42px;height:42px;border-radius:50%;background:#00999e;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;">Y</div>
-                        <div style="flex: 1;">
+                        <div id="commentUserAvatar" class="comment-user-avatar">Y</div>
+                        <div class="flex-1">
                             <textarea id="commentInput" class="form-textarea" rows="3" placeholder="Leave a comment or question for the host..."></textarea>
-                            <button type="button" id="btnPostComment" class="btn btn-teal btn-pill btn-sm" style="margin-top: 0.5rem;">Post comment</button>
+                            <button type="button" id="btnPostComment" class="btn btn-teal btn-pill btn-sm mt-0-5">Post comment</button>
                         </div>
                     </div>
 
@@ -121,11 +98,11 @@
             <div>
                 <!-- Group Info Widget -->
                 <div class="meetup-sidebar-widget">
-                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
-                        <div id="sidebarGroupAvatar" style="width:54px;height:54px;border-radius:var(--radius-md);background:linear-gradient(135deg,#00999e,#006e73);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">👥</div>
+                    <div class="sidebar-group-header">
+                        <div id="sidebarGroupAvatar" class="sidebar-group-avatar">👥</div>
                         <div>
-                            <h4 id="sidebarGroupName" style="font-size: 1rem; font-weight: 700; line-height: 1.3;">Community Group</h4>
-                            <div id="sidebarGroupSub" style="font-size: 0.8rem; color: var(--text-muted);">Public group</div>
+                            <h4 id="sidebarGroupName" class="sidebar-group-name">Community Group</h4>
+                            <div id="sidebarGroupSub" class="sidebar-group-sub">Public group</div>
                         </div>
                     </div>
                     <button class="btn btn-outline-teal btn-pill btn-block btn-sm" onclick="showToast('Joined group!', 'success'); this.textContent='Joined';">Join this group</button>
@@ -133,33 +110,40 @@
 
                 <!-- Date & Time Widget -->
                 <div class="meetup-sidebar-widget">
-                    <div style="display: flex; gap: 0.9rem; align-items: flex-start;">
-                        <span class="material-symbols-outlined" style="color: var(--teal); font-size: 22px;">schedule</span>
+                    <div class="sidebar-info-row">
+                        <span class="material-symbols-outlined sidebar-icon-teal">schedule</span>
                         <div>
-                            <div id="sidebarDateText" style="font-weight: 700; font-size: 0.95rem;">Date TBD</div>
-                            <div id="sidebarTimeText" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Time TBD</div>
+                            <div id="sidebarDateText" class="sidebar-info-title">Date TBD</div>
+                            <div id="sidebarTimeText" class="sidebar-info-sub">Time TBD</div>
+                        </div>
+                    </div>
+                    <div id="sidebarDeadlineContainer" class="sidebar-info-row mt-1 is-hidden">
+                        <span class="material-symbols-outlined sidebar-icon-teal">timer</span>
+                        <div>
+                            <div class="sidebar-info-title">Registration Deadline</div>
+                            <div id="sidebarDeadlineText" class="sidebar-info-sub">—</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Location Widget -->
                 <div class="meetup-sidebar-widget">
-                    <div style="display: flex; gap: 0.9rem; align-items: flex-start;">
-                        <span class="material-symbols-outlined" style="color: var(--teal); font-size: 22px;">pin_drop</span>
+                    <div class="sidebar-info-row">
+                        <span class="material-symbols-outlined sidebar-icon-teal">pin_drop</span>
                         <div>
-                            <div id="sidebarVenueName" style="font-weight: 700; font-size: 0.95rem;">Location</div>
-                            <div id="sidebarAddressText" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">—</div>
+                            <div id="sidebarVenueName" class="sidebar-info-title">Location</div>
+                            <div id="sidebarAddressText" class="sidebar-info-sub">—</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- RSVP / Ticket Action Box -->
-                <div class="meetup-sidebar-widget" style="background-color: var(--bg-subtle);">
-                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Price</span>
-                        <span id="sidebarPriceText" style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary);">Free</span>
+                <div class="meetup-sidebar-widget bg-subtle">
+                    <div class="sidebar-price-row">
+                        <span class="sidebar-price-label">Price</span>
+                        <span id="sidebarPriceText" class="sidebar-price-val">Free</span>
                     </div>
-                    <div id="sidebarSpotsText" style="font-size: 0.8rem; color: var(--primary); font-weight: 600; margin-bottom: 1.25rem;">
+                    <div id="sidebarSpotsText" class="sidebar-spots-text">
                         Open admission
                     </div>
                     <button class="btn btn-primary btn-pill btn-block btn-lg btn-attend-trigger">
@@ -182,71 +166,61 @@
 
             <!-- Form State -->
             <div id="rsvpFormPane" class="modal-body">
-                <div style="margin-bottom: 1.25rem;">
-                    <div id="modalEventTitle" style="font-weight: 800; font-size: 1.15rem; color: var(--text-primary);">Event Title</div>
-                    <div id="modalEventHost" style="font-size: 0.85rem; color: var(--text-muted);">Host Group</div>
-                    <div id="modalEventPrice" style="font-size: 1.1rem; font-weight: 700; color: var(--teal); margin-top: 0.35rem;">NPR 1,000</div>
+                <div class="mb-1-25">
+                    <div id="modalEventTitle" class="modal-event-title">Event Title</div>
+                    <div id="modalEventHost" class="modal-event-host">Host Group</div>
+                    <div id="modalEventPrice" class="modal-event-price">—</div>
                 </div>
 
                 <form id="meetupRsvpForm">
                     <div class="form-group">
                         <label class="form-label" for="rsvpFullName">Your Full Name *</label>
-                        <input type="text" id="rsvpFullName" class="form-input" placeholder="e.g. Alex Shrestha" required value="Alex Shrestha">
+                        <input type="text" id="rsvpFullName" class="form-input" placeholder="Your full name" required>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="rsvpEmail">Email Address *</label>
-                        <input type="email" id="rsvpEmail" class="form-input" placeholder="alex@example.com" required value="alex@example.com">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Your RSVP confirmation will be sent to this email.</div>
+                        <input type="email" id="rsvpEmail" class="form-input" placeholder="you@example.com" required>
+                        <div class="form-help-text">Your RSVP confirmation will be sent to this email.</div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-pill btn-block btn-lg" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary btn-pill btn-block btn-lg mt-1-5">
                         <span>Confirm RSVP & Attend</span>
                     </button>
                 </form>
             </div>
 
             <!-- Success State -->
-            <div id="rsvpSuccessPane" class="modal-body" style="display: none; text-align: center;">
-                <div style="width: 56px; height: 56px; border-radius: var(--radius-full); background-color: var(--teal-light); color: var(--teal); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                    <span class="material-symbols-outlined" style="font-size: 32px;">check_circle</span>
+            <div id="rsvpSuccessPane" class="modal-body d-none text-center">
+                <div class="rsvp-success-icon-wrap">
+                    <span class="material-symbols-outlined fs-32">check_circle</span>
                 </div>
-                <h3 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem;">You're going!</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">We've sent the confirmation and calendar invite to your email.</p>
+                <h3 class="rsvp-success-title">You're going!</h3>
+                <p class="rsvp-success-desc">We've sent the confirmation and calendar invite to your email.</p>
 
                 <!-- Pass Card -->
-                <div style="background-color: var(--bg-dark); color: #ffffff; border-radius: var(--radius-lg); padding: 1.5rem; text-align: left; margin-bottom: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
-                        <span style="font-size: 0.75rem; color: #a6a6a6; text-transform: uppercase;">Ticket ID</span>
-                        <strong id="passTicketId" style="font-family: monospace; color: var(--primary);">TKT-894120</strong>
+                <div class="rsvp-pass-card">
+                    <div class="rsvp-pass-header">
+                        <span class="rsvp-pass-label">Ticket ID</span>
+                        <strong id="passTicketId" class="rsvp-pass-ticket-id">—</strong>
                     </div>
-                    <div id="passUserName" style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.25rem;">Alex Shrestha</div>
-                    <div id="passEventName" style="font-size: 0.9rem; color: #e0e0e0; margin-bottom: 0.5rem;">-</div>
-                    <div id="passEventTime" style="font-size: 0.8rem; color: #a6a6a6;">-</div>
-                    <div id="passEventVenue" style="font-size: 0.8rem; color: #a6a6a6;">-</div>
+                    <div id="passUserName" class="rsvp-pass-user-name">—</div>
+                    <div id="passEventName" class="rsvp-pass-event-name">-</div>
+                    <div id="passEventTime" class="rsvp-pass-detail">-</div>
+                    <div id="passEventVenue" class="rsvp-pass-detail">-</div>
                 </div>
 
-                <button class="btn btn-teal btn-pill btn-block" onclick="closeModal('meetupRsvpModal')">Done</button>
+                <button id="btnDoneRsvpModal" class="btn btn-teal btn-pill btn-block">Done</button>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-bottom">
-                <div>© 2026 Aavahan, Inc. An event management platform prototype.</div>
-                <div style="display: flex; gap: 1.5rem;">
-                    <a href="#" class="footer-link">Terms of Service</a>
-                    <a href="#" class="footer-link">Privacy Policy</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer Component -->
+    <div id="site-footer"></div>
 
     <!-- Scripts -->
-    <script src="../assets/js/api.js"></script>
-    <script src="../assets/js/main.js"></script>
-    <script src="../assets/js/event-details.js"></script>
+    <script type="module" src="../assets/js/api.js"></script>
+    <script type="module" src="../assets/js/main.js"></script>
+    <script type="module" src="../assets/js/event-details.js"></script>
 </body>
 </html>

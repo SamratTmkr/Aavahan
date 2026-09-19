@@ -12,9 +12,12 @@ export const eventSchema = {
         address:        { type: 'TEXT', required: false },
         city:           { type: 'VARCHAR(100)', required: false },
         country:        { type: 'VARCHAR(80)', default: 'Nepal' },
-        event_date:     { type: 'DATE', required: true },
+        event_date:     { type: 'DATE', required: false },
         start_time:     { type: 'TIME', required: false },
         end_time:       { type: 'TIME', required: false },
+        is_date_tba:    { type: 'BOOLEAN', default: false },
+        registration_deadline: { type: 'DATETIME', required: false },
+        image_url:      { type: 'VARCHAR(500)', required: false },
         is_free:        { type: 'BOOLEAN', default: true },
         min_price:      { type: 'DECIMAL(10,2)', default: 0 },
         currency:       { type: 'VARCHAR(10)', default: 'NPR' },
@@ -29,11 +32,32 @@ export const eventSchema = {
 };
 
 // Insert a new event
-export async function createEvent({ title, description = null, category = null, venue = null, address = null, city = null, country = 'Nepal', event_date, start_time = null, end_time = null, is_free = true, min_price = 0, currency = 'NPR', is_online = false, capacity = null, group_id = null, organizer_id = null }) {
+export async function createEvent({
+    title,
+    description = null,
+    category = null,
+    venue = null,
+    address = null,
+    city = null,
+    country = 'Nepal',
+    event_date = null,
+    start_time = null,
+    end_time = null,
+    is_date_tba = false,
+    registration_deadline = null,
+    image_url = null,
+    is_free = true,
+    min_price = 0,
+    currency = 'NPR',
+    is_online = false,
+    capacity = null,
+    group_id = null,
+    organizer_id = null
+}) {
     const [result] = await pool.execute(
         `INSERT INTO events
-         (title, description, category, venue, address, city, country, event_date, start_time, end_time, is_free, min_price, currency, is_online, capacity, group_id, organizer_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (title, description, category, venue, address, city, country, event_date, start_time, end_time, is_date_tba, registration_deadline, image_url, is_free, min_price, currency, is_online, capacity, group_id, organizer_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             title,
             description ?? null,
@@ -42,9 +66,12 @@ export async function createEvent({ title, description = null, category = null, 
             address ?? null,
             city ?? null,
             country ?? 'Nepal',
-            event_date,
+            event_date ?? null,
             start_time ?? null,
             end_time ?? null,
+            is_date_tba ? 1 : 0,
+            registration_deadline ?? null,
+            image_url ?? null,
             is_free ?? true,
             min_price ?? 0,
             currency ?? 'NPR',

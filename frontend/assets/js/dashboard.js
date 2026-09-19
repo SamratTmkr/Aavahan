@@ -1,58 +1,42 @@
-// ============================================================
-// Organizer Hub / Dashboard Logic — dashboard.js
-// ============================================================
+import { isAuthenticated, getUser } from './authService.js';
+import { deleteEvent, getMyOrganizerEvents, getMyOrganizerRSVPs, getMyOrganizerGroups } from './api.js';
+import { showToast } from './main.js';
 
-// Global delete handler exposed to window for inline button clicks
-window.handleDeleteOrganizerEvent = async function(eventId, eventTitle) {
+// Organizer hub and dashboard logic
+
+// Module-scoped delete handler
+async function handleDeleteOrganizerEvent(eventId, eventTitle) {
     const cleanTitle = eventTitle || 'this event';
     if (!confirm(`Are you sure you want to delete "${cleanTitle}"? This cannot be undone.`)) {
         return;
     }
 
     try {
-        if (typeof showToast === 'function') {
-            showToast('Removing event...', 'info');
-        }
-
         const res = await deleteEvent(eventId);
         if (res && res.success) {
-            if (typeof showToast === 'function') {
-                showToast('Event deleted successfully.', 'success');
-            } else {
-                alert('Event deleted successfully.');
-            }
+            showToast('Event deleted successfully.', 'success');
             // Re-render dashboard without full page reload
             loadDashboardData();
         } else {
             const msg = res?.message || 'Failed to delete event.';
-            if (typeof showToast === 'function') {
-                showToast(msg, 'error');
-            } else {
-                alert(msg);
-            }
+            showToast(msg, 'error');
         }
     } catch (err) {
         console.error('Error deleting event:', err);
-        if (typeof showToast === 'function') {
-            showToast('Network error while deleting event.', 'error');
-        }
+        showToast('Network error while deleting event.', 'error');
     }
-};
+}
 
 // Main loader function
 async function loadDashboardData() {
     // Guard — Require authentication
-    const token = localStorage.getItem('aavahan_token') || sessionStorage.getItem('aavahan_token');
-    if (!token && window.location.pathname.includes('dashboard.html')) {
+    if (!isAuthenticated() && window.location.pathname.includes('dashboard.html')) {
         window.location.href = 'login.html?redirect=dashboard.html';
         return;
     }
 
     // 2. Hydrate user info from session
-    let currentUser = {};
-    try {
-        currentUser = JSON.parse(localStorage.getItem('aavahan_user') || '{}');
-    } catch (e) {}
+    const currentUser = getUser() || {};
 
     const userName = currentUser.name || 'Organizer';
     const userRole = currentUser.role || 'Organizer';
@@ -75,7 +59,7 @@ async function loadDashboardData() {
                 if (groupTitleEl) groupTitleEl.textContent = primaryGroup.name;
                 if (groupSubtitleEl) {
                     const memberCount = primaryGroup.member_count || 0;
-                    const city = primaryGroup.city || 'Kathmandu, Nepal';
+                    const city = primaryGroup.city || 'Nepal';
                     groupSubtitleEl.textContent = `${memberCount.toLocaleString()} members • Public Group • ${city}`;
                 }
                 if (groupAvatarEl && primaryGroup.name) {
@@ -147,10 +131,10 @@ async function loadDashboardData() {
     if (eventsListContainer) {
         if (events.length === 0) {
             eventsListContainer.innerHTML = `
-                <div style="text-align: center; padding: 3.5rem 1rem; color: var(--text-muted); background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
-                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--border-color); margin-bottom: 0.75rem; display: block;">event_busy</span>
-                    <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem;">No upcoming meetups scheduled</h3>
-                    <p style="margin-bottom: 1.5rem; max-width: 420px; margin-left: auto; margin-right: auto; font-size: 0.88rem;">
+                <div class="dash-empty-box">
+                    <span class="material-symbols-outlined dash-empty-icon">event_busy</span>
+                    <h3 class="dash-empty-title">No upcoming meetups scheduled</h3>
+                    <p class="dash-empty-desc">
                         You haven't scheduled any meetups yet. Host a gathering, workshop, or tech talk to start building your community.
                     </p>
                     <a href="create-event.html" class="btn btn-teal btn-pill btn-sm">+ Schedule Your First Meetup</a>
@@ -165,39 +149,51 @@ async function loadDashboardData() {
                 const timeStr = ev.start_time ? ev.start_time.slice(0, 5) : '10:00';
                 const isFree = ev.is_free || !ev.min_price || Number(ev.min_price) === 0;
                 const priceLabel = isFree ? 'Free' : `NPR ${Number(ev.min_price).toLocaleString()}`;
-                const borderStyle = isLast ? '' : 'border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.25rem;';
+                const borderClass = isLast ? '' : 'dash-event-item-border';
                 const escapedTitle = (ev.title || '').replace(/'/g, "\\'");
-                const onlineBadge = ev.is_online ? '<span class="badge" style="background:#e0f2fe;color:#0284c7;font-size:0.7rem;font-weight:700;padding:2px 6px;">Online</span>' : '';
+                const onlineBadge = ev.is_online ? '<span class="badge badge-online-light">Online</span>' : '';
 
                 return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; ${borderStyle} flex-wrap: wrap; gap: 1rem;">
-                        <div style="flex: 1; min-width: 260px;">
-                            <div style="font-size: 0.8rem; font-weight: 700; color: #8c5300; display: flex; align-items: center; gap: 0.5rem;">
+                    <div class="dash-event-item ${borderClass}">
+                        <div class="dash-event-info">
+                            <div class="dash-event-meta">
                                 <span>${dateStr} · ${timeStr} NPT</span>
                                 ${onlineBadge}
                             </div>
-                            <h3 style="font-size: 1.15rem; font-weight: 700; margin-top: 0.25rem; margin-bottom: 0.25rem; color: var(--text-primary);">
+                            <h3 class="dash-event-title">
                                 ${ev.title}
                             </h3>
-                            <div style="font-size: 0.85rem; color: var(--text-muted);">
-                                ${ev.venue || ev.city || 'Kathmandu, Nepal'} • <strong>${ev.attendee_count || 0} Going</strong> • ${priceLabel}
+                            <div class="dash-event-sub">
+                                ${ev.venue || ev.city || 'Location TBD'} • <strong>${ev.attendee_count || 0} Going</strong> • ${priceLabel}
                             </div>
                         </div>
-                        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                        <div class="dash-event-actions">
                             <a href="manage-event.html?id=${ev.id}" class="btn btn-outline-teal btn-pill btn-sm">
-                                <span class="material-symbols-outlined" style="font-size: 16px;">qr_code_scanner</span>
+                                <span class="material-symbols-outlined">qr_code_scanner</span>
                                 <span>Manage RSVPs</span>
                             </a>
                             <a href="event-details.html?id=${ev.id}" target="_blank" class="btn btn-outline btn-pill btn-sm" title="Preview public page">
                                 Preview
                             </a>
-                            <button type="button" class="btn btn-sm btn-pill" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:0.35rem 0.75rem;cursor:pointer;" onclick="handleDeleteOrganizerEvent(${ev.id}, '${escapedTitle}')" title="Delete event">
+                            <button type="button" class="btn btn-sm btn-pill btn-danger-light" data-action="delete-event" data-id="${ev.id}" data-title="${escapedTitle}" title="Delete event">
                                 Delete
                             </button>
                         </div>
                     </div>
                 `;
             }).join('');
+
+            if (!eventsListContainer.dataset.bound) {
+                eventsListContainer.dataset.bound = 'true';
+                eventsListContainer.addEventListener('click', (e) => {
+                    const btn = e.target.closest('[data-action="delete-event"]');
+                    if (btn) {
+                        const eventId = btn.getAttribute('data-id');
+                        const eventTitle = btn.getAttribute('data-title');
+                        handleDeleteOrganizerEvent(eventId, eventTitle);
+                    }
+                });
+            }
         }
     }
 
@@ -219,7 +215,7 @@ async function loadDashboardData() {
         if (rsvps.length === 0) {
             rsvpsBody.innerHTML = `
                 <tr>
-                    <td colspan="4" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                    <td colspan="4" class="dash-table-empty">
                         No RSVPs received yet. As community members register for your meetups, their details and check-in statuses will appear here.
                     </td>
                 </tr>
@@ -234,14 +230,14 @@ async function loadDashboardData() {
                 return `
                     <tr>
                         <td>
-                            <div style="font-weight: 700; color: var(--text-primary);">${r.user_name || 'Community Member'}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">${r.user_email || '—'}</div>
+                            <div class="dash-user-name">${r.user_name || 'Community Member'}</div>
+                            <div class="dash-user-sub">${r.user_email || '—'}</div>
                         </td>
                         <td>
-                            <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">${r.event_title || 'Meetup'}</div>
+                            <div class="dash-rsvp-event">${r.event_title || 'Meetup'}</div>
                         </td>
                         <td>
-                            <span style="font-family: monospace; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">${formattedId}</span>
+                            <span class="dash-mono-id">${formattedId}</span>
                         </td>
                         <td>
                             <span class="badge ${badgeClass}">${statusLabel}</span>

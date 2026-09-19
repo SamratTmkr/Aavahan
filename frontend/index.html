@@ -17,60 +17,8 @@
     <link rel="stylesheet" href="assets/css/pages.css">
 </head>
 <body>
-    <!-- 1. Meetup Top Navigation Bar -->
-    <header class="navbar">
-        <div class="container nav-container">
-            <div class="nav-left">
-                <!-- Meetup Logo -->
-                <a href="index.html" class="brand">
-                    <span>Aavahan</span>
-                    <span class="brand-dot"></span>
-                </a>
-
-                <!-- Integrated Search Bar (Meetup signature) -->
-                <form class="header-search-bar" action="pages/explore.html" method="GET">
-                    <div class="header-search-input-group">
-                        <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 18px;">search</span>
-                        <input type="text" name="search" class="header-search-input" placeholder="Search events">
-                    </div>
-                    <div class="header-search-input-group">
-                        <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 18px;">location_on</span>
-                        <input type="text" name="city" class="header-search-input" value="Kathmandu" placeholder="City or location">
-                    </div>
-                    <button type="submit" class="header-search-btn" aria-label="Search">
-                        <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
-                    </button>
-                </form>
-            </div>
-
-            <div class="nav-right">
-                <a href="pages/create-event.html" class="nav-link-group">Start an Event</a>
-                <a href="pages/explore.html" class="nav-link-group">Explore</a>
-                <a id="navLogin" href="pages/login.html" class="nav-link-group">Log in</a>
-                <a id="navSignup" href="pages/signup.html" class="btn btn-primary btn-pill btn-sm">Sign up</a>
-                <button id="navLogout" class="btn btn-outline btn-pill btn-sm" style="display:none;">Log out</button>
-            </div>
-
-            <!-- Mobile Hamburger Button -->
-            <button class="nav-toggle-btn" aria-label="Toggle navigation">
-                <span class="material-symbols-outlined">menu</span>
-            </button>
-        </div>
-    </header>
-
-    <!-- Mobile Drawer -->
-    <div class="mobile-nav-drawer">
-        <div class="mobile-nav-links">
-            <a href="index.html" class="mobile-nav-link">Home</a>
-            <a href="pages/explore.html" class="mobile-nav-link">Find Events</a>
-            <a href="pages/create-event.html" class="mobile-nav-link">Start an Event</a>
-            <a href="pages/dashboard.html" class="mobile-nav-link">Organizer Hub</a>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-            <a href="pages/login.html" class="btn btn-outline btn-block">Log in</a>
-            <a href="pages/signup.html" class="btn btn-primary btn-block">Sign up</a>
-        </div>
-    </div>
+    <!-- Header Component -->
+    <div id="site-header"></div>
 
     <main>
         <!-- 2. Meetup Hero Section -->
@@ -96,7 +44,7 @@
         </section>
 
         <!-- 3. Category Exploration Badges -->
-        <section class="section" style="padding-top: 1rem; padding-bottom: 2rem;">
+        <section class="section section-compact">
             <div class="container">
                 <div class="category-badges-scroll" id="categoryPillsScroll">
                     <a href="pages/explore.html?category=technology" class="category-pill-item">
@@ -135,12 +83,12 @@
             </div>
         </section>
 
-        <!-- 4. Events near Kathmandu, Nepal -->
-        <section class="section" style="padding-top: 1rem;">
+        <!-- 4. Events in Nepal -->
+        <section class="section section-pt-1">
             <div class="container">
                 <div class="section-header-row">
                     <div>
-                        <h2 class="section-header-title">Events near Kathmandu, Nepal</h2>
+                        <h2 class="section-header-title">Upcoming Events in Nepal</h2>
                     </div>
                     <a href="pages/explore.html" class="section-header-link">See all events</a>
                 </div>
@@ -155,15 +103,15 @@
         <!-- 5. How Aavahan Works (Meetup 3 Core Cards) -->
         <section class="section">
             <div class="container">
-                <h2 class="section-header-title" style="text-align: center; margin-bottom: 0.5rem;">How Aavahan works</h2>
-                <p style="text-align: center; color: var(--text-muted); max-width: 600px; margin: 0 auto 2.5rem;">
+                <h2 class="section-header-title how-it-works-title">How Aavahan works</h2>
+                <p class="how-it-works-desc">
                     Meet new people who share your interests through online and in-person events. It’s free to create an account.
                 </p>
 
                 <div class="meetup-how-grid">
                     <div class="meetup-how-card">
                         <div class="meetup-how-icon-box">
-                            <span class="material-symbols-outlined" style="font-size: 36px;">search</span>
+                            <span class="material-symbols-outlined how-step-icon">search</span>
                         </div>
                         <h3 class="meetup-how-title">Discover events</h3>
                         <p class="meetup-how-desc">See who’s hosting local events for all the things you love, from tech and outdoor hikes to music.</p>
@@ -172,7 +120,7 @@
 
                     <div class="meetup-how-card">
                         <div class="meetup-how-icon-box">
-                            <span class="material-symbols-outlined" style="font-size: 36px;">confirmation_number</span>
+                            <span class="material-symbols-outlined how-step-icon">confirmation_number</span>
                         </div>
                         <h3 class="meetup-how-title">Attend an event</h3>
                         <p class="meetup-how-desc">Meet people who share your passions, learn something new, and make genuine connections in your city.</p>
@@ -181,7 +129,7 @@
 
                     <div class="meetup-how-card">
                         <div class="meetup-how-icon-box">
-                            <span class="material-symbols-outlined" style="font-size: 36px;">calendar_add_on</span>
+                            <span class="material-symbols-outlined how-step-icon">calendar_add_on</span>
                         </div>
                         <h3 class="meetup-how-title">Start an event</h3>
                         <p class="meetup-how-desc">You don’t have to be an expert to gather people together and host a memorable event.</p>
@@ -209,7 +157,7 @@
         <!-- 7. Popular Cities on Aavahan -->
         <section class="section">
             <div class="container">
-                <h2 class="section-header-title" style="margin-bottom: 2rem;">Popular cities on Aavahan</h2>
+                <h2 class="section-header-title popular-cities-title">Popular cities on Aavahan</h2>
                 <div class="cities-grid" id="homepageCitiesGrid">
                     <!-- Populated from API -->
                 </div>
@@ -217,14 +165,14 @@
         </section>
 
         <!-- 8. Start an Event Organizer CTA Banner -->
-        <section class="section" style="padding-top: 0;">
+        <section class="section section-pt-0">
             <div class="container">
-                <div style="background-color: var(--teal-light); border-radius: var(--radius-lg); padding: 3rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
-                    <div style="max-width: 600px;">
-                        <h2 style="font-size: 2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem;">
+                <div class="cta-banner">
+                    <div class="cta-banner-content">
+                        <h2 class="cta-banner-title">
                             Do what you love, meet others who love it, host your community.
                         </h2>
-                        <p style="color: var(--text-secondary); margin-bottom: 0;">
+                        <p class="cta-banner-desc">
                             Host events on Aavahan to bring people together, share knowledge, and grow your local network.
                         </p>
                     </div>
@@ -236,72 +184,15 @@
         </section>
     </main>
 
-    <!-- 9. Meetup Signature Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-top-banner">
-                <div class="footer-top-title">Host your own event on Aavahan.</div>
-                <a href="pages/create-event.html" class="btn btn-outline" style="color: #ffffff; border-color: #ffffff;">Get Started</a>
-            </div>
-
-            <div class="footer-grid">
-                <div>
-                    <h4 class="footer-col-title">Your Account</h4>
-                    <div class="footer-links">
-                        <a href="pages/signup.html" class="footer-link">Sign up</a>
-                        <a href="pages/login.html" class="footer-link">Log in</a>
-                        <a href="#" class="footer-link">Help</a>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="footer-col-title">Discover</h4>
-                    <div class="footer-links">
-                        <a href="pages/explore.html" class="footer-link">All Events</a>
-                        <a href="pages/explore.html" class="footer-link">Calendar</a>
-                        <a href="pages/explore.html?category=technology" class="footer-link">Topics</a>
-                        <a href="pages/explore.html?city=Kathmandu" class="footer-link">Cities</a>
-                        <a href="pages/explore.html?type=online" class="footer-link">Online Events</a>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="footer-col-title">Aavahan</h4>
-                    <div class="footer-links">
-                        <a href="#" class="footer-link">About</a>
-                        <a href="#" class="footer-link">Blog</a>
-                        <a href="pages/dashboard.html" class="footer-link">Organizer Hub</a>
-                        <a href="pages/admin.html" class="footer-link" style="color: var(--primary); font-weight: 600;">Superadmin Panel</a>
-                        <a href="#" class="footer-link">Careers</a>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="footer-col-title">Follow us</h4>
-                    <div class="footer-links">
-                        <a href="#" class="footer-link">Facebook</a>
-                        <a href="#" class="footer-link">Twitter / X</a>
-                        <a href="#" class="footer-link">Instagram</a>
-                        <a href="#" class="footer-link">YouTube</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="footer-bottom">
-                <div>© 2026 Aavahan, Inc. An event management platform prototype.</div>
-                <div style="display: flex; gap: 1.5rem;">
-                    <a href="#" class="footer-link">Terms of Service</a>
-                    <a href="#" class="footer-link">Privacy Policy</a>
-                    <a href="#" class="footer-link">Cookie Policy</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer Component -->
+    <div id="site-footer"></div>
 
     <!-- Scripts -->
-    <script src="assets/js/api.js"></script>
-    <script src="assets/js/main.js"></script>
-    <script>
+    <script type="module" src="assets/js/api.js"></script>
+    <script type="module" src="assets/js/main.js"></script>
+    <script type="module">
+        import { getEvents, getEventCities } from './assets/js/api.js';
+
         document.addEventListener('DOMContentLoaded', async () => {
             // Category cover mapper using local high-res assets with clean fallbacks
             function getCoverImage(cat) {
@@ -354,10 +245,10 @@
                 // If no events in database, show clean empty state
                 if (events.length === 0) {
                     eventsGrid.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1rem; color: var(--text-muted); background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
-                            <span class="material-symbols-outlined" style="font-size: 48px; color: var(--border-color); margin-bottom: 0.5rem; display: block;">event_busy</span>
-                            <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem;">No upcoming events right now</h3>
-                            <p style="font-size: 0.9rem; margin-bottom: 1.25rem;">Be the first to bring the community together and host an event in Nepal!</p>
+                        <div class="events-feed-empty">
+                            <span class="material-symbols-outlined events-feed-empty-icon">event_busy</span>
+                            <h3 class="events-feed-empty-title">No upcoming events right now</h3>
+                            <p class="events-feed-empty-desc">Be the first to bring the community together and host an event in Nepal!</p>
                             <a href="pages/create-event.html" class="btn btn-teal btn-pill btn-sm">+ Start an Event</a>
                         </div>
                     `;
@@ -365,7 +256,7 @@
                 }
 
                 eventsGrid.innerHTML = events.slice(0, 4).map(evt => {
-                    const group = evt.group_name || (evt.category ? `${evt.category} Community` : 'Kathmandu Community Group');
+                    const group = evt.group_name || (evt.category ? `${evt.category} Community` : (evt.city ? `${evt.city} Community Group` : 'Community Group'));
                     const count = evt.attendee_count || 1;
                     const isFree = evt.is_free || !evt.min_price || Number(evt.min_price) === 0;
                     const priceStr = isFree ? 'Free' : `NPR ${Number(evt.min_price).toLocaleString()}`;
@@ -388,7 +279,7 @@
                             <div class="meetup-card-meta-row">
                                 <span>👥 ${count} attendee${count === 1 ? '' : 's'}</span>
                                 <span class="meetup-card-price ${isFree ? 'free' : ''}">
-                                    ${priceStr}
+                                     ${priceStr}
                                 </span>
                             </div>
                         </div>
@@ -436,37 +327,45 @@
             // 3. Render Popular Cities on Aavahan
             const citiesGrid = document.getElementById('homepageCitiesGrid');
             if (citiesGrid) {
-                let cityStats = {};
+                const knownCityImages = {
+                    'kathmandu': 'assets/images/city-kathmandu.jpg',
+                    'pokhara': 'assets/images/city-pokhara.jpg',
+                    'lalitpur': 'assets/images/city-lalitpur.jpg',
+                    'bhaktapur': 'assets/images/city-kathmandu.jpg',
+                    'chitwan': 'assets/images/outdoor-hiking.jpg'
+                };
+
+                let popularCities = [];
                 try {
                     if (typeof getEventCities === 'function') {
                         const cityRes = await getEventCities();
-                        if (cityRes && cityRes.success && Array.isArray(cityRes.data)) {
-                            cityRes.data.forEach(item => {
-                                if (item.city) cityStats[item.city.toLowerCase().trim()] = item.count;
-                            });
+                        if (cityRes && cityRes.success && Array.isArray(cityRes.data) && cityRes.data.length > 0) {
+                            popularCities = cityRes.data.map(item => ({
+                                name: item.city,
+                                count: item.count,
+                                img: knownCityImages[item.city.toLowerCase().trim()] || 'assets/images/community-banner.jpg'
+                            }));
                         }
                     }
                 } catch (e) {
                     console.warn('[Home] Could not fetch city statistics:', e);
                 }
 
-                const popularCities = [
-                    { name: 'Kathmandu', img: 'assets/images/city-kathmandu.jpg' },
-                    { name: 'Pokhara', img: 'assets/images/city-pokhara.jpg' },
-                    { name: 'Lalitpur', img: 'assets/images/city-lalitpur.jpg' },
-                    { name: 'Bhaktapur', img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=300&q=80' },
-                    { name: 'Chitwan', img: 'https://images.unsplash.com/photo-1570783350280-d667c9c0f994?auto=format&fit=crop&w=300&q=80' }
-                ];
+                if (popularCities.length === 0) {
+                    popularCities = [
+                        { name: 'Kathmandu', count: 0, img: 'assets/images/city-kathmandu.jpg' },
+                        { name: 'Pokhara', count: 0, img: 'assets/images/city-pokhara.jpg' },
+                        { name: 'Lalitpur', count: 0, img: 'assets/images/city-lalitpur.jpg' }
+                    ];
+                }
 
                 citiesGrid.innerHTML = popularCities.map(c => {
-                    const cKey = c.name.toLowerCase();
-                    const count = cityStats[cKey] || 0;
-                    const countLabel = `${count} event${count === 1 ? '' : 's'}`;
+                    const countLabel = `${c.count} event${c.count === 1 ? '' : 's'}`;
                     return `
                     <a href="pages/explore.html?city=${encodeURIComponent(c.name)}" class="city-card">
                         <img src="${c.img}" alt="${c.name}" class="city-card-avatar" loading="lazy">
                         <div class="city-card-name">${c.name}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">${countLabel}</div>
+                        <div class="city-card-count">${countLabel}</div>
                     </a>
                     `;
                 }).join('');

@@ -12,12 +12,23 @@ userRouter.get('/', userAuth, adminAuth, async (req, res) => {
         if (search) {
             const term = `%${search}%`;
             [rows] = await pool.execute(
-                'SELECT id, name, email, role, avatar_url, created_at FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY created_at DESC',
+                `SELECT u.id, u.name, u.email, u.role, u.avatar_url, u.created_at, 
+                        COUNT(r.id) AS total_rsvps
+                 FROM users u 
+                 LEFT JOIN rsvps r ON u.id = r.user_id
+                 WHERE u.name LIKE ? OR u.email LIKE ? 
+                 GROUP BY u.id
+                 ORDER BY u.created_at DESC`,
                 [term, term]
             );
         } else {
             [rows] = await pool.execute(
-                'SELECT id, name, email, role, avatar_url, created_at FROM users ORDER BY created_at DESC'
+                `SELECT u.id, u.name, u.email, u.role, u.avatar_url, u.created_at, 
+                        COUNT(r.id) AS total_rsvps
+                 FROM users u 
+                 LEFT JOIN rsvps r ON u.id = r.user_id
+                 GROUP BY u.id
+                 ORDER BY u.created_at DESC`
             );
         }
         return res.json({ success: true, data: rows });

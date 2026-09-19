@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View and manage events you have joined and events you have created on Aavahan.">
+    <title>My Activities — Aavahan</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/pages.css">
+</head>
+<body class="bg-main">
+    <!-- Header Component -->
+    <div id="site-header"></div>
+
+    <!-- Main Container -->
+    <main class="container activities-page">
+        <!-- Page Title & Header Actions -->
+        <div class="activities-header-wrap">
+            <div class="activities-header-left">
+                <h1 class="activities-title">My Activities & Events</h1>
+                <p class="activities-subtitle">Track where and what events you have joined, and easily manage events you have created.</p>
+            </div>
+            <div class="activities-header-actions">
+                <a href="create-event.html" class="btn btn-primary btn-pill">
+                    <span class="material-symbols-outlined btn-icon-sm">add_circle</span>
+                    Host an Event
+                </a>
+                <a href="explore.html" class="btn btn-outline btn-pill">
+                    <span class="material-symbols-outlined btn-icon-sm">explore</span>
+                    Explore Events
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Summary Stats Grid -->
+        <div class="activities-stats-grid">
+            <div class="activities-stat-card">
+                <div class="activities-stat-icon-box joined">
+                    <span class="material-symbols-outlined">how_to_reg</span>
+                </div>
+                <div>
+                    <div class="activities-stat-label">Events Joined</div>
+                    <div class="activities-stat-value" id="statJoinedTotal">0</div>
+                    <div class="activities-stat-subtext">
+                        <span id="statJoinedUpcoming">0</span> upcoming · <span id="statJoinedPast">0</span> past
+                    </div>
+                </div>
+            </div>
+
+            <div class="activities-stat-card">
+                <div class="activities-stat-icon-box created">
+                    <span class="material-symbols-outlined">campaign</span>
+                </div>
+                <div>
+                    <div class="activities-stat-label">Events Created</div>
+                    <div class="activities-stat-value" id="statCreatedTotal">0</div>
+                    <div class="activities-stat-subtext">
+                        <span id="statCreatedUpcoming">0</span> active / upcoming · <span id="statCreatedPast">0</span> past
+                    </div>
+                </div>
+            </div>
+
+            <div class="activities-stat-card">
+                <div class="activities-stat-icon-box reach">
+                    <span class="material-symbols-outlined">groups</span>
+                </div>
+                <div>
+                    <div class="activities-stat-label">Community Attendees</div>
+                    <div class="activities-stat-value" id="statTotalAttendees">0</div>
+                    <div class="activities-stat-subtext">across all your hosted events</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Primary Mode Navigation Switcher -->
+        <div class="activities-nav-bar">
+            <button type="button" id="tabJoined" class="activities-nav-btn active">
+                <span class="material-symbols-outlined">how_to_reg</span>
+                <span>Events I've Joined</span>
+                <span id="badgeJoinedTotal" class="activities-nav-count">0</span>
+            </button>
+            <button type="button" id="tabCreated" class="activities-nav-btn">
+                <span class="material-symbols-outlined">campaign</span>
+                <span>Events I've Created</span>
+                <span id="badgeCreatedTotal" class="activities-nav-count">0</span>
+            </button>
+        </div>
+
+        <!-- Secondary Filter & Search Subbar -->
+        <div class="activities-subbar">
+            <!-- Filter Pills -->
+            <div id="subfilterContainer" class="activities-filter-pills">
+                <!-- Injected dynamically based on active tab -->
+            </div>
+
+            <!-- Instant Search Input -->
+            <div class="activities-search-box">
+                <span class="material-symbols-outlined search-box-icon">search</span>
+                <input type="text" id="activitySearchInput" placeholder="Filter by title, venue, or city...">
+            </div>
+        </div>
+
+        <!-- Activity Cards List -->
+        <div id="activitiesList" class="activities-list"></div>
+    </main>
+
+    <!-- Footer Component -->
+    <div id="site-footer"></div>
+
+    <!-- Scripts -->
+    <script type="module" src="../assets/js/api.js"></script>
+    <script type="module" src="../assets/js/main.js"></script>
+    <script type="module" src="../assets/js/my-activities.js"></script>
+</body>
+</html>

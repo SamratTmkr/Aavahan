@@ -1,171 +1,298 @@
-// ============================================================
-// Aavahan Core Client Scripts — main.js
-// ============================================================
+import { getToken, getUser, isAuthenticated, clearAuth } from './authService.js';
 
-// ── Global Toast Notification System ─────────────────────────
-function showToast(message, type = 'info') {
+// main.js
+
+// Toast notification
+export function showToast(message, type = 'info') {
+    if (!message || /loading|cancelling|removing|processing|redirecting/i.test(message)) {
+        return;
+    }
+
     let container = document.getElementById('aavGlobalToastContainer');
     if (!container) {
         container = document.createElement('div');
         container.id = 'aavGlobalToastContainer';
-        container.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:999999;display:flex;flex-direction:column;gap:0.6rem;pointer-events:none;max-width:380px;';
+        container.className = 'toast-container';
         document.body.appendChild(container);
     }
 
     const toast = document.createElement('div');
-    toast.className = `aav-toast aav-toast-${type}`;
-    
-    let bg = '#1e293b';
-    let border = '#334155';
+    toast.className = `toast toast-${type}`;
+
     let icon = 'info';
-    let color = '#ffffff';
-
-    if (type === 'success') {
-        bg = '#064e3b';
-        border = '#059669';
-        icon = 'check_circle';
-        color = '#a7f3d0';
-    } else if (type === 'error') {
-        bg = '#7f1d1d';
-        border = '#dc2626';
-        icon = 'error';
-        color = '#fecaca';
-    } else if (type === 'teal' || type === 'info') {
-        bg = '#0f3d3e';
-        border = '#00828a';
-        icon = 'info';
-        color = '#e6f7f7';
-    }
-
-    toast.style.cssText = `display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.15rem;border-radius:10px;background:${bg};border:1px solid ${border};color:#ffffff;box-shadow:0 10px 30px rgba(0,0,0,0.35);font-size:0.875rem;font-weight:500;font-family:system-ui,-apple-system,sans-serif;pointer-events:auto;animation:aavToastIn 0.25s cubic-bezier(0.16,1,0.3,1);transition:opacity 0.25s ease,transform 0.25s ease;`;
+    if (type === 'success') icon = 'check_circle';
+    else if (type === 'error') icon = 'error';
+    else if (type === 'warning') icon = 'warning';
 
     toast.innerHTML = `
-        <span class="material-symbols-outlined" style="font-size:20px;color:${color};flex-shrink:0;">${icon}</span>
-        <span style="flex:1;line-height:1.4;">${message}</span>
-        <button type="button" aria-label="Dismiss" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:0;display:flex;align-items:center;margin-left:0.25rem;">
-            <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+        <span class="material-symbols-outlined toast-icon">${icon}</span>
+        <span class="toast-message">${message}</span>
+        <button type="button" aria-label="Dismiss" class="toast-close-btn">
+            <span class="material-symbols-outlined toast-close-icon">close</span>
         </button>
     `;
 
     const closeBtn = toast.querySelector('button');
-    const dismiss = () => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
-        setTimeout(() => { toast.remove(); }, 260);
-    };
-    closeBtn.addEventListener('click', dismiss);
+    closeBtn.addEventListener('click', () => {
+        toast.remove();
+    });
 
     container.appendChild(toast);
-    setTimeout(dismiss, 3500);
+    setTimeout(() => {
+        toast.remove();
+    }, 3500);
 }
 
-// Attach to window so inline onclick handlers in all HTML pages can call it
-window.showToast = showToast;
-
-// Inject toast animation styles once
-if (!document.getElementById('aavToastAnimationStyles')) {
-    const style = document.createElement('style');
-    style.id = 'aavToastAnimationStyles';
-    style.textContent = `
-        @keyframes aavToastIn {
-            from { opacity: 0; transform: translateY(16px) scale(0.95); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-    `;
-    document.head.appendChild(style);
+if (typeof window !== 'undefined') {
+    window.showToast = showToast;
 }
 
-// ── Navbar Auth State & Hydration ────────────────────────────
+// Navbar auth state
 function updateNavbar() {
-    const token = localStorage.getItem('aavahan_token') || sessionStorage.getItem('aavahan_token');
-    const isLoggedIn = !!token;
-
-    let user = {};
-    try {
-        user = JSON.parse(localStorage.getItem('aavahan_user') || '{}');
-    } catch(e) {}
-
-    if (!isLoggedIn) {
-        sessionStorage.removeItem('aavahan_logged_in');
-    }
+    const isLoggedIn = isAuthenticated();
+    const user = getUser() || {};
 
     const navLogin  = document.getElementById('navLogin');
     const navSignup = document.getElementById('navSignup');
     const navLogout = document.getElementById('navLogout');
+
 
     if (!navLogin || !navSignup || !navLogout) return;
 
     const isSubfolder = window.location.pathname.includes('/pages/');
 
     if (isLoggedIn) {
-        navLogin.style.display  = 'none';
-        navSignup.style.display = 'none';
-        navLogout.style.display = 'inline-flex';
+        navLogin.classList.add('is-hidden');
+        navSignup.classList.add('is-hidden');
+        navLogout.classList.remove('is-hidden');
 
-        // Check if user is admin, show Admin Panel badge link
+        // My Activities link
+        let navMyActivities = document.getElementById('navMyActivities');
+        if (!navMyActivities) {
+            navMyActivities = document.createElement('a');
+            navMyActivities.id = 'navMyActivities';
+            navMyActivities.className = 'nav-link-group';
+            navMyActivities.textContent = 'My Activities';
+            navMyActivities.href = isSubfolder ? 'my-activities.html' : 'pages/my-activities.html';
+            navLogout.parentNode.insertBefore(navMyActivities, navLogout);
+        } else {
+            navMyActivities.classList.remove('is-hidden');
+        }
+
+        // Mobile drawer My Activities link
+        let mobileMyActivities = document.getElementById('mobileMyActivities');
+        const mobileLinks = document.querySelector('.mobile-nav-links');
+        if (mobileLinks) {
+            if (!mobileMyActivities) {
+                mobileMyActivities = document.createElement('a');
+                mobileMyActivities.id = 'mobileMyActivities';
+                mobileMyActivities.className = 'mobile-nav-link';
+                mobileMyActivities.textContent = 'My Activities';
+                mobileMyActivities.href = isSubfolder ? 'my-activities.html' : 'pages/my-activities.html';
+                mobileLinks.appendChild(mobileMyActivities);
+            } else {
+                mobileMyActivities.classList.remove('is-hidden');
+            }
+        }
+
+        // Admin badge link
         let navAdmin = document.getElementById('navAdmin');
         if (user.role === 'admin') {
             if (!navAdmin) {
                 navAdmin = document.createElement('a');
                 navAdmin.id = 'navAdmin';
-                navAdmin.className = 'nav-link-group';
-                navAdmin.style.cssText = 'color:#00828a;font-weight:700;display:inline-flex;align-items:center;gap:4px;';
-                navAdmin.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">admin_panel_settings</span> Admin';
+                navAdmin.className = 'nav-link-group nav-admin-link';
+                navAdmin.innerHTML = '<span class="material-symbols-outlined nav-admin-icon">admin_panel_settings</span> Admin';
                 navAdmin.href = isSubfolder ? 'admin.html' : 'pages/admin.html';
                 navLogout.parentNode.insertBefore(navAdmin, navLogout);
             } else {
-                navAdmin.style.display = 'inline-flex';
+                navAdmin.classList.remove('is-hidden');
             }
         } else if (navAdmin) {
-            navAdmin.style.display = 'none';
+            navAdmin.classList.add('is-hidden');
         }
     } else {
-        navLogin.style.display  = '';
-        navSignup.style.display = '';
-        navLogout.style.display = 'none';
+        navLogin.classList.remove('is-hidden');
+        navSignup.classList.remove('is-hidden');
+        navLogout.classList.add('is-hidden');
+
+        const navMyActivities = document.getElementById('navMyActivities');
+        if (navMyActivities) navMyActivities.classList.add('is-hidden');
+
+        const mobileMyActivities = document.getElementById('mobileMyActivities');
+        if (mobileMyActivities) mobileMyActivities.classList.add('is-hidden');
 
         const navAdmin = document.getElementById('navAdmin');
-        if (navAdmin) navAdmin.style.display = 'none';
+        if (navAdmin) navAdmin.classList.add('is-hidden');
     }
 }
 
-// ── Logout handler ───────────────────────────────────────────
-const navLogoutBtn = document.getElementById('navLogout');
-if (navLogoutBtn) {
-    navLogoutBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        navLogoutBtn.disabled = true;
-        if (typeof logoutUser === 'function') {
-            await logoutUser();
-        } else {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = window.location.pathname.includes('/pages/') ? '../index.html' : 'index.html';
+// Fallback component templates
+const DEFAULT_HEADER_HTML = `
+<header class="navbar">
+    <div class="container nav-container">
+        <div class="nav-left">
+            <a href="{{ROOT}}index.html" class="brand">
+                <span>Aavahan</span>
+                <span class="brand-dot"></span>
+            </a>
+
+            <form class="header-search-bar" action="{{PAGES}}explore.html" method="GET">
+                <div class="header-search-input-group">
+                    <span class="material-symbols-outlined header-search-icon">search</span>
+                    <input type="text" id="meetupSearchInput" name="search" class="header-search-input" placeholder="Search events">
+                </div>
+                <button type="submit" class="header-search-btn" aria-label="Search">
+                    <span class="material-symbols-outlined header-search-submit-icon">search</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="nav-right">
+            <a href="{{PAGES}}create-event.html" class="nav-link-group">Start an Event</a>
+            <a href="{{PAGES}}explore.html" class="nav-link-group">Explore</a>
+            <a id="navLogin" href="{{PAGES}}login.html" class="nav-link-group">Log in</a>
+            <a id="navSignup" href="{{PAGES}}signup.html" class="btn btn-primary btn-pill btn-sm">Sign up</a>
+            <button id="navLogout" class="btn btn-outline btn-pill btn-sm is-hidden">Log out</button>
+        </div>
+
+        <button class="nav-toggle-btn" aria-label="Toggle navigation">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+    </div>
+</header>
+
+<div class="mobile-nav-drawer">
+    <div class="mobile-nav-links">
+        <a href="{{ROOT}}index.html" class="mobile-nav-link">Home</a>
+        <a href="{{PAGES}}explore.html" class="mobile-nav-link">Find Events</a>
+        <a href="{{PAGES}}create-event.html" class="mobile-nav-link">Start an Event</a>
+        <a href="{{PAGES}}dashboard.html" class="mobile-nav-link">Organizer Hub</a>
+    </div>
+    <div class="mobile-drawer-auth">
+        <a href="{{PAGES}}login.html" class="btn btn-outline btn-block">Log in</a>
+        <a href="{{PAGES}}signup.html" class="btn btn-primary btn-block">Sign up</a>
+    </div>
+</div>
+`;
+
+const DEFAULT_FOOTER_HTML = `
+<footer class="footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <div class="footer-brand-wrap">
+                <a href="{{ROOT}}index.html" class="brand footer-brand-link">
+                    <span>Aavahan</span>
+                    <span class="brand-dot"></span>
+                </a>
+                <span>© 2026 Aavahan, Inc. All rights reserved.</span>
+            </div>
+            <div class="footer-legal-links">
+                <a href="{{PAGES}}explore.html" class="footer-link">Explore</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">Privacy Policy</a>
+            </div>
+        </div>
+    </div>
+</footer>
+`;
+
+// Dynamic component loader
+async function loadComponents() {
+    const isSubfolder = window.location.pathname.includes('/pages/');
+    const basePath = isSubfolder ? '../' : './';
+    const rootPath = isSubfolder ? '../' : '';
+    const pagesPath = isSubfolder ? '' : 'pages/';
+
+    const headerContainer = document.getElementById('site-header') || 
+                            document.getElementById('header-placeholder') || 
+                            document.querySelector('[data-include="header"]');
+
+    const footerContainer = document.getElementById('site-footer') || 
+                            document.getElementById('footer-placeholder') || 
+                            document.querySelector('[data-include="footer"]');
+
+    const replacePaths = (html) => {
+        return html
+            .replace(/\{\{ROOT\}\}/g, rootPath)
+            .replace(/\{\{PAGES\}\}/g, pagesPath);
+    };
+
+    if (headerContainer) {
+        let headerHtml = null;
+        try {
+            let res = await fetch(`${basePath}components/header.html`);
+            if (!res.ok) res = await fetch(`${basePath}header.html`);
+            if (res.ok) headerHtml = await res.text();
+        } catch (e) {
+            // Local file protocol fallback
         }
-    });
+
+        headerContainer.innerHTML = replacePaths(headerHtml || DEFAULT_HEADER_HTML);
+        bindHeaderEvents();
+        updateNavbar();
+    }
+
+    if (footerContainer) {
+        let footerHtml = null;
+        try {
+            let res = await fetch(`${basePath}components/footer.html`);
+            if (!res.ok) res = await fetch(`${basePath}footer.html`);
+            if (res.ok) footerHtml = await res.text();
+        } catch (e) {
+            // Local file protocol fallback
+        }
+
+        footerContainer.innerHTML = replacePaths(footerHtml || DEFAULT_FOOTER_HTML);
+    }
 }
 
-// ── Mobile Drawer Toggle ──────────────────────────────────────
-const navToggleBtn = document.querySelector('.nav-toggle-btn');
-const mobileDrawer = document.querySelector('.mobile-nav-drawer');
-if (navToggleBtn && mobileDrawer) {
-    navToggleBtn.addEventListener('click', () => {
-        mobileDrawer.classList.toggle('open');
-    });
-}
+// Bind header events
+function bindHeaderEvents() {
+    const navToggleBtn = document.querySelector('.nav-toggle-btn');
+    const mobileDrawer = document.querySelector('.mobile-nav-drawer');
+    if (navToggleBtn && mobileDrawer) {
+        navToggleBtn.onclick = () => {
+            mobileDrawer.classList.toggle('open');
+        };
+    }
 
-// ── Require login when clicking "Start an Event" ───────────────
-document.querySelectorAll('a[href*="create-event.html"]').forEach(link => {
-    link.addEventListener('click', (e) => {
-        const token = localStorage.getItem('aavahan_token') || sessionStorage.getItem('aavahan_token');
-        if (!token) {
+    const navLogoutBtn = document.getElementById('navLogout');
+    if (navLogoutBtn) {
+        navLogoutBtn.onclick = async (e) => {
             e.preventDefault();
-            const isSubfolder = window.location.pathname.includes('/pages/');
-            window.location.href = isSubfolder ? 'login.html?redirect=create-event.html' : 'pages/login.html?redirect=create-event.html';
-        }
-    });
-});
+            navLogoutBtn.disabled = true;
+            if (typeof logoutUser === 'function') {
+                await logoutUser();
+            } else {
+                clearAuth();
+                window.location.href = window.location.pathname.includes('/pages/') ? '../index.html' : 'index.html';
+            }
+        };
+    }
 
-// Run on page load
-document.addEventListener('DOMContentLoaded', updateNavbar);
-updateNavbar();
+    document.querySelectorAll('a[href*="create-event.html"]').forEach(link => {
+        link.onclick = (e) => {
+            if (!isAuthenticated()) {
+                e.preventDefault();
+                const isSubfolder = window.location.pathname.includes('/pages/');
+                window.location.href = isSubfolder ? 'login.html?redirect=create-event.html' : 'pages/login.html?redirect=create-event.html';
+            }
+        };
+    });
+}
+
+export { loadComponents, bindHeaderEvents, updateNavbar };
+
+// Initialize
+async function initApp() {
+    await loadComponents();
+    bindHeaderEvents();
+    updateNavbar();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
