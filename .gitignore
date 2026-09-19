@@ -21,6 +21,10 @@ yarn-error.log*
 *.sln
 *.sw?
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Uploads
+uploads/
+backend/uploads/
+
+# Agent configs
+.agents/
+

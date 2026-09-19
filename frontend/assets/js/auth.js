@@ -1,3 +1,6 @@
+import { setAuth } from './authService.js';
+import { registerUser, loginUser } from './api.js';
+
 // Sign Up Form Handler
 const signupForm = document.getElementById('signupForm');
 
@@ -17,23 +20,10 @@ if (signupForm) {
             const data = await registerUser(name, email, password);
 
             if (data.success) {
-                if (data.token) {
-                    localStorage.setItem('aavahan_token', data.token);
-                    sessionStorage.setItem('aavahan_token', data.token);
-                }
-                if (data.user) {
-                    localStorage.setItem('aavahan_user', JSON.stringify(data.user));
-                    sessionStorage.setItem('aavahan_user', JSON.stringify(data.user));
-                }
-                sessionStorage.setItem('aavahan_logged_in', 'true');
-                if (typeof showToast === 'function') {
-                    showToast('Account created! Redirecting...', 'success');
-                } else {
-                    alert('Account created! Redirecting...');
-                }
+                setAuth(data.token, data.user);
                 const urlParams = new URLSearchParams(window.location.search);
                 const redirectUrl = urlParams.get('redirect') || (data.user?.role === 'admin' ? 'admin.html' : '../index.html');
-                setTimeout(() => { window.location.href = redirectUrl; }, 800);
+                window.location.href = redirectUrl;
             } else {
                 alert(data.message || 'Registration failed. Please try again.');
                 submitBtn.disabled = false;
@@ -66,53 +56,20 @@ if (loginForm) {
             const data = await loginUser(email, password);
 
             if (data.success) {
-                if (data.token) {
-                    localStorage.setItem('aavahan_token', data.token);
-                    sessionStorage.setItem('aavahan_token', data.token);
-                }
-                if (data.user) {
-                    localStorage.setItem('aavahan_user', JSON.stringify(data.user));
-                    sessionStorage.setItem('aavahan_user', JSON.stringify(data.user));
-                }
-                sessionStorage.setItem('aavahan_logged_in', 'true');
-                if (typeof showToast === 'function') {
-                    showToast('Welcome back! Redirecting...', 'success');
-                } else {
-                    alert('Welcome back! Redirecting...');
-                }
+                setAuth(data.token, data.user);
                 const urlParams = new URLSearchParams(window.location.search);
                 const redirectUrl = urlParams.get('redirect') || (data.user?.role === 'admin' ? 'admin.html' : '../index.html');
-                setTimeout(() => { window.location.href = redirectUrl; }, 800);
+                window.location.href = redirectUrl;
             } else {
-                alert(data.message || 'Login failed. Please try again.');
+                alert(data.message || 'Login failed. Please check your email and password.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Log in';
             }
         } catch (error) {
-            console.warn('Backend unavailable, activating offline demo session:', error);
-            const isSubfolder = window.location.pathname.includes('/pages/');
-            const defaultRedirect = isSubfolder ? 'dashboard.html' : 'pages/dashboard.html';
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirectUrl = urlParams.get('redirect') || defaultRedirect;
-
-            const isAdmin = email.toLowerCase().includes('admin');
-            const demoUser = {
-                id: isAdmin ? 99 : 1,
-                name: isAdmin ? 'Admin Organizer' : (email.split('@')[0].replace(/[._]/g, ' ') || 'Demo Organizer'),
-                email: email,
-                role: isAdmin ? 'admin' : 'user'
-            };
-
-            localStorage.setItem('aavahan_token', isAdmin ? 'demo-admin-token' : 'demo-user-token');
-            localStorage.setItem('aavahan_user', JSON.stringify(demoUser));
-            sessionStorage.setItem('aavahan_token', isAdmin ? 'demo-admin-token' : 'demo-user-token');
-            sessionStorage.setItem('aavahan_user', JSON.stringify(demoUser));
-            sessionStorage.setItem('aavahan_logged_in', 'true');
-
-            if (typeof showToast === 'function') {
-                showToast('Logged in (Offline Demo Session)', 'info');
-            }
-            setTimeout(() => { window.location.href = redirectUrl; }, 600);
+            console.error('Authentication error:', error);
+            alert('Unable to connect to the authentication service. Please check your network and verify the server is running.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Log in';
         }
     });
 }

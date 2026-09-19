@@ -17,57 +17,14 @@
     <link rel="stylesheet" href="../assets/css/pages.css">
 </head>
 <body>
-    <!-- 1. Meetup Top Navigation Bar -->
-    <header class="navbar">
-        <div class="container nav-container">
-            <div class="nav-left">
-                <a href="../index.html" class="brand">
-                    <span>Aavahan</span>
-                    <span class="brand-dot"></span>
-                </a>
+    <!-- Header Component -->
+    <div id="site-header"></div>
 
-                <!-- Integrated Search Bar -->
-                <div class="header-search-bar">
-                    <div class="header-search-input-group" style="flex: 1.5;">
-                        <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 18px;">search</span>
-                        <input type="text" id="meetupSearchInput" class="header-search-input" placeholder="Search events or groups">
-                    </div>
-                </div>
-            </div>
-
-            <div class="nav-right">
-                <a href="create-event.html" class="nav-link-group">Start an Event</a>
-                <a href="explore.html" class="nav-link-group active" style="color: var(--primary);">Explore</a>
-                <a id="navLogin" href="login.html" class="nav-link-group">Log in</a>
-                <a id="navSignup" href="signup.html" class="btn btn-primary btn-pill btn-sm">Sign up</a>
-                <button id="navLogout" class="btn btn-outline btn-pill btn-sm" style="display:none;">Log out</button>
-            </div>
-
-            <button class="nav-toggle-btn" aria-label="Toggle navigation">
-                <span class="material-symbols-outlined">menu</span>
-            </button>
-        </div>
-    </header>
-
-    <!-- Mobile Drawer -->
-    <div class="mobile-nav-drawer">
-        <div class="mobile-nav-links">
-            <a href="../index.html" class="mobile-nav-link">Home</a>
-            <a href="explore.html" class="mobile-nav-link active">Find Events</a>
-            <a href="create-event.html" class="mobile-nav-link">Start an Event</a>
-            <a href="dashboard.html" class="mobile-nav-link">Organizer Hub</a>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-            <a href="login.html" class="btn btn-outline btn-block">Log in</a>
-            <a href="signup.html" class="btn btn-primary btn-block">Sign up</a>
-        </div>
-    </div>
-
-    <main class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
+    <main class="container explore-page">
         <!-- Page Title & Subtitle -->
-        <div style="margin-bottom: 2rem;">
-            <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">Explore Events</h1>
-            <p style="color: var(--text-muted);">Discover meetups, workshops, and activities happening across Nepal.</p>
+        <div class="explore-header">
+            <h1 class="explore-title">Explore Events</h1>
+            <p class="explore-subtitle">Discover meetups, workshops, and activities happening across Nepal.</p>
         </div>
 
         <!-- Meetup Pill Filter Bar -->
@@ -81,10 +38,7 @@
 
             <!-- Distance / Location -->
             <select id="filterCitySelect" class="meetup-filter-dropdown" aria-label="Filter by location">
-                <option value="all">Any distance (Kathmandu)</option>
-                <option value="Kathmandu">Kathmandu, Nepal</option>
-                <option value="Pokhara">Pokhara, Nepal</option>
-                <option value="Lalitpur">Lalitpur, Nepal</option>
+                <option value="all">All Locations</option>
             </select>
 
             <!-- Category -->
@@ -108,7 +62,7 @@
             </select>
 
             <!-- Sort -->
-            <select id="filterSortSelect" class="meetup-filter-dropdown" style="margin-left: auto;" aria-label="Sort by">
+            <select id="filterSortSelect" class="meetup-filter-dropdown meetup-filter-sort" aria-label="Sort by">
                 <option value="date">Sort by: Date</option>
                 <option value="price-low">Sort by: Price (Low to High)</option>
                 <option value="price-high">Sort by: Price (High to Low)</option>
@@ -116,78 +70,20 @@
         </div>
 
         <!-- Feed Results Subtitle -->
-        <div id="feedResultsCount" style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem; font-weight: 500;">
-            Loading events...
-        </div>
+        <div id="feedResultsCount" class="explore-results-count"></div>
 
         <!-- Events Feed Section (Date Grouped) -->
         <div id="meetupEventsFeedSection">
             <!-- Dynamically populated by events.js -->
         </div>
-
-        </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-top-banner">
-                <div class="footer-top-title">Host your own event on Aavahan.</div>
-                <a href="create-event.html" class="btn btn-outline" style="color: #ffffff; border-color: #ffffff;">Get Started</a>
-            </div>
-
-            <div class="footer-grid">
-                <div>
-                    <h4 class="footer-col-title">Your Account</h4>
-                    <div class="footer-links">
-                        <a href="signup.html" class="footer-link">Sign up</a>
-                        <a href="login.html" class="footer-link">Log in</a>
-                        <a href="#" class="footer-link">Help</a>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="footer-col-title">Discover</h4>
-                    <div class="footer-links">
-                        <a href="explore.html" class="footer-link">All Events</a>
-                        <a href="explore.html" class="footer-link">Calendar</a>
-                        <a href="explore.html?category=technology" class="footer-link">Topics</a>
-                        <a href="explore.html?city=Kathmandu" class="footer-link">Cities</a>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="footer-col-title">Aavahan</h4>
-                    <div class="footer-links">
-                        <a href="#" class="footer-link">About</a>
-                        <a href="#" class="footer-link">Blog</a>
-                        <a href="dashboard.html" class="footer-link">Organizer Hub</a>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="footer-col-title">Follow us</h4>
-                    <div class="footer-links">
-                        <a href="#" class="footer-link">Facebook</a>
-                        <a href="#" class="footer-link">Twitter / X</a>
-                        <a href="#" class="footer-link">Instagram</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="footer-bottom">
-                <div>© 2026 Aavahan, Inc. An event management platform prototype.</div>
-                <div style="display: flex; gap: 1.5rem;">
-                    <a href="#" class="footer-link">Terms of Service</a>
-                    <a href="#" class="footer-link">Privacy Policy</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer Component -->
+    <div id="site-footer"></div>
 
     <!-- Scripts -->
-    <script src="../assets/js/api.js"></script>
-    <script src="../assets/js/main.js"></script>
-    <script src="../assets/js/events.js"></script>
+    <script type="module" src="../assets/js/api.js"></script>
+    <script type="module" src="../assets/js/main.js"></script>
+    <script type="module" src="../assets/js/events.js"></script>
 </body>
 </html>

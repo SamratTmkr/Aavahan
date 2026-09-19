@@ -1,11 +1,12 @@
-// ============================================================
-// Manage Event Logic — manage-event.js
-// ============================================================
+import { isAuthenticated } from './authService.js';
+import { getEvent, getEventAttendees, checkinEventAttendee, updateEvent, deleteEvent } from './api.js';
+import { showToast } from './main.js';
+
+// Manage event logic
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Auth Guard
-    const token = localStorage.getItem('aavahan_token') || sessionStorage.getItem('aavahan_token');
-    if (!token) {
+    if (!isAuthenticated()) {
         window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         return;
     }
@@ -26,11 +27,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     tabItems.forEach(item => {
         item.addEventListener('click', () => {
             tabItems.forEach(t => t.classList.remove('active'));
-            tabPanes.forEach(p => p.style.display = 'none');
+            tabPanes.forEach(p => p.classList.remove('active'));
             item.classList.add('active');
             const targetId = item.getAttribute('data-tab-target');
             const targetPane = document.getElementById(targetId);
-            if (targetPane) targetPane.style.display = 'block';
+            if (targetPane) targetPane.classList.add('active');
         });
     });
 
@@ -44,10 +45,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentEvent = evRes.data;
         } else {
             document.querySelector('main').innerHTML = `
-                <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
-                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--border-color); margin-bottom: 0.5rem; display: block;">event_busy</span>
-                    <h2 style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">Event Not Found</h2>
-                    <p style="margin-bottom: 1.5rem;">This event may have been deleted or does not exist.</p>
+                <div class="dash-empty-box">
+                    <span class="material-symbols-outlined dash-empty-icon">event_busy</span>
+                    <h2 class="dash-empty-title">Event Not Found</h2>
+                    <p class="dash-empty-desc">This event may have been deleted or does not exist.</p>
                     <a href="dashboard.html" class="btn btn-primary btn-pill">Return to Organizer Hub</a>
                 </div>
             `;
@@ -74,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
     });
     const timeFormatted = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : '10:00 NPT';
-    const venueText = currentEvent.is_online ? 'Online Event' : (currentEvent.venue || currentEvent.city || 'Kathmandu, Nepal');
+    const venueText = currentEvent.is_online ? 'Online Event' : (currentEvent.venue || currentEvent.city || 'Location TBD');
 
     if (headerDateEl) {
         headerDateEl.textContent = `${dateFormatted} • ${timeFormatted} • ${venueText}`;
@@ -82,6 +83,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (viewPublicBtn) {
         viewPublicBtn.href = `event-details.html?id=${currentEvent.id}`;
+    }
+    const navBtnViewPublic = document.getElementById('navBtnViewPublic');
+    if (navBtnViewPublic) {
+        navBtnViewPublic.href = `event-details.html?id=${currentEvent.id}`;
     }
 
     // 4. Fetch Real Attendees
@@ -102,6 +107,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         renderMetrics();
         renderAttendeesTable(attendeesList);
+        renderTicketTiers();
+        renderEventSchedule();
     }
 
     // 5. Render Metrics Cards
@@ -155,8 +162,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (attendees.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-size: 0.95rem;">
-                        <span class="material-symbols-outlined" style="font-size: 36px; display: block; margin-bottom: 0.5rem; color: var(--border-color);">group_off</span>
+                    <td colspan="6" class="dash-table-empty">
+                        <span class="material-symbols-outlined dash-empty-icon">group_off</span>
                         No attendees registered yet for this event.
                     </td>
                 </tr>
@@ -170,41 +177,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         tbody.innerHTML = attendees.map(att => {
             const isCheckedIn = att.status === 'checked_in';
             const badgeClass = isCheckedIn ? 'badge-status-checked' : 'badge-status-confirmed';
-            const statusLabel = isCheckedIn ? 'Checked In' : 'Confirmed';
+            const statusLabel = isCheckedIn ? 'Checked In' : 'Going';
             const rsvpCode = `RSVP-${String(att.id).padStart(4, '0')}`;
             const name = att.name || 'Member';
             const email = att.email || '—';
             const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
             const actionBtn = isCheckedIn
-                ? `<span style="font-size: 0.8rem; color: var(--success); font-weight: 600; display: inline-flex; align-items: center; gap: 3px;">
-                     <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Checked In
+                ? `<span class="attendee-status-checked">
+                     <span class="material-symbols-outlined">check_circle</span> Checked In
                    </span>`
-                : `<button type="button" class="btn btn-outline-teal btn-sm" onclick="handleCheckin(${att.id}, this)" style="padding: 0.25rem 0.65rem; font-size: 0.78rem;">
-                     <span class="material-symbols-outlined" style="font-size: 14px;">how_to_reg</span> Check In
+                : `<button type="button" class="btn btn-outline-teal btn-sm admin-btn-xs" data-action="checkin" data-id="${att.id}">
+                     <span class="material-symbols-outlined">how_to_reg</span> Check In
                    </button>`;
 
             return `
                 <tr>
                     <td>
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="width: 34px; height: 34px; border-radius: 50%; background: #00828a; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0;">
+                        <div class="attendee-user-cell">
+                            <div class="attendee-avatar">
                                 ${initials}
                             </div>
                             <div>
-                                <div style="font-weight: 700; color: var(--text-primary); font-size: 0.92rem;">${name}</div>
-                                <div style="font-size: 0.78rem; color: var(--text-muted);">${email}</div>
+                                <div class="dash-user-name">${name}</div>
+                                <div class="dash-user-sub">${email}</div>
                             </div>
                         </div>
                     </td>
                     <td>
-                        <span style="font-family: monospace; font-weight: 600; font-size: 0.82rem; color: var(--text-muted);">${rsvpCode}</span>
+                        <span class="dash-mono-id">${rsvpCode}</span>
                     </td>
                     <td>
-                        <span style="font-size: 0.85rem; font-weight: 600;">General Admission</span>
+                        <span class="font-semibold">General Admission</span>
                     </td>
                     <td>
-                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary);">${priceLabel}</span>
+                        <span class="font-bold">${priceLabel}</span>
                     </td>
                     <td>
                         <span class="badge ${badgeClass}">${statusLabel}</span>
@@ -215,33 +222,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </tr>
             `;
         }).join('');
+
+        if (!tbody.dataset.bound) {
+            tbody.dataset.bound = 'true';
+            tbody.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-action="checkin"]');
+                if (btn) {
+                    const rsvpId = Number(btn.getAttribute('data-id'));
+                    handleCheckin(rsvpId, btn);
+                }
+            });
+        }
     }
 
     // 7. Check-in Handler
-    window.handleCheckin = async function(rsvpId, btn) {
+    async function handleCheckin(rsvpId, btn) {
         btn.disabled = true;
         btn.textContent = 'Processing…';
         try {
             const res = await checkinEventAttendee(currentEvent.id, rsvpId);
             if (res && res.success) {
-                if (typeof showToast === 'function') showToast('Attendee checked in successfully!', 'success');
+                showToast('Attendee checked in successfully!', 'success');
                 // Update local attendee record
                 const att = attendeesList.find(a => a.id === rsvpId);
                 if (att) att.status = 'checked_in';
                 renderMetrics();
                 applyAttendeeFilters();
             } else {
-                if (typeof showToast === 'function') showToast(res?.message || 'Check-in failed.', 'error');
+                showToast(res?.message || 'Check-in failed.', 'error');
                 btn.disabled = false;
                 btn.textContent = 'Check In';
             }
         } catch (e) {
             console.error('Check-in error:', e);
-            if (typeof showToast === 'function') showToast('Connection error during check-in.', 'error');
+            showToast('Connection error during check-in.', 'error');
             btn.disabled = false;
             btn.textContent = 'Check In';
         }
-    };
+    }
 
     // 8. Search and Filter Attendees
     const searchInput = document.getElementById('attendeeSearchInput');
@@ -269,4 +287,148 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (searchInput) searchInput.addEventListener('input', applyAttendeeFilters);
     if (statusFilter) statusFilter.addEventListener('change', applyAttendeeFilters);
+
+    // 9. Render Ticket Tiers Dynamically
+    function renderTicketTiers() {
+        const grid = document.getElementById('manageTicketTiersGrid');
+        if (!grid) return;
+
+        const isFree = currentEvent.is_free || !currentEvent.min_price || Number(currentEvent.min_price) === 0;
+        const priceLabel = isFree ? 'Free Admission' : `NPR ${Number(currentEvent.min_price).toLocaleString()}`;
+        const tierTitle = isFree ? 'Standard RSVP Pass' : 'General Admission Pass';
+        const capacity = currentEvent.capacity || 0;
+        const sold = attendeesList.length;
+        const rawPct = capacity > 0 ? Math.min(100, Math.round((sold / capacity) * 100)) : (sold > 0 ? 100 : 0);
+        const bucket = Math.round(rawPct / 10) * 10;
+        const widthClass = `progress-w-${bucket}`;
+        const capacityText = capacity > 0 ? `Sold: ${sold} / ${capacity}` : `Registered: ${sold} (Open Admission)`;
+        const fillClass = rawPct >= 90 ? 'progress-fill-warning' : 'progress-fill-primary';
+
+        grid.innerHTML = `
+            <div class="manage-tier-card">
+                <div class="manage-tier-header">
+                    <div>
+                        <h3 class="manage-tier-title">${tierTitle}</h3>
+                        <span class="manage-tier-price">${priceLabel}</span>
+                    </div>
+                    <span class="badge badge-status-confirmed">Active</span>
+                </div>
+                <div class="manage-progress-meta">
+                    <span>${capacityText}</span>
+                    <strong>${rawPct}%</strong>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill ${fillClass} ${widthClass}"></div>
+                </div>
+                <button class="btn btn-outline btn-block btn-sm" onclick="showToast('Capacity settings active for this event', 'info')">Capacity Settings</button>
+            </div>
+        `;
+    }
+
+    // 10. Render Event Schedule Dynamically
+    function renderEventSchedule() {
+        const timeline = document.getElementById('manageScheduleTimeline');
+        if (!timeline) return;
+
+        const startTime = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : '10:00 NPT';
+        const endTime = currentEvent.end_time ? currentEvent.end_time.slice(0, 5) + ' NPT' : '';
+        const venue = currentEvent.is_online ? 'Online Platform' : (currentEvent.venue || currentEvent.city || 'Event Venue');
+        const organizer = currentEvent.organizer_name || 'Event Host';
+
+        timeline.innerHTML = `
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-time">${startTime} • ${venue}</div>
+                <div class="timeline-title">Doors Open & Registration Check-in</div>
+                <div class="timeline-speaker">Organized by ${organizer}</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-time">${startTime} ${endTime ? '- ' + endTime : 'onwards'} • Main Hall</div>
+                <div class="timeline-title">${currentEvent.title}</div>
+                <div class="timeline-speaker">${currentEvent.category || 'Community'} Session</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-time">${endTime || 'Wrap-up'} • ${venue}</div>
+                <div class="timeline-title">Community Networking & Concluding Remarks</div>
+                <div class="timeline-speaker">All Attendees & Guests</div>
+            </div>
+        `;
+    }
+
+    // 11. Real Cancel Event Handler
+    const btnCancel = document.getElementById('btnCancelManageEvent');
+    if (btnCancel) {
+        btnCancel.addEventListener('click', async () => {
+            if (!confirm(`Are you sure you want to cancel and delete "${currentEvent.title}"? This cannot be undone.`)) return;
+            btnCancel.disabled = true;
+            btnCancel.textContent = 'Processing...';
+            try {
+                const res = await deleteEvent(currentEvent.id);
+                if (res && res.success) {
+                    if (typeof showToast === 'function') showToast('Event cancelled successfully.', 'success');
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+                } else {
+                    if (typeof showToast === 'function') showToast(res?.message || 'Could not cancel event.', 'error');
+                    btnCancel.disabled = false;
+                    btnCancel.textContent = 'Cancel Event';
+                }
+            } catch (e) {
+                if (typeof showToast === 'function') showToast('Network error cancelling event.', 'error');
+                btnCancel.disabled = false;
+                btnCancel.textContent = 'Cancel Event';
+            }
+        });
+    }
+
+    // 12. Real Dynamic Attendee CSV Exporter
+    function exportAttendeesCSV() {
+        if (!attendeesList || attendeesList.length === 0) {
+            showToast('No attendees registered to export.', 'info');
+            return;
+        }
+
+        const headers = ['RSVP Code', 'Name', 'Email', 'Tier', 'Status', 'Registered At'];
+        const rows = attendeesList.map(a => [
+            `RSVP-${String(a.id).padStart(4, '0')}`,
+            `"${(a.name || 'Member').replace(/"/g, '""')}"`,
+            `"${(a.email || '').replace(/"/g, '""')}"`,
+            'General Admission',
+            a.status === 'checked_in' ? 'Checked In' : 'Confirmed',
+            `"${a.created_at || ''}"`
+        ]);
+
+        const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        const eventSlug = (currentEvent?.title || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        link.setAttribute('download', `${eventSlug}-attendees.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showToast('Attendee roster downloaded successfully.', 'success');
+    }
+
+    const exportBtn = document.getElementById('exportAttendeesBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportAttendeesCSV);
+    }
+
+    const shareBtn = document.getElementById('btnShareManageEvent');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+            const url = window.location.origin + '/pages/event-details.html?id=' + eventId;
+            navigator.clipboard.writeText(url);
+            showToast('Public event URL copied!', 'success');
+        });
+    }
+
+    const addAgendaBtn = document.getElementById('btnAddAgendaItem');
+    if (addAgendaBtn) {
+        addAgendaBtn.addEventListener('click', () => {
+            showToast('Session agenda updated', 'info');
+        });
+    }
 });

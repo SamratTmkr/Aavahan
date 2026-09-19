@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/pages.css">
 </head>
-<body style="background-color: var(--bg-subtle);">
+<body class="bg-subtle">
     <!-- Top Navigation Bar -->
     <header class="navbar">
         <div class="container nav-container">
@@ -29,80 +29,80 @@
 
             <div class="nav-right">
                 <!-- Only shown if user role is admin -->
-                <a id="adminPanelLink" href="admin.html" class="btn btn-outline btn-pill btn-sm" style="display:none; color: var(--primary); border-color: var(--primary);">
-                    <span class="material-symbols-outlined" style="font-size: 16px;">admin_panel_settings</span>
+                <a id="adminPanelLink" href="admin.html" class="btn btn-outline btn-pill btn-sm d-none nav-admin-link">
+                    <span class="material-symbols-outlined fs-16">admin_panel_settings</span>
                     <span>Admin Panel</span>
                 </a>
                 <a href="create-event.html" class="btn btn-primary btn-pill btn-sm">+ Create Event</a>
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: 0.5rem; cursor: pointer;" title="Your account">
+                <div class="nav-user-account-wrap" title="Your account">
                     <!-- Initials avatar -->
-                    <div id="navUserAvatar" style="width:36px;height:36px;border-radius:50%;background:#00999e;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">U</div>
-                    <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                        <span id="navUserName" style="font-weight: 700; font-size: 0.9rem; line-height: 1.2;">You</span>
-                        <span id="navUserRole" style="display:none;font-size:0.68rem;font-weight:700;color:#fff;background:var(--primary);border-radius:3px;padding:0 5px;line-height:1.5;">ADMIN</span>
+                    <div id="navUserAvatar" class="nav-user-avatar">U</div>
+                    <div class="nav-user-info">
+                        <span id="navUserName" class="nav-user-name">You</span>
+                        <span id="navUserRole" class="d-none nav-user-role-badge">ADMIN</span>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="container" style="padding-top: 2.5rem; padding-bottom: 5rem;">
+    <main class="container dashboard-main">
         <!-- Group Header Card -->
-        <div style="background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
-            <div style="display: flex; gap: 1.25rem; align-items: center;">
-                <div id="dashboardGroupAvatar" style="width:72px;height:72px;border-radius:var(--radius-md);background:linear-gradient(135deg,#00999e,#006e73);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;">💻</div>
+        <div class="dash-group-header-card">
+            <div class="dash-group-header-info">
+                <div id="dashboardGroupAvatar" class="dash-group-avatar">💻</div>
                 <div>
-                    <span id="dashboardRoleBadge" class="badge" style="background-color: var(--teal-light); color: var(--teal); margin-bottom: 0.25rem;">Community Organizer</span>
-                    <h1 id="dashboardGroupTitle" style="font-size: 1.65rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.2rem;">Organizer Hub</h1>
-                    <div id="dashboardGroupSubtitle" style="font-size: 0.875rem; color: var(--text-muted);">Manage your community groups, track RSVPs, and host events in Nepal.</div>
+                    <span id="dashboardRoleBadge" class="badge badge-organizer">Community Organizer</span>
+                    <h1 id="dashboardGroupTitle" class="dash-group-title">Organizer Hub</h1>
+                    <div id="dashboardGroupSubtitle" class="dash-group-subtitle">Manage your community groups, track RSVPs, and host events in Nepal.</div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <div class="dash-group-header-actions">
                 <a id="btnHubManageGate" href="manage-event.html" class="btn btn-outline btn-pill btn-sm">Manage Attendees & Gate</a>
                 <a href="create-event.html" class="btn btn-teal btn-pill btn-sm">+ Schedule Meetup</a>
             </div>
         </div>
 
         <!-- Quick Stats Overview -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
-            <div style="background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
-                <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Upcoming Events</div>
-                <div id="statUpcomingEvents" style="font-size: 1.85rem; font-weight: 800; color: var(--text-primary); margin-top: 0.25rem;">0</div>
+        <div class="dash-stats-grid">
+            <div class="dash-stat-card">
+                <div class="dash-stat-label">Upcoming Events</div>
+                <div id="statUpcomingEvents" class="dash-stat-value">0</div>
             </div>
-            <div style="background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
-                <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Community Members</div>
-                <div id="statGroupMembers" style="font-size: 1.85rem; font-weight: 800; color: var(--teal); margin-top: 0.25rem;">0</div>
+            <div class="dash-stat-card">
+                <div class="dash-stat-label">Community Members</div>
+                <div id="statGroupMembers" class="dash-stat-value text-teal">0</div>
             </div>
-            <div style="background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
-                <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Total RSVPs Processed</div>
-                <div id="statTotalRSVPs" style="font-size: 1.85rem; font-weight: 800; color: var(--text-primary); margin-top: 0.25rem;">0</div>
+            <div class="dash-stat-card">
+                <div class="dash-stat-label">Total RSVPs Processed</div>
+                <div id="statTotalRSVPs" class="dash-stat-value">0</div>
             </div>
-            <div style="background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
-                <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Gross Ticket Volume</div>
-                <div id="statGrossSales" style="font-size: 1.85rem; font-weight: 800; color: var(--primary); margin-top: 0.25rem;">NPR 0</div>
+            <div class="dash-stat-card">
+                <div class="dash-stat-label">Gross Ticket Volume</div>
+                <div id="statGrossSales" class="dash-stat-value text-primary">NPR 0</div>
             </div>
         </div>
 
         <!-- Upcoming Scheduled Meetups -->
-        <div style="background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.75rem; margin-bottom: 2.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
-                    <h2 style="font-size: 1.35rem; font-weight: 800; margin: 0;">Your Scheduled Meetups</h2>
-                    <span id="dashboardEventsCountBadge" class="badge badge-status-confirmed" style="font-size: 0.75rem;">0</span>
+        <div class="dash-section-card mb-2-5">
+            <div class="dash-section-header">
+                <div class="dash-section-title-wrap">
+                    <h2 class="dash-section-title">Your Scheduled Meetups</h2>
+                    <span id="dashboardEventsCountBadge" class="badge badge-status-confirmed fs-xs">0</span>
                 </div>
                 <a href="create-event.html" class="section-header-link">+ Schedule an event</a>
             </div>
 
-            <div id="dashboardUpcomingEventsList" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div id="dashboardUpcomingEventsList" class="dash-events-list">
                 <!-- Populated dynamically by dashboard.js -->
             </div>
         </div>
 
         <!-- Recent Attendees Feed -->
-        <div style="background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.75rem;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.25rem;">
-                <h2 style="font-size: 1.35rem; font-weight: 800; margin: 0;">Recent Event RSVPs</h2>
+        <div class="dash-section-card">
+            <div class="dash-section-header mb-1-25">
+                <h2 class="dash-section-title">Recent Event RSVPs</h2>
                 <a href="manage-event.html" class="section-header-link">Open Gate Check-in</a>
             </div>
 
@@ -124,49 +124,39 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-bottom">
-                <div>© 2026 Aavahan, Inc. An event management platform prototype.</div>
-                <div style="display: flex; gap: 1.5rem;">
-                    <a href="#" class="footer-link">Terms of Service</a>
-                    <a href="#" class="footer-link">Privacy Policy</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer Component -->
+    <div id="site-footer"></div>
 
     <!-- Scripts -->
-    <script src="../assets/js/api.js"></script>
-    <script src="../assets/js/main.js"></script>
-    <script src="../assets/js/auth.js"></script>
-    <script src="../assets/js/dashboard.js"></script>
-    <script>
+    <script type="module" src="../assets/js/api.js"></script>
+    <script type="module" src="../assets/js/main.js"></script>
+    <script type="module" src="../assets/js/auth.js"></script>
+    <script type="module" src="../assets/js/dashboard.js"></script>
+    <script type="module">
+        import { getUser } from '../assets/js/authService.js';
+
         // Hydrate nav from stored session
         (function() {
-            try {
-                const user = JSON.parse(localStorage.getItem('aavahan_user') || '{}');
-                const name = user.name || '';
-                const role = user.role || 'user';
-                const nameEl = document.getElementById('navUserName');
-                const avatarEl = document.getElementById('navUserAvatar');
-                const roleEl = document.getElementById('navUserRole');
-                const adminLink = document.getElementById('adminPanelLink');
+            const user = getUser() || {};
+            const name = user.name || '';
+            const role = user.role || 'user';
+            const nameEl = document.getElementById('navUserName');
+            const avatarEl = document.getElementById('navUserAvatar');
+            const roleEl = document.getElementById('navUserRole');
+            const adminLink = document.getElementById('adminPanelLink');
 
-                if (name && nameEl) {
-                    const first = name.split(' ')[0];
-                    nameEl.textContent = first;
-                }
-                if (avatarEl && name) {
-                    const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-                    avatarEl.textContent = initials;
-                }
-                if (role === 'admin') {
-                    if (roleEl) roleEl.style.display = 'block';
-                    if (adminLink) adminLink.style.display = 'flex';
-                }
-            } catch(e) {}
+            if (name && nameEl) {
+                const first = name.split(' ')[0];
+                nameEl.textContent = first;
+            }
+            if (avatarEl && name) {
+                const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                avatarEl.textContent = initials;
+            }
+            if (role === 'admin') {
+                if (roleEl) roleEl.classList.remove('d-none');
+                if (adminLink) adminLink.classList.remove('d-none');
+            }
         })();
     </script>
 </body>

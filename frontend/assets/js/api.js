@@ -1,8 +1,10 @@
+import { getToken, clearAuth } from './authService.js';
+
 const API = 'http://localhost:3001/api/v1';
 
 // Returns headers including Bearer token if stored
 function getHeaders() {
-    const token = localStorage.getItem('aavahan_token') || sessionStorage.getItem('aavahan_token');
+    const token = getToken();
     return {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -39,10 +41,7 @@ async function logoutUser() {
     } catch (e) {
         console.warn('Logout API error:', e);
     }
-    localStorage.removeItem('aavahan_token');
-    localStorage.removeItem('aavahan_user');
-    sessionStorage.removeItem('aavahan_token');
-    sessionStorage.removeItem('aavahan_logged_in');
+    clearAuth();
     
     // Redirect to public homepage
     const isSubfolder = window.location.pathname.includes('/pages/');
@@ -60,11 +59,16 @@ async function createGroup(data) {
 }
 
 async function createEvent(data) {
+    const isFormData = data instanceof FormData;
+    const headers = getHeaders();
+    if (isFormData) {
+        delete headers['Content-Type'];
+    }
     const res = await fetch(`${API}/events`, {
         method: 'POST',
-        headers: getHeaders(),
+        headers: headers,
         credentials: 'include',
-        body: JSON.stringify(data),
+        body: isFormData ? data : JSON.stringify(data),
     });
     return res.json();
 }
@@ -103,6 +107,33 @@ async function rsvpToEvent(eventId) {
     return res.json();
 }
 
+async function cancelEventRsvp(eventId) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/rsvp`, {
+            method: 'DELETE',
+            headers: getHeaders(),
+            credentials: 'include',
+        });
+        return await res.json();
+    } catch (e) {
+        console.warn('API cancelEventRsvp error:', e);
+        return { success: false, message: 'Network error while cancelling registration' };
+    }
+}
+
+async function getMyActivities() {
+    try {
+        const res = await fetch(`${API}/events/user/my-activities`, {
+            headers: getHeaders(),
+            credentials: 'include'
+        });
+        return await res.json();
+    } catch (e) {
+        console.warn('API getMyActivities error:', e);
+        return { success: false, data: { upcoming: [], past: [], total: 0 } };
+    }
+}
+
 async function getEventAttendees(eventId) {
     const res = await fetch(`${API}/events/${eventId}/rsvps`, { headers: getHeaders() });
     return res.json();
@@ -136,7 +167,7 @@ async function getEventCities() {
     }
 }
 
-// ── Organizer Hub Helpers ─────────────────────────────────────
+// Organizer hub helpers
 async function getMyOrganizerEvents() {
     try {
         const res = await fetch(`${API}/events/organizer/mine`, {
@@ -176,6 +207,21 @@ async function getMyOrganizerGroups() {
     }
 }
 
+async function updateEvent(id, eventData) {
+    try {
+        const res = await fetch(`${API}/events/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify(eventData),
+        });
+        return await res.json();
+    } catch (e) {
+        console.warn('API updateEvent error:', e);
+        return { success: false, message: e.message };
+    }
+}
+
 async function deleteEvent(eventId) {
     try {
         const res = await fetch(`${API}/events/${eventId}`, {
@@ -190,7 +236,7 @@ async function deleteEvent(eventId) {
     }
 }
 
-// ── Admin helpers ────────────────────────────────────────────
+// Admin helpers
 async function getAdminUsers(search = null) {
     const url = search ? `${API}/users?search=${encodeURIComponent(search)}` : `${API}/users`;
     const res = await fetch(url, { headers: getHeaders(), credentials: 'include' });
@@ -252,3 +298,32 @@ async function getAdminTransactions() {
         return { success: false, data: [] };
     }
 }
+
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    getEvents,
+    getEvent,
+    createEvent,
+    rsvpToEvent,
+    cancelEventRsvp,
+    getMyActivities,
+    getEventAttendees,
+    checkinEventAttendee,
+    searchEvents,
+    getEventCities,
+    deleteEvent,
+    updateEvent,
+    getMyOrganizerEvents,
+    getMyOrganizerRSVPs,
+    getAdminUsers,
+    updateUserRole,
+    adminDeleteUser,
+    adminDeleteEvent,
+    getGroups,
+    adminDeleteGroup,
+    getAdminTransactions
+};
+
