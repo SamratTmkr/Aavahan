@@ -113,6 +113,14 @@
                 <span class="material-symbols-outlined icon-tab">schedule</span>
                 <span>Schedule & Stages</span>
             </div>
+            <div class="manage-tab-item" data-tab-target="tabAnnouncements">
+                <span class="material-symbols-outlined icon-tab">campaign</span>
+                <span>Announcements & Broadcasts</span>
+            </div>
+            <div class="manage-tab-item" data-tab-target="tabTeam">
+                <span class="material-symbols-outlined icon-tab">shield_person</span>
+                <span>Team & Co-Managers</span>
+            </div>
             <div class="manage-tab-item" data-tab-target="tabSettings">
                 <span class="material-symbols-outlined icon-tab">settings</span>
                 <span>Event Settings</span>
@@ -140,6 +148,10 @@
                     <button id="exportAttendeesBtn" class="btn btn-outline btn-sm">
                         <span class="material-symbols-outlined">download</span>
                         <span>Export CSV</span>
+                    </button>
+                    <button id="btnAddManualAttendeeBtn" class="btn btn-primary btn-sm">
+                        <span class="material-symbols-outlined">person_add</span>
+                        <span>+ Add Attendee</span>
                     </button>
                 </div>
             </div>
@@ -187,6 +199,64 @@
             </div>
         </div>
 
+        <!-- TAB: Announcements & Broadcasts -->
+        <div class="manage-tab-pane" id="tabAnnouncements">
+            <div class="manage-settings-card">
+                <h3 class="manage-settings-title">Post Official Broadcast</h3>
+                <p class="manage-panel-desc mb-1-5">Broadcast verified one-way updates to all attendees (e.g. WiFi credentials, room/schedule changes, kickoff alerts).</p>
+
+                <form id="formPostAnnouncement" class="broadcast-composer-form mb-2">
+                    <div class="form-group">
+                        <label class="form-label" for="announcementTitleInput">Headline / Title *</label>
+                        <input type="text" id="announcementTitleInput" class="form-input" placeholder="e.g. Hackathon Kickoff & API Keys Released" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="announcementMessageInput">Message Body *</label>
+                        <textarea id="announcementMessageInput" class="form-textarea" rows="4" placeholder="Write your announcement details..." required></textarea>
+                    </div>
+
+                    <button type="submit" id="btnSubmitAnnouncement" class="btn btn-primary btn-pill">
+                        <span class="material-symbols-outlined">campaign</span>
+                        <span>Broadcast to Attendees</span>
+                    </button>
+                </form>
+
+                <hr class="manage-divider my-2">
+                <h4 class="manage-sub-heading mb-1">Previous Announcements</h4>
+                <div id="manageAnnouncementsList" class="announcements-manage-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Team & Co-Managers -->
+        <div class="manage-tab-pane" id="tabTeam">
+            <div class="manage-settings-card">
+                <h3 class="manage-settings-title">Event Team & Co-Managers</h3>
+                <p class="manage-panel-desc mb-1-5">Add team members or volunteers by email. Co-managers can check in attendees at the gate and post official broadcasts.</p>
+
+                <form id="formAddManager" class="team-add-form mb-2">
+                    <div class="form-group mb-1">
+                        <label class="form-label" for="managerEmailInput">Team Member's Registered Email *</label>
+                        <div class="d-flex gap-1">
+                            <input type="email" id="managerEmailInput" class="form-input" placeholder="e.g. volunteer@aavahan.com" required>
+                            <button type="submit" id="btnAddManagerSubmit" class="btn btn-primary btn-pill" style="white-space: nowrap;">
+                                <span class="material-symbols-outlined">person_add</span>
+                                <span>Add Co-Manager</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <hr class="manage-divider my-2">
+                <h4 class="manage-sub-heading mb-1">Active Co-Managers</h4>
+                <div id="manageTeamList" class="team-roster-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
         <!-- TAB 4: Settings -->
         <div class="manage-tab-pane" id="tabSettings">
             <div class="manage-settings-card">
@@ -222,6 +292,26 @@
             </div>
         </div>
     </main>
+
+    <!-- Manual Attendee Modal -->
+    <div id="manualAttendeeModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Register Attendee by Email</h3>
+                <button type="button" class="modal-close" id="btnCloseManualRsvp">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="manage-panel-desc mb-1-5">Enter a registered user's email address to manually add them to this event's attendee roster.</p>
+                <form id="formManualAttendee">
+                    <div class="form-group mb-1-5">
+                        <label class="form-label" for="manualAttendeeEmail">User Email *</label>
+                        <input type="email" id="manualAttendeeEmail" class="form-input" placeholder="e.g. attendee@aavahan.com" required>
+                    </div>
+                    <button type="submit" id="btnSubmitManualAttendee" class="btn btn-primary btn-pill btn-block">Confirm Registration</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer Component -->
     <div id="site-footer"></div>

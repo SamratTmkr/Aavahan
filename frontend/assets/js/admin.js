@@ -397,7 +397,7 @@ async function loadAdminTransactions() {
             '</tr>';
         }).join('');
     } catch (e) {
-        console.warn('Error loading admin transactions:', e);
+        console.log('Error loading admin transactions:', e);
         tableEmpty('adminTransactionsTableBody', 7, 'Failed to load transaction records.');
     }
 }

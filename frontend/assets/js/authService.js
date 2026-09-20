@@ -11,7 +11,7 @@ export function getUser() {
         const raw = localStorage.getItem('aavahan_user') || sessionStorage.getItem('aavahan_user');
         return raw ? JSON.parse(raw) : null;
     } catch (e) {
-        console.warn('AuthService: Failed to parse user object from storage', e);
+        console.log('AuthService: Failed to parse user object from storage', e);
         return null;
     }
 }

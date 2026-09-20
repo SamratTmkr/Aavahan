@@ -239,7 +239,7 @@
                         }
                     }
                 } catch (err) {
-                    console.warn('[Home] Could not load events from API, falling back to curated highlights:', err);
+                    console.log('[Home] Could not load events from API, falling back to curated highlights:', err);
                 }
 
                 // If no events in database, show clean empty state
@@ -348,7 +348,7 @@
                         }
                     }
                 } catch (e) {
-                    console.warn('[Home] Could not fetch city statistics:', e);
+                    console.log('[Home] Could not fetch city statistics:', e);
                 }
 
                 if (popularCities.length === 0) {

@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } catch (e) {
-            console.warn('Could not dynamically load cities:', e);
+            console.log('Could not dynamically load cities:', e);
         }
     }
 

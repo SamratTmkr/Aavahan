@@ -76,7 +76,7 @@ async function loadDashboardData() {
             }
         }
     } catch (e) {
-        console.warn('Could not load organizer group info:', e);
+        console.log('Could not load organizer group info:', e);
         if (groupTitleEl) groupTitleEl.textContent = `${userName}'s Organizer Hub`;
     }
 
@@ -95,7 +95,7 @@ async function loadDashboardData() {
             }
         }
     } catch (e) {
-        console.warn('Error fetching organizer events:', e);
+        console.log('Error fetching organizer events:', e);
     }
 
     // 4. Update Quick Stats Overview
@@ -209,7 +209,7 @@ async function loadDashboardData() {
                 }
             }
         } catch (e) {
-            console.warn('Error fetching recent RSVPs:', e);
+            console.log('Error fetching recent RSVPs:', e);
         }
 
         if (rsvps.length === 0) {
