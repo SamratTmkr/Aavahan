@@ -43,9 +43,10 @@ app.use('/api/v1/groups', groupRouter);
 // Global error handling middleware (must be after all routes)
 app.use(errorMiddleware);
 
-app.listen(3001, async () => {
-  log('api is running on localhost:3001');
-  console.log('api is running on localhost:3001');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  log(`api is running on port ${PORT}`);
+  console.log(`api is running on port ${PORT}`);
 
   await connectToDatabase();
 });
