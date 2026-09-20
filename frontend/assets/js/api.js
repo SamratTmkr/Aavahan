@@ -39,7 +39,7 @@ async function logoutUser() {
             credentials: 'include',
         });
     } catch (e) {
-        console.warn('Logout API error:', e);
+        console.log('Logout API error:', e);
     }
     clearAuth();
     
@@ -83,7 +83,7 @@ async function getEvents(city = null, search = null) {
         const res = await fetch(url, { headers: getHeaders() });
         return await res.json();
     } catch (e) {
-        console.warn('API getEvents error:', e);
+        console.log('API getEvents error:', e);
         return { success: false, data: [] };
     }
 }
@@ -93,7 +93,7 @@ async function getEvent(id) {
         const res = await fetch(`${API}/events/${id}`, { headers: getHeaders() });
         return await res.json();
     } catch (e) {
-        console.warn('API getEvent error:', e);
+        console.log('API getEvent error:', e);
         return { success: false, message: 'Event not found' };
     }
 }
@@ -116,7 +116,7 @@ async function cancelEventRsvp(eventId) {
         });
         return await res.json();
     } catch (e) {
-        console.warn('API cancelEventRsvp error:', e);
+        console.log('API cancelEventRsvp error:', e);
         return { success: false, message: 'Network error while cancelling registration' };
     }
 }
@@ -129,7 +129,7 @@ async function getMyActivities() {
         });
         return await res.json();
     } catch (e) {
-        console.warn('API getMyActivities error:', e);
+        console.log('API getMyActivities error:', e);
         return { success: false, data: { upcoming: [], past: [], total: 0 } };
     }
 }
@@ -148,7 +148,7 @@ async function checkinEventAttendee(eventId, rsvpId) {
         });
         return await res.json();
     } catch (e) {
-        console.warn('API checkinEventAttendee error:', e);
+        console.log('API checkinEventAttendee error:', e);
         return { success: false, message: 'Check-in failed' };
     }
 }
@@ -162,7 +162,7 @@ async function getEventCities() {
         const res = await fetch(`${API}/events/cities`, { headers: getHeaders() });
         return await res.json();
     } catch (e) {
-        console.warn('API getEventCities error:', e);
+        console.log('API getEventCities error:', e);
         return { success: false, data: [] };
     }
 }
@@ -176,7 +176,7 @@ async function getMyOrganizerEvents() {
         });
         return await res.json();
     } catch (e) {
-        console.warn('API getMyOrganizerEvents error:', e);
+        console.log('API getMyOrganizerEvents error:', e);
         return { success: false, data: [], stats: { totalEvents: 0, totalRSVPs: 0, grossVolume: 0 } };
     }
 }
@@ -189,7 +189,7 @@ async function getMyOrganizerRSVPs() {
         });
         return await res.json();
     } catch (e) {
-        console.warn('API getMyOrganizerRSVPs error:', e);
+        console.log('API getMyOrganizerRSVPs error:', e);
         return { success: false, data: [] };
     }
 }
@@ -202,7 +202,7 @@ async function getMyOrganizerGroups() {
         });
         return await res.json();
     } catch (e) {
-        console.warn('API getMyOrganizerGroups error:', e);
+        console.log('API getMyOrganizerGroups error:', e);
         return { success: false, data: [] };
     }
 }
@@ -217,7 +217,7 @@ async function updateEvent(id, eventData) {
         });
         return await res.json();
     } catch (e) {
-        console.warn('API updateEvent error:', e);
+        console.log('API updateEvent error:', e);
         return { success: false, message: e.message };
     }
 }
@@ -231,7 +231,7 @@ async function deleteEvent(eventId) {
         });
         return await res.json();
     } catch (e) {
-        console.warn('API deleteEvent error:', e);
+        console.log('API deleteEvent error:', e);
         return { success: false, message: e.message };
     }
 }
@@ -294,11 +294,106 @@ async function getAdminTransactions() {
         });
         return await res.json();
     } catch (e) {
-        console.warn('API getAdminTransactions error:', e);
+        console.log('API getAdminTransactions error:', e);
         return { success: false, data: [] };
     }
 }
 
+// Announcements API
+async function getEventAnnouncements(eventId) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/announcements`, { headers: getHeaders() });
+        return await res.json();
+    } catch (e) {
+        console.log('API getEventAnnouncements error:', e);
+        return { success: false, data: [] };
+    }
+}
+
+async function createEventAnnouncement(eventId, announcementData) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/announcements`, {
+            method: 'POST',
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify(announcementData)
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API createEventAnnouncement error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+async function deleteEventAnnouncement(eventId, announcementId) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/announcements/${announcementId}`, {
+            method: 'DELETE',
+            headers: getHeaders(),
+            credentials: 'include'
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API deleteEventAnnouncement error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+// Co-managers API
+async function getEventManagers(eventId) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/managers`, { headers: getHeaders(), credentials: 'include' });
+        return await res.json();
+    } catch (e) {
+        console.log('API getEventManagers error:', e);
+        return { success: false, data: [] };
+    }
+}
+
+async function addEventManager(eventId, email) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/managers`, {
+            method: 'POST',
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify({ email })
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API addEventManager error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+async function removeEventManager(eventId, userId) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/managers/${userId}`, {
+            method: 'DELETE',
+            headers: getHeaders(),
+            credentials: 'include'
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API removeEventManager error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+// Manual attendee RSVP by email
+async function addManualAttendee(eventId, email) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/manual-rsvp`, {
+            method: 'POST',
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify({ email })
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API addManualAttendee error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
 
 export {
     registerUser,
@@ -324,6 +419,13 @@ export {
     adminDeleteEvent,
     getGroups,
     adminDeleteGroup,
-    getAdminTransactions
+    getAdminTransactions,
+    getEventAnnouncements,
+    createEventAnnouncement,
+    deleteEventAnnouncement,
+    getEventManagers,
+    addEventManager,
+    removeEventManager,
+    addManualAttendee
 };
 

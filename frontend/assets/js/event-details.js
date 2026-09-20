@@ -1,5 +1,5 @@
 import { getUser, isAuthenticated } from './authService.js';
-import { getEvent, getEventAttendees, rsvpToEvent, cancelEventRsvp } from './api.js';
+import { getEvent, getEventAttendees, rsvpToEvent, cancelEventRsvp, getEventAnnouncements } from './api.js';
 import { showToast } from './main.js';
 
 // Event details page logic
@@ -181,6 +181,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Hydrate Attendees Faces
     loadAttendeesList(currentEvent.id);
+
+    // Hydrate Announcements
+    loadEventAnnouncements(currentEvent.id);
 
     // 5. RSVP Modal Controls
     const rsvpModal = document.getElementById('meetupRsvpModal');
@@ -417,6 +420,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         grid.innerHTML = `
             <div class="attendee-empty-text">
                 No attendees registered yet. Be the first to RSVP!
+            </div>
+        `;
+    }
+
+    // Load Event Announcements
+    async function loadEventAnnouncements(eventId) {
+        const feed = document.getElementById('eventAnnouncementsFeed');
+        const countBadge = document.getElementById('announcementsCountBadge');
+        if (!feed) return;
+
+        try {
+            const res = await getEventAnnouncements(eventId);
+            if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+                if (countBadge) countBadge.textContent = res.data.length;
+
+                feed.innerHTML = res.data.map(item => {
+                    const authorName = item.author_name || 'Event Host';
+                    const authorInitials = authorName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'EH';
+                    const timeFormatted = new Date(item.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    });
+
+                    return `
+                        <div class="announcement-item-card">
+                            <div class="announcement-card-header">
+                                <div class="d-flex items-center gap-0-75">
+                                    <div class="announcement-avatar">${authorInitials}</div>
+                                    <div>
+                                        <div class="d-flex items-center gap-0-5">
+                                            <span class="announcement-author">${authorName}</span>
+                                            <span class="announcement-verified-badge">
+                                                <span class="material-symbols-outlined icon-verified">verified</span> Host
+                                            </span>
+                                        </div>
+                                        <span class="announcement-time">${timeFormatted}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <h4 class="announcement-title">${item.title}</h4>
+                            <div class="announcement-message-text">${(item.message || '').replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+                }).join('');
+                return;
+            }
+        } catch (err) {
+            console.log('Error loading announcements:', err);
+        }
+
+        if (countBadge) countBadge.textContent = '0';
+        feed.innerHTML = `
+            <div class="announcement-empty-state">
+                <span class="material-symbols-outlined announcement-empty-icon">campaign</span>
+                <p class="announcement-empty-text">No announcements posted yet. Official updates from the host will appear here.</p>
             </div>
         `;
     }

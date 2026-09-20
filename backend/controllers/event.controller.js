@@ -6,7 +6,7 @@ import fs from 'fs';
 const cleanupUploadedFile = (file) => {
     if (file && file.path) {
         fs.unlink(file.path, (err) => {
-            if (err) console.warn('Failed to cleanup uploaded file:', err.message);
+            if (err) console.log('Failed to cleanup uploaded file:', err.message);
         });
     }
 };
@@ -322,22 +322,36 @@ export const getMyOrganizerRSVPs = async (req, res) => {
     }
 };
 
-// PATCH /api/v1/events/:id/rsvps/:rsvpId/checkin — Check in an attendee (organizer only)
+// PATCH /api/v1/events/:id/rsvps/:rsvpId/checkin — Check in an attendee (organizer or co-manager)
 export const checkinAttendee = async (req, res) => {
     try {
         const { id, rsvpId } = req.params;
-        const [events] = await pool.execute('SELECT organizer_id FROM events WHERE id = ?', [id]);
-        if (!events.length) return res.json({ success: false, message: 'Event not found' });
-        if (events[0].organizer_id !== req.user.id && req.user.role !== 'admin') {
-            return res.json({ success: false, message: 'Not authorized' });
+
+        const [event] = await pool.execute('SELECT organizer_id FROM events WHERE id = ?', [id]);
+        if (!event.length) return res.status(404).json({ success: false, message: 'Event not found' });
+
+        const [manager] = await pool.execute(
+            'SELECT id FROM event_managers WHERE event_id = ? AND user_id = ?',
+            [id, req.user.id]
+        );
+
+        const isOrganizer = event[0].organizer_id === req.user.id;
+        const isManager = manager.length > 0;
+        const isAdmin = req.user.role === 'admin';
+
+        if (!isOrganizer && !isManager && !isAdmin) {
+            return res.status(403).json({ success: false, message: 'Not authorized to check in attendees' });
         }
+
         await pool.execute(
             'UPDATE rsvps SET status = ? WHERE id = ? AND event_id = ?',
             ['checked_in', rsvpId, id]
         );
+        console.log(`Attendee ${rsvpId} checked in for event ${id}`);
         return res.json({ success: true, message: 'Attendee marked as checked in' });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.log('Error checking in attendee:', error.message);
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -412,7 +426,218 @@ export const cancelRsvp = async (req, res) => {
 
         return res.json({ success: true, message: 'Registration cancelled successfully.' });
     } catch (error) {
+        console.log('Error cancelling RSVP:', error.message);
         return res.json({ success: false, message: error.message });
+    }
+};
+
+// GET /api/v1/events/:id/managers — List co-managers for an event
+export const listEventManagers = async (req, res) => {
+    try {
+        const eventId = req.params.id;
+
+        const [rows] = await pool.execute(
+            `SELECT m.id, m.event_id, m.user_id, m.created_at,
+                    u.name, u.email, u.avatar_url
+             FROM event_managers m
+             JOIN users u ON m.user_id = u.id
+             WHERE m.event_id = ?
+             ORDER BY m.created_at ASC`,
+            [eventId]
+        );
+        return res.json({ success: true, data: rows });
+    } catch (error) {
+        console.log('Error fetching event managers:', error.message);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// POST /api/v1/events/:id/managers — Add a co-manager by email (Organizer only)
+export const addEventManager = async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        // Verify organizer permissions
+        const [event] = await pool.execute(
+            'SELECT organizer_id FROM events WHERE id = ?',
+            [eventId]
+        );
+
+        if (!event.length) {
+            return res.status(404).json({ success: false, message: 'Event not found' });
+        }
+
+        const isOrganizer = event[0].organizer_id === req.user.id;
+        const isAdmin = req.user.role === 'admin';
+
+        if (!isOrganizer && !isAdmin) {
+            return res.status(403).json({ success: false, message: 'Only the event organizer can add co-managers' });
+        }
+
+        // Find user by email
+        const [users] = await pool.execute(
+            'SELECT id, name, email FROM users WHERE email = ?',
+            [email]
+        );
+
+        if (!users.length) {
+            return res.status(404).json({ success: false, message: 'No registered user found with this email' });
+        }
+
+        const targetUser = users[0];
+
+        // Cannot add self if already the primary organizer
+        if (targetUser.id === event[0].organizer_id) {
+            return res.status(400).json({ success: false, message: 'This user is already the event organizer' });
+        }
+
+        // Check if already a co-manager
+        const [existing] = await pool.execute(
+            'SELECT id FROM event_managers WHERE event_id = ? AND user_id = ?',
+            [eventId, targetUser.id]
+        );
+
+        if (existing.length > 0) {
+            return res.status(409).json({ success: false, message: 'This user is already a co-manager' });
+        }
+
+        await pool.execute(
+            `INSERT INTO event_managers (event_id, user_id, added_by)
+             VALUES (?, ?, ?)`,
+            [eventId, targetUser.id, req.user.id]
+        );
+
+        console.log(`Co-manager ${email} added to event ${eventId}`);
+
+        return res.status(201).json({
+            success: true,
+            message: `${targetUser.name} added as co-manager successfully`,
+            data: { user_id: targetUser.id, name: targetUser.name, email: targetUser.email }
+        });
+    } catch (error) {
+        console.log('Error adding co-manager:', error.message);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// DELETE /api/v1/events/:id/managers/:userId — Remove a co-manager (Organizer only)
+export const removeEventManager = async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const userId = req.params.userId;
+
+        const [event] = await pool.execute(
+            'SELECT organizer_id FROM events WHERE id = ?',
+            [eventId]
+        );
+
+        if (!event.length) {
+            return res.status(404).json({ success: false, message: 'Event not found' });
+        }
+
+        const isOrganizer = event[0].organizer_id === req.user.id;
+        const isAdmin = req.user.role === 'admin';
+
+        if (!isOrganizer && !isAdmin) {
+            return res.status(403).json({ success: false, message: 'Only the event organizer can remove co-managers' });
+        }
+
+        await pool.execute(
+            'DELETE FROM event_managers WHERE event_id = ? AND user_id = ?',
+            [eventId, userId]
+        );
+
+        console.log(`Co-manager ${userId} removed from event ${eventId}`);
+        return res.json({ success: true, message: 'Co-manager removed successfully' });
+    } catch (error) {
+        console.log('Error removing co-manager:', error.message);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// POST /api/v1/events/:id/manual-rsvp — Manually add registered user as attendee by email
+export const addManualAttendee = async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        // Check if event exists
+        const [event] = await pool.execute('SELECT organizer_id FROM events WHERE id = ?', [eventId]);
+        if (!event.length) {
+            return res.status(404).json({ success: false, message: 'Event not found' });
+        }
+
+        // Check permission (organizer, co-manager, admin)
+        const [manager] = await pool.execute(
+            'SELECT id FROM event_managers WHERE event_id = ? AND user_id = ?',
+            [eventId, req.user.id]
+        );
+
+        const isOrganizer = event[0].organizer_id === req.user.id;
+        const isManager = manager.length > 0;
+        const isAdmin = req.user.role === 'admin';
+
+        if (!isOrganizer && !isManager && !isAdmin) {
+            return res.status(403).json({ success: false, message: 'Not authorized to manage attendees' });
+        }
+
+        // Find user by email
+        const [users] = await pool.execute(
+            'SELECT id, name, email FROM users WHERE email = ?',
+            [email]
+        );
+
+        if (!users.length) {
+            return res.status(404).json({
+                success: false,
+                message: 'No registered user found with this email'
+            });
+        }
+
+        const targetUser = users[0];
+
+        // Check if already registered
+        const [existing] = await pool.execute(
+            'SELECT id FROM rsvps WHERE event_id = ? AND user_id = ?',
+            [eventId, targetUser.id]
+        );
+
+        if (existing.length) {
+            return res.status(409).json({
+                success: false,
+                message: 'User is already registered'
+            });
+        }
+
+        await pool.execute(
+            `INSERT INTO rsvps (event_id, user_id, status)
+             VALUES (?, ?, 'confirmed')`,
+            [eventId, targetUser.id]
+        );
+
+        await pool.execute(
+            'UPDATE events SET attendee_count = attendee_count + 1 WHERE id = ?',
+            [eventId]
+        );
+
+        console.log(`Manual attendee ${email} registered for event ${eventId}`);
+
+        return res.status(201).json({
+            success: true,
+            message: `${targetUser.name} registered as attendee successfully`
+        });
+    } catch (error) {
+        console.log('Error adding manual attendee:', error.message);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 

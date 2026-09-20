@@ -1,5 +1,18 @@
 import { isAuthenticated } from './authService.js';
-import { getEvent, getEventAttendees, checkinEventAttendee, updateEvent, deleteEvent } from './api.js';
+import { 
+    getEvent, 
+    getEventAttendees, 
+    checkinEventAttendee, 
+    updateEvent, 
+    deleteEvent,
+    getEventAnnouncements, 
+    createEventAnnouncement, 
+    deleteEventAnnouncement, 
+    getEventManagers, 
+    addEventManager, 
+    removeEventManager, 
+    addManualAttendee 
+} from './api.js';
 import { showToast } from './main.js';
 
 // Manage event logic
@@ -89,8 +102,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         navBtnViewPublic.href = `event-details.html?id=${currentEvent.id}`;
     }
 
-    // 4. Fetch Real Attendees
+    // 4. Fetch Real Attendees, Announcements, and Team
     await loadAttendees();
+    await loadManageAnnouncements();
+    await loadManageTeam();
 
     async function loadAttendees() {
         try {
@@ -101,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 attendeesList = [];
             }
         } catch (err) {
-            console.warn('Error fetching event attendees:', err);
+            console.log('Error fetching event attendees:', err);
             attendeesList = [];
         }
 
@@ -429,6 +444,277 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (addAgendaBtn) {
         addAgendaBtn.addEventListener('click', () => {
             showToast('Session agenda updated', 'info');
+        });
+    }
+
+    // 13. Announcements Management
+    async function loadManageAnnouncements() {
+        const container = document.getElementById('manageAnnouncementsList');
+        if (!container) return;
+
+        try {
+            const res = await getEventAnnouncements(eventId);
+            if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+                container.innerHTML = res.data.map(item => {
+                    const timeFormatted = new Date(item.created_at).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+                    });
+                    return `
+                        <div class="announcement-manage-item">
+                            <div class="d-flex justify-between items-start">
+                                <div>
+                                    <h4 class="announcement-item-title">${item.title}</h4>
+                                    <span class="announcement-meta-time">Posted by ${item.author_name || 'Host'} • ${timeFormatted}</span>
+                                </div>
+                                <button type="button" class="btn btn-outline btn-outline-danger btn-sm" data-action="delete-announcement" data-id="${item.id}">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                            <p class="announcement-item-body">${(item.message || '').replace(/\n/g, '<br>')}</p>
+                        </div>
+                    `;
+                }).join('');
+                return;
+            }
+        } catch (err) {
+            console.log('Error loading announcements for manager:', err);
+        }
+
+        container.innerHTML = `
+            <div class="dash-empty-box py-2">
+                <span class="material-symbols-outlined dash-empty-icon">campaign</span>
+                <p class="text-muted">No broadcasts posted yet. Use the form above to send your first announcement.</p>
+            </div>
+        `;
+    }
+
+    const formPostAnnouncement = document.getElementById('formPostAnnouncement');
+    if (formPostAnnouncement) {
+        formPostAnnouncement.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titleInput = document.getElementById('announcementTitleInput');
+            const messageInput = document.getElementById('announcementMessageInput');
+            const submitBtn = document.getElementById('btnSubmitAnnouncement');
+
+            const title = titleInput ? titleInput.value.trim() : '';
+            const message = messageInput ? messageInput.value.trim() : '';
+
+            if (!title || !message) {
+                showToast('Title and message are required', 'info');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Broadcasting...';
+
+            try {
+                const res = await createEventAnnouncement(eventId, { title, message });
+                if (res && res.success) {
+                    showToast('Announcement broadcasted to attendees!', 'success');
+                    if (titleInput) titleInput.value = '';
+                    if (messageInput) messageInput.value = '';
+                    await loadManageAnnouncements();
+                } else {
+                    showToast(res?.message || 'Failed to post announcement', 'error');
+                }
+            } catch (err) {
+                console.log('Error broadcasting announcement:', err);
+                showToast('Network error while posting announcement', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span class="material-symbols-outlined">campaign</span> <span>Broadcast to Attendees</span>';
+            }
+        });
+    }
+
+    const announcementsListEl = document.getElementById('manageAnnouncementsList');
+    if (announcementsListEl) {
+        announcementsListEl.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-action="delete-announcement"]');
+            if (btn) {
+                const id = btn.getAttribute('data-id');
+                if (!confirm('Are you sure you want to delete this announcement?')) return;
+                btn.disabled = true;
+                try {
+                    const res = await deleteEventAnnouncement(eventId, id);
+                    if (res && res.success) {
+                        showToast('Announcement deleted', 'success');
+                        await loadManageAnnouncements();
+                    } else {
+                        showToast(res?.message || 'Failed to delete announcement', 'error');
+                        btn.disabled = false;
+                    }
+                } catch (err) {
+                    console.log('Error deleting announcement:', err);
+                    showToast('Network error deleting announcement', 'error');
+                    btn.disabled = false;
+                }
+            }
+        });
+    }
+
+    // 14. Team & Co-Managers Management
+    async function loadManageTeam() {
+        const container = document.getElementById('manageTeamList');
+        if (!container) return;
+
+        try {
+            const res = await getEventManagers(eventId);
+            if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+                container.innerHTML = res.data.map(m => {
+                    const initials = (m.name || 'Member').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                    return `
+                        <div class="team-member-item">
+                            <div class="d-flex items-center gap-0-75">
+                                <div class="team-member-avatar">${initials}</div>
+                                <div>
+                                    <div class="team-member-name">${m.name}</div>
+                                    <div class="team-member-email">${m.email}</div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-outline-danger btn-sm" data-action="remove-manager" data-id="${m.user_id}">
+                                <span class="material-symbols-outlined">person_remove</span>
+                                <span>Remove</span>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+                return;
+            }
+        } catch (err) {
+            console.log('Error loading event managers:', err);
+        }
+
+        container.innerHTML = `
+            <div class="dash-empty-box py-2">
+                <span class="material-symbols-outlined dash-empty-icon">group_off</span>
+                <p class="text-muted">No co-managers assigned yet. Add team members by email to share gate check-in and announcement privileges.</p>
+            </div>
+        `;
+    }
+
+    const formAddManager = document.getElementById('formAddManager');
+    if (formAddManager) {
+        formAddManager.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const emailInput = document.getElementById('managerEmailInput');
+            const submitBtn = document.getElementById('btnAddManagerSubmit');
+            const email = emailInput ? emailInput.value.trim() : '';
+
+            if (!email) {
+                showToast('Please enter a team member email', 'info');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Adding...';
+
+            try {
+                const res = await addEventManager(eventId, email);
+                if (res && res.success) {
+                    showToast(res.message || 'Co-manager added successfully!', 'success');
+                    if (emailInput) emailInput.value = '';
+                    await loadManageTeam();
+                } else {
+                    showToast(res?.message || 'Failed to add co-manager', 'error');
+                }
+            } catch (err) {
+                console.log('Error adding co-manager:', err);
+                showToast('Network error while adding co-manager', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span class="material-symbols-outlined">person_add</span> <span>Add Co-Manager</span>';
+            }
+        });
+    }
+
+    const teamListEl = document.getElementById('manageTeamList');
+    if (teamListEl) {
+        teamListEl.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-action="remove-manager"]');
+            if (btn) {
+                const userId = btn.getAttribute('data-id');
+                if (!confirm('Remove this co-manager from the event?')) return;
+                btn.disabled = true;
+                try {
+                    const res = await removeEventManager(eventId, userId);
+                    if (res && res.success) {
+                        showToast('Co-manager removed', 'success');
+                        await loadManageTeam();
+                    } else {
+                        showToast(res?.message || 'Failed to remove co-manager', 'error');
+                        btn.disabled = false;
+                    }
+                } catch (err) {
+                    console.log('Error removing co-manager:', err);
+                    showToast('Network error removing co-manager', 'error');
+                    btn.disabled = false;
+                }
+            }
+        });
+    }
+
+    // 15. Manual Attendee by Email
+    const btnAddManual = document.getElementById('btnAddManualAttendeeBtn');
+    const modalManual = document.getElementById('manualAttendeeModal');
+    const btnCloseManual = document.getElementById('btnCloseManualRsvp');
+    const formManual = document.getElementById('formManualAttendee');
+
+    if (btnAddManual && modalManual) {
+        btnAddManual.addEventListener('click', () => {
+            modalManual.classList.add('open');
+            document.body.classList.add('modal-open');
+        });
+    }
+
+    function closeManualModal() {
+        if (modalManual) {
+            modalManual.classList.remove('open');
+            document.body.classList.remove('modal-open');
+        }
+    }
+
+    if (btnCloseManual) {
+        btnCloseManual.addEventListener('click', closeManualModal);
+    }
+    if (modalManual) {
+        modalManual.addEventListener('click', (e) => {
+            if (e.target === modalManual) closeManualModal();
+        });
+    }
+
+    if (formManual) {
+        formManual.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const emailInput = document.getElementById('manualAttendeeEmail');
+            const submitBtn = document.getElementById('btnSubmitManualAttendee');
+            const email = emailInput ? emailInput.value.trim() : '';
+
+            if (!email) {
+                showToast('Please enter an attendee email', 'info');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registering...';
+
+            try {
+                const res = await addManualAttendee(eventId, email);
+                if (res && res.success) {
+                    showToast(res.message || 'Attendee registered successfully!', 'success');
+                    if (emailInput) emailInput.value = '';
+                    closeManualModal();
+                    await loadAttendees();
+                } else {
+                    showToast(res?.message || 'Failed to register attendee', 'error');
+                }
+            } catch (err) {
+                console.log('Error registering manual attendee:', err);
+                showToast('Network error registering attendee', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Confirm Registration';
+            }
         });
     }
 });
