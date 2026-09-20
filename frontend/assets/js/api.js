@@ -1,6 +1,9 @@
 import { getToken, clearAuth } from './authService.js';
 
-const API = 'http://localhost:3001/api/v1';
+const API = (window.location.protocol === 'file:' || window.location.port === '5500')
+    ? 'http://localhost:3000/api/v1'
+    : '/api/v1';
+
 
 // Returns headers including Bearer token if stored
 function getHeaders() {
