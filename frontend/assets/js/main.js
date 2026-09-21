@@ -167,7 +167,7 @@ const DEFAULT_HEADER_HTML = `
         <a href="{{ROOT}}index.html" class="mobile-nav-link">Home</a>
         <a href="{{PAGES}}explore.html" class="mobile-nav-link">Find Events</a>
         <a href="{{PAGES}}create-event.html" class="mobile-nav-link">Start an Event</a>
-        <a href="{{PAGES}}dashboard.html" class="mobile-nav-link">Organizer Hub</a>
+        <a href="{{PAGES}}my-activities.html" class="mobile-nav-link">My Activities</a>
     </div>
     <div class="mobile-drawer-auth">
         <a href="{{PAGES}}login.html" class="btn btn-outline btn-block">Log in</a>

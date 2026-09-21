@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!eventId) {
         if (typeof showToast === 'function') showToast('No event ID provided.', 'error');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+        setTimeout(() => { window.location.href = 'my-activities.html'; }, 1000);
         return;
     }
 
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span class="material-symbols-outlined dash-empty-icon">event_busy</span>
                     <h2 class="dash-empty-title">Event Not Found</h2>
                     <p class="dash-empty-desc">This event may have been deleted or does not exist.</p>
-                    <a href="dashboard.html" class="btn btn-primary btn-pill">Return to Organizer Hub</a>
+                    <a href="my-activities.html" class="btn btn-primary btn-pill">Return to My Activities</a>
                 </div>
             `;
             return;
@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await deleteEvent(currentEvent.id);
                 if (res && res.success) {
                     if (typeof showToast === 'function') showToast('Event cancelled successfully.', 'success');
-                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+                    setTimeout(() => { window.location.href = 'my-activities.html'; }, 1000);
                 } else {
                     if (typeof showToast === 'function') showToast(res?.message || 'Could not cancel event.', 'error');
                     btnCancel.disabled = false;
