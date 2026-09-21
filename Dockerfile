@@ -2,11 +2,20 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY backend/package*.json ./
-
+# Install backend dependencies first so this layer stays cached
+COPY backend/package*.json ./backend/
+WORKDIR /app/backend
 RUN npm install
 
-COPY backend/ .
+# Copy the backend and the frontend, which Express serves as static files
+WORKDIR /app
+COPY backend/ ./backend/
+COPY frontend/ ./frontend/
+
+# Uploaded event banners are written here
+RUN mkdir -p /app/backend/uploads/events
+
+WORKDIR /app/backend
 
 EXPOSE 3000
 

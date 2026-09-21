@@ -7,7 +7,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from '../routes/auth.route.js';
 import userRouter from '../routes/user.routes.js';
-import subscriptionRouter from '../routes/subscription.routes.js';
 import eventRouter from '../routes/event.routes.js';
 import groupRouter from '../routes/group.routes.js';
 import { connectToDatabase } from './db.js';
@@ -36,16 +35,18 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Mount routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRouter);
-app.use('/api/v1/subscriptions', subscriptionRouter);
 app.use('/api/v1/events', eventRouter);
 app.use('/api/v1/groups', groupRouter);
 
 // Global error handling middleware (must be after all routes)
 app.use(errorMiddleware);
 
-app.listen(3001, async () => {
-  log('api is running on localhost:3001');
-  console.log('api is running on localhost:3001');
+// Set by .env locally and by docker-compose in the container
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, async () => {
+  log(`api is running on port ${PORT}`);
+  console.log(`api is running on port ${PORT}`);
 
   await connectToDatabase();
 });
