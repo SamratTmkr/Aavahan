@@ -1,6 +1,12 @@
 import { getToken, clearAuth } from './authService.js';
 
-const API = 'http://localhost:3001/api/v1';
+// When Express serves the pages (npm start, or Docker on any port) the API is on the same
+// origin. When the page is opened from the file system or from a separate static server
+// such as VS Code Live Server, call the local backend directly.
+const LIVE_SERVER_PORTS = ['5500', '5501'];
+const API = (window.location.protocol === 'file:' || LIVE_SERVER_PORTS.includes(window.location.port))
+    ? 'http://localhost:3000/api/v1'
+    : '/api/v1';
 
 // Returns headers including Bearer token if stored
 function getHeaders() {

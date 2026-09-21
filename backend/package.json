@@ -5,7 +5,8 @@
   "description": "Aavahan event platform - MVP backend",
   "main": "src/index.js",
   "scripts": {
-    "start": "nodemon --experimental-specifier-resolution=node src/index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

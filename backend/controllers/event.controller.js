@@ -20,7 +20,7 @@ export const getEvents = async (req, res) => {
         );
         return res.json({ success: true, data: events });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -28,10 +28,10 @@ export const getEvents = async (req, res) => {
 export const getEvent = async (req, res) => {
     try {
         const event = await getEventById(req.params.id);
-        if (!event) return res.json({ success: false, message: 'Event not found' });
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
         return res.json({ success: true, data: event });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -41,7 +41,7 @@ export const getGroupEvents = async (req, res) => {
         const events = await getEventsByGroup(req.params.groupId);
         return res.json({ success: true, data: events });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -161,16 +161,16 @@ export const createNewEvent = async (req, res) => {
 export const updateExistingEvent = async (req, res) => {
     try {
         const event = await getEventById(req.params.id);
-        if (!event) return res.json({ success: false, message: 'Event not found' });
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
         if (event.organizer_id !== req.user.id && req.user.role !== 'admin') {
-            return res.json({ success: false, message: 'Not authorised' });
+            return res.status(403).json({ success: false, message: 'Not authorised' });
         }
 
         await updateEvent(req.params.id, req.body);
         return res.json({ success: true, message: 'Event updated' });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -178,60 +178,77 @@ export const updateExistingEvent = async (req, res) => {
 export const deleteExistingEvent = async (req, res) => {
     try {
         const event = await getEventById(req.params.id);
-        if (!event) return res.json({ success: false, message: 'Event not found' });
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
         if (event.organizer_id !== req.user.id && req.user.role !== 'admin') {
-            return res.json({ success: false, message: 'Not authorised' });
+            return res.status(403).json({ success: false, message: 'Not authorised' });
         }
 
         await deleteEvent(req.params.id);
         return res.json({ success: true, message: 'Event deleted' });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // POST /api/v1/events/:id/rsvp — RSVP to an event
 export const rsvpEvent = async (req, res) => {
+    // One connection with a transaction, so the capacity check and the count update
+    // cannot be split by another registration arriving at the same time
+    const connection = await pool.getConnection();
+
     try {
         const eventId = req.params.id;
         const userId = req.user.id;
 
-        const [existing] = await pool.execute(
+        await connection.beginTransaction();
+
+        // FOR UPDATE locks the event row until this transaction finishes
+        const [events] = await connection.execute(
+            'SELECT capacity, attendee_count, registration_deadline FROM events WHERE id = ? FOR UPDATE',
+            [eventId]
+        );
+        if (!events.length) {
+            await connection.rollback();
+            return res.status(404).json({ success: false, message: 'Event not found' });
+        }
+
+        const [existing] = await connection.execute(
             'SELECT id FROM rsvps WHERE event_id = ? AND user_id = ?',
             [eventId, userId]
         );
         if (existing.length > 0) {
+            await connection.rollback();
             return res.json({ success: true, message: 'You are already registered for this event!' });
         }
 
-        const [events] = await pool.execute(
-            'SELECT capacity, attendee_count, registration_deadline FROM events WHERE id = ?',
-            [eventId]
-        );
-        if (!events.length) {
-            return res.json({ success: false, message: 'Event not found' });
-        }
         if (events[0].registration_deadline && new Date() > new Date(events[0].registration_deadline)) {
-            return res.json({ success: false, message: 'Registration deadline for this event has passed.' });
+            await connection.rollback();
+            return res.status(400).json({ success: false, message: 'Registration deadline for this event has passed.' });
         }
         if (events[0].capacity && events[0].capacity > 0 && events[0].attendee_count >= events[0].capacity) {
-            return res.json({ success: false, message: 'This event has reached full capacity.' });
+            await connection.rollback();
+            return res.status(409).json({ success: false, message: 'This event has reached full capacity.' });
         }
 
-        const [insertRes] = await pool.execute(
+        const [insertRes] = await connection.execute(
             'INSERT INTO rsvps (event_id, user_id, status) VALUES (?, ?, ?)',
             [eventId, userId, 'confirmed']
         );
 
-        await pool.execute(
+        await connection.execute(
             'UPDATE events SET attendee_count = attendee_count + 1 WHERE id = ?',
             [eventId]
         );
 
+        await connection.commit();
         return res.json({ success: true, message: 'RSVP confirmed successfully!', rsvpId: insertRes.insertId });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        await connection.rollback();
+        console.log('Error creating RSVP:', error.message);
+        return res.status(500).json({ success: false, message: error.message });
+    } finally {
+        connection.release();
     }
 };
 
@@ -248,7 +265,7 @@ export const getEventAttendees = async (req, res) => {
         );
         return res.json({ success: true, data: rows });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -260,7 +277,7 @@ export const getEventCities = async (req, res) => {
         );
         return res.json({ success: true, data: rows });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -298,7 +315,7 @@ export const getMyOrganizerEvents = async (req, res) => {
             }
         });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -318,7 +335,7 @@ export const getMyOrganizerRSVPs = async (req, res) => {
         );
         return res.json({ success: true, data: rows });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -343,8 +360,9 @@ export const checkinAttendee = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Not authorized to check in attendees' });
         }
 
+        // Record when the attendee arrived, not just that they did
         await pool.execute(
-            'UPDATE rsvps SET status = ? WHERE id = ? AND event_id = ?',
+            'UPDATE rsvps SET status = ?, checked_in_at = NOW() WHERE id = ? AND event_id = ?',
             ['checked_in', rsvpId, id]
         );
         console.log(`Attendee ${rsvpId} checked in for event ${id}`);
@@ -395,7 +413,7 @@ export const getMyActivities = async (req, res) => {
             data: { upcoming, past, total: rows.length }
         });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -411,7 +429,7 @@ export const cancelRsvp = async (req, res) => {
         );
 
         if (!existing.length) {
-            return res.json({ success: false, message: 'No active registration found for this event.' });
+            return res.status(404).json({ success: false, message: 'No active registration found for this event.' });
         }
 
         await pool.execute(
@@ -427,7 +445,7 @@ export const cancelRsvp = async (req, res) => {
         return res.json({ success: true, message: 'Registration cancelled successfully.' });
     } catch (error) {
         console.log('Error cancelling RSVP:', error.message);
-        return res.json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
