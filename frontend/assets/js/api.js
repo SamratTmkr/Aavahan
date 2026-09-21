@@ -1,9 +1,6 @@
 import { getToken, clearAuth } from './authService.js';
 
-const API = (window.location.protocol === 'file:' || window.location.port === '5500')
-    ? 'http://localhost:3000/api/v1'
-    : '/api/v1';
-
+const API = 'http://localhost:3001/api/v1';
 
 // Returns headers including Bearer token if stored
 function getHeaders() {
@@ -45,7 +42,7 @@ async function logoutUser() {
         console.log('Logout API error:', e);
     }
     clearAuth();
-    
+
     // Redirect to public homepage
     const isSubfolder = window.location.pathname.includes('/pages/');
     window.location.href = isSubfolder ? '../index.html' : 'index.html';
@@ -79,9 +76,9 @@ async function createEvent(data) {
 async function getEvents(city = null, search = null) {
     try {
         const params = new URLSearchParams();
-        if (city && city !== 'all')   params.set('city', city);
-        if (search && search.trim())  params.set('search', search.trim());
-        const qs  = params.toString();
+        if (city && city !== 'all') params.set('city', city);
+        if (search && search.trim()) params.set('search', search.trim());
+        const qs = params.toString();
         const url = qs ? `${API}/events?${qs}` : `${API}/events`;
         const res = await fetch(url, { headers: getHeaders() });
         return await res.json();
