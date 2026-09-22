@@ -10,7 +10,7 @@ import {
     getAdminTransactions,
     logoutUser
 } from './api.js';
-import { showToast } from './main.js';
+import { showToast, escapeHtml } from './main.js';
 
 // Admin panel logic
 
@@ -55,7 +55,7 @@ function initials(name) {
     return (name || '?').split(' ').map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
 }
 function avatarEl(name) {
-    return '<div class="admin-avatar">' + initials(name) + '</div>';
+    return '<div class="admin-avatar">' + escapeHtml(initials(name)) + '</div>';
 }
 
 // Loading skeleton helper
@@ -112,7 +112,7 @@ async function loadOverview() {
         if (!recent.length) { tableEmpty('adminPendingQueue', 4, 'No events yet.'); return; }
         tbody.innerHTML = recent.map(function(ev) {
             return '<tr>' +
-                '<td><div class="admin-table-title">' + ev.title + '</div><div class="admin-table-sub">' + (ev.city || '—') + '</div></td>' +
+                '<td><div class="admin-table-title">' + escapeHtml(ev.title) + '</div><div class="admin-table-sub">' + escapeHtml(ev.city || '—') + '</div></td>' +
                 '<td>' + fmtDate(ev.event_date) + '</td>' +
                 '<td><span class="mod-badge mod-badge-published">Published</span></td>' +
                 '<td><div class="admin-action-btn-group">' +
@@ -157,9 +157,9 @@ function renderAdminEvents(events) {
             : '<span class="mod-badge mod-badge-published">In-Person</span>';
         var priceTxt = (ev.is_free || !ev.min_price || ev.min_price == 0) ? 'Free' : 'NPR ' + Number(ev.min_price).toLocaleString();
         return '<tr>' +
-            '<td><div class="admin-table-title admin-table-title-truncate">' + ev.title + '</div>' +
+            '<td><div class="admin-table-title admin-table-title-truncate">' + escapeHtml(ev.title) + '</div>' +
                 '<div class="admin-table-sub">' + fmtDate(ev.event_date) + (ev.start_time ? ' · ' + ev.start_time.slice(0,5) : '') + '</div></td>' +
-            '<td>' + (ev.city || '—') + '</td>' +
+            '<td>' + escapeHtml(ev.city || '—') + '</td>' +
             '<td>' + (ev.attendee_count || 0) + '</td>' +
             '<td>' + priceTxt + '</td>' +
             '<td>' + statusBadge + '</td>' +
@@ -219,8 +219,8 @@ function renderAdminGroups(groups) {
     if (!groups.length) { tableEmpty('adminGroupsTableBody', 6, 'No groups found.'); return; }
     tbody.innerHTML = groups.map(function(g) {
         return '<tr>' +
-            '<td><div class="admin-user-cell">' + avatarEl(g.name) + '<div><div class="admin-table-title">' + g.name + '</div><div class="admin-table-sub">' + (g.city || '—') + '</div></div></div></td>' +
-            '<td>' + (g.category || '—') + '</td>' +
+            '<td><div class="admin-user-cell">' + avatarEl(g.name) + '<div><div class="admin-table-title">' + escapeHtml(g.name) + '</div><div class="admin-table-sub">' + escapeHtml(g.city || '—') + '</div></div></div></td>' +
+            '<td>' + escapeHtml(g.category || '—') + '</td>' +
             '<td>' + (g.member_count || 0).toLocaleString() + '</td>' +
             '<td>' + (g.hosted_events_count || 0) + '</td>' +
             '<td><span class="mod-badge mod-badge-' + (g.is_public ? 'active' : 'suspended') + '">' + (g.is_public ? 'Public' : 'Private') + '</span></td>' +
@@ -291,7 +291,7 @@ function renderAdminUsers(users) {
             ? '<button class="btn btn-outline btn-sm admin-btn-xs" data-action="toggle-role" data-id="' + u.id + '" data-role="user">Demote</button>'
             : '<button class="btn btn-outline btn-sm admin-btn-xs" data-action="toggle-role" data-id="' + u.id + '" data-role="admin">Make Admin</button>';
         return '<tr>' +
-            '<td><div class="admin-user-cell">' + avatarEl(u.name) + '<div><div class="admin-table-title">' + u.name + '</div><div class="admin-table-sub">' + u.email + '</div></div></div></td>' +
+            '<td><div class="admin-user-cell">' + avatarEl(u.name) + '<div><div class="admin-table-title">' + escapeHtml(u.name) + '</div><div class="admin-table-sub">' + escapeHtml(u.email) + '</div></div></div></td>' +
             '<td>' + roleBadge + '</td>' +
             '<td>' + fmtDate(u.created_at) + '</td>' +
             '<td>' + (u.total_rsvps || 0) + '</td>' +
@@ -383,15 +383,15 @@ async function loadAdminTransactions() {
             var isConfirmed = tx.status === 'confirmed' || tx.status === 'checked_in';
             var statusBadge = isConfirmed
                 ? '<span class="mod-badge mod-badge-published">' + (tx.status === 'checked_in' ? 'Checked In' : 'Confirmed') + '</span>'
-                : '<span class="mod-badge mod-badge-flagged">' + tx.status + '</span>';
+                : '<span class="mod-badge mod-badge-flagged">' + escapeHtml(tx.status) + '</span>';
             var formattedId = 'RSVP-' + String(tx.id).padStart(4, '0');
 
             return '<tr>' +
                 '<td class="admin-mono-id">' + formattedId + '</td>' +
-                '<td class="admin-cell-semibold">' + (tx.buyer || 'Community Member') + '</td>' +
-                '<td>' + (tx.event || 'Meetup') + '</td>' +
-                '<td class="admin-cell-bold">' + tx.amount + '</td>' +
-                '<td>' + (tx.gateway || 'Direct RSVP') + '</td>' +
+                '<td class="admin-cell-semibold">' + escapeHtml(tx.buyer || 'Community Member') + '</td>' +
+                '<td>' + escapeHtml(tx.event || 'Meetup') + '</td>' +
+                '<td class="admin-cell-bold">' + escapeHtml(tx.amount) + '</td>' +
+                '<td>' + escapeHtml(tx.gateway || 'Direct RSVP') + '</td>' +
                 '<td>' + statusBadge + '</td>' +
                 '<td><span class="admin-table-sub">' + fmtDate(tx.created_at) + '</span></td>' +
             '</tr>';
@@ -509,14 +509,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (alertsBtn) {
         alertsBtn.addEventListener('click', function() {
             showToast('No new unread platform alerts', 'info');
-        });
-    }
-
-    // Admin save settings button
-    var saveSettingsBtn = document.getElementById('btnAdminSaveSettings');
-    if (saveSettingsBtn) {
-        saveSettingsBtn.addEventListener('click', function() {
-            showToast('Platform settings saved!', 'success');
         });
     }
 

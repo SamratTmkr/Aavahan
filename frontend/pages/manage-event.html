@@ -28,7 +28,7 @@
             </div>
 
             <div class="nav-right">
-                <a href="dashboard.html" class="nav-link-group">Organizer Hub</a>
+                <a href="my-activities.html" class="nav-link-group">My Activities</a>
                 <a id="navBtnViewPublic" href="event-details.html" class="btn btn-outline btn-pill btn-sm">View Public Event</a>
                 <a href="create-event.html" class="btn btn-primary btn-pill btn-sm">+ Create Event</a>
             </div>
@@ -145,6 +145,10 @@
 
                 <div class="d-flex items-center gap-0-75">
                     <span id="attendeeTotalCount" class="attendee-total-count">0 attendees</span>
+                    <a href="checkin.html" class="btn btn-outline btn-sm">
+                        <span class="material-symbols-outlined">qr_code_scanner</span>
+                        <span>Check in by code</span>
+                    </a>
                     <button id="exportAttendeesBtn" class="btn btn-outline btn-sm">
                         <span class="material-symbols-outlined">download</span>
                         <span>Export CSV</span>
@@ -262,9 +266,15 @@
             <div class="manage-settings-card">
                 <h3 class="manage-settings-title">Event Settings & Policies</h3>
 
+                <p class="admin-notice">
+                    Event status and refund policy are planned for a later iteration. The controls
+                    below show the intended options but are not stored yet, so they are disabled.
+                    Cancelling the event does work and is final.
+                </p>
+
                 <div class="form-group">
                     <label class="form-label" for="manageEventStatusSelect">Event Status</label>
-                    <select id="manageEventStatusSelect" class="form-select">
+                    <select id="manageEventStatusSelect" class="form-select" disabled>
                         <option value="published">Published & Accepting Registrations</option>
                         <option value="paused">Pause Ticket Sales</option>
                         <option value="completed">Mark as Completed</option>
@@ -273,7 +283,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Refund Policy</label>
-                    <select class="form-select">
+                    <select class="form-select" disabled>
                         <option>Full refund up to 7 days before event</option>
                         <option>Full refund up to 24 hours before event</option>
                         <option>No refunds</option>

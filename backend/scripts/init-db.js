@@ -77,6 +77,7 @@ async function init() {
       user_id        INT NOT NULL,
       status         VARCHAR(20) DEFAULT 'confirmed',
       checked_in_at  TIMESTAMP NULL,
+      checkin_code   CHAR(8) NULL,
       created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE (event_id, user_id),
       FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
@@ -84,6 +85,29 @@ async function init() {
     )
   `);
   console.log('rsvps table ready');
+
+  // Existing databases predate checkin_code, and MySQL has no ADD COLUMN IF NOT EXISTS
+  const [rsvpCols] = await pool.query("SHOW COLUMNS FROM rsvps LIKE 'checkin_code'");
+  if (rsvpCols.length === 0) {
+    await pool.query('ALTER TABLE rsvps ADD COLUMN checkin_code CHAR(8) NULL');
+    await pool.query('CREATE UNIQUE INDEX idx_rsvps_checkin_code ON rsvps (checkin_code)');
+    console.log('rsvps.checkin_code column added');
+  }
+
+  // Password reset tokens
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_resets (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      user_id    INT NOT NULL,
+      token_hash CHAR(64) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      used_at    TIMESTAMP NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      INDEX idx_password_resets_token (token_hash)
+    )
+  `);
+  console.log('password_resets table ready');
 
   // Event Announcements
   await pool.query(`
@@ -99,6 +123,20 @@ async function init() {
     )
   `);
   console.log('event_announcements table ready');
+
+  // Event Comments
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS event_comments (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      event_id   INT NOT NULL,
+      user_id    INT NOT NULL,
+      message    TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+  console.log('event_comments table ready');
 
   // Event Co-Managers
   await pool.query(`

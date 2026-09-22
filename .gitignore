@@ -28,3 +28,6 @@ backend/uploads/
 # Agent configs
 .agents/
 
+
+# Local evaluation and diagram working files
+docs/
