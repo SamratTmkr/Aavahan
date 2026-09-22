@@ -1,0 +1,56 @@
+sequenceDiagram
+    autonumber
+    actor Participant
+    participant Page as EventDetailPage
+    participant API as ApiClient
+    participant Auth as AuthMiddleware
+    participant Controller as EventController
+    participant DB as Database
+
+    Participant->>Page: Click "Register"
+    Page->>API: rsvpToEvent(eventId)
+    API->>Auth: POST /api/v1/events/{id}/rsvp\nAuthorization: Bearer token
+    Auth->>Auth: Verify JWT token
+    Auth->>DB: SELECT id, name, email, role\nFROM users WHERE id = ?
+    DB-->>Auth: User record
+
+    alt Missing, invalid, or expired token / user not found
+        Auth-->>API: 401 Unauthorized
+        API-->>Page: Show sign-in error
+    else Authenticated
+        Auth->>Controller: rsvpEvent(eventId, req.user)
+        Controller->>DB: BEGIN TRANSACTION
+        Controller->>DB: SELECT capacity, attendee_count, registration_deadline\nFROM events WHERE id = ? FOR UPDATE
+        Note right of DB: The event row remains locked\nuntil commit or rollback.
+        DB-->>Controller: Event row (or no row)
+
+        alt Event not found
+            Controller->>DB: ROLLBACK
+            Controller-->>API: 404 Not Found
+            API-->>Page: Show "Event not found"
+        else Event found
+            Controller->>DB: SELECT id FROM rsvps\nWHERE event_id = ? AND user_id = ?
+            DB-->>Controller: Existing RSVP
+            alt Already registered
+                Controller->>DB: ROLLBACK
+                Controller-->>API: 200 OK — already registered
+                API-->>Page: Show already-registered state
+            else No existing RSVP
+                alt Registration deadline has passed
+                    Controller->>DB: ROLLBACK
+                    Controller-->>API: 400 Bad Request
+                    API-->>Page: Show deadline-passed message
+                else Event capacity reached
+                    Controller->>DB: ROLLBACK
+                    Controller-->>API: 409 Conflict
+                    API-->>Page: Show capacity-reached message
+                else Registration available
+                    Controller->>DB: INSERT INTO rsvps (event_id, user_id, status)\nVALUES (?, ?, 'confirmed')
+                    Controller->>DB: UPDATE events SET attendee_count = attendee_count + 1\nWHERE id = ?
+                    Controller->>DB: COMMIT
+                    Controller-->>API: 200 OK — RSVP confirmed
+                    API-->>Page: Update UI to "Registered"
+                end
+            end
+        end
+    end

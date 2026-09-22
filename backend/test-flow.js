@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 async function runTests() {
-    const BASE = 'http://localhost:3001/api/v1';
+    const BASE = `http://localhost:${process.env.PORT || 3000}/api/v1`;
 
     console.log('--- 1. Login as Organizer (user@aavahan.com) ---');
     const orgLoginRes = await fetch(`${BASE}/auth/login`, {

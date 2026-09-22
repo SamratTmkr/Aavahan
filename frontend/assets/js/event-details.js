@@ -1,6 +1,7 @@
 import { getUser, isAuthenticated } from './authService.js';
-import { getEvent, getEventAttendees, rsvpToEvent, cancelEventRsvp, getEventAnnouncements } from './api.js';
-import { showToast } from './main.js';
+import { getEvent, getEventAttendees, rsvpToEvent, cancelEventRsvp, getEventAnnouncements,
+         getEventComments, postEventComment, deleteEventComment } from './api.js';
+import { showToast, escapeHtml } from './main.js';
 
 // Event details page logic
 
@@ -50,7 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (dateEl) dateEl.textContent = 'Please check the link or browse active events.';
         const detailsEl = document.getElementById('eventDetailsText');
         if (detailsEl) detailsEl.innerHTML = '<p class="mb-1">The requested event could not be found or has been removed.</p><a href="explore.html" class="btn btn-primary btn-pill btn-sm">Explore Other Events</a>';
-        if (typeof showToast === 'function') showToast('Event could not be located.', 'error');
+        showToast('Event could not be located.', 'error');
         return;
     }
 
@@ -87,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const topEventTitle = document.getElementById('topEventTitle');
     if (topEventTitle) {
         topEventTitle.textContent = currentEvent.title;
-        document.title = `${currentEvent.title} — Aavahan`;
+        document.title = `${escapeHtml(currentEvent.title)} — Aavahan`;
     }
 
     const topHostAvatar = document.getElementById('topHostAvatar');
@@ -101,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const eventDetailsText = document.getElementById('eventDetailsText');
     if (eventDetailsText) {
-        eventDetailsText.innerHTML = (currentEvent.description || 'Join us for this exciting community gathering. Connect with like-minded individuals, share knowledge, and learn something new.')
+        eventDetailsText.innerHTML = escapeHtml(currentEvent.description || 'Join us for this exciting community gathering. Connect with like-minded individuals, share knowledge, and learn something new.')
             .split('\n\n')
             .map(p => `<p class="mb-1">${p.replace(/\n/g, '<br>')}</p>`)
             .join('');
@@ -109,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Sidebar widgets
     const sidebarGroupName = document.getElementById('sidebarGroupName');
-    if (sidebarGroupName) sidebarGroupName.textContent = currentEvent.group_name || (currentEvent.category ? `${currentEvent.category} Group` : (currentEvent.city ? `${currentEvent.city} Community Group` : 'Community Group'));
+    if (sidebarGroupName) sidebarGroupName.textContent = currentEvent.group_name || (currentEvent.category ? `${escapeHtml(currentEvent.category)} Group` : (currentEvent.city ? `${escapeHtml(currentEvent.city)} Community Group` : 'Community Group'));
 
     const sidebarDateText = document.getElementById('sidebarDateText');
     if (sidebarDateText) sidebarDateText.textContent = isTba ? 'Date to be Announced' : dateFormattedLong;
@@ -184,6 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Hydrate Announcements
     loadEventAnnouncements(currentEvent.id);
+    loadEventComments(currentEvent.id);
 
     // 5. RSVP Modal Controls
     const rsvpModal = document.getElementById('meetupRsvpModal');
@@ -323,23 +325,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Reload attendees
                     loadAttendeesList(currentEvent.id);
 
-                    if (typeof showToast === 'function') {
-                        showToast('RSVP confirmed! See you at the event.', 'success');
-                    }
+                    showToast('RSVP confirmed! See you at the event.', 'success');
                 } else {
-                    if (typeof showToast === 'function') {
-                        showToast(res?.message || 'Could not complete RSVP.', 'error');
-                    } else {
-                        alert(res?.message || 'RSVP failed');
-                    }
+                    showToast(res?.message || 'Could not complete RSVP.', 'error');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Confirm RSVP & Attend';
                 }
             } catch (err) {
                 console.error('RSVP submission error:', err);
-                if (typeof showToast === 'function') {
-                    showToast('Connection error during RSVP. Please try again.', 'error');
-                }
+                showToast('Connection error during RSVP. Please try again.', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Confirm RSVP & Attend';
             }
@@ -351,37 +345,106 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnPostComment = document.getElementById('btnPostComment');
     const commentsList = document.getElementById('meetupCommentsList');
 
-    if (btnPostComment && commentInput && commentsList) {
-        btnPostComment.addEventListener('click', () => {
-            const text = commentInput.value.trim();
-            if (!text) {
-                if (typeof showToast === 'function') showToast('Please enter a comment.', 'info');
+    if (btnPostComment && commentInput) {
+        btnPostComment.addEventListener('click', async () => {
+            const message = commentInput.value.trim();
+
+            if (!message) {
+                showToast('Please enter a comment.', 'info');
                 return;
             }
 
-            const u = getUser() || {};
-            const userName = u.name || 'Community Member';
+            if (!isAuthenticated()) {
+                showToast('Please log in to join the discussion.', 'info');
+                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                return;
+            }
 
-            const initials = userName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+            btnPostComment.disabled = true;
+            btnPostComment.textContent = 'Posting...';
 
-            const newComment = document.createElement('div');
-            newComment.className = 'comment-item';
-            newComment.innerHTML = `
-                <div class="comment-avatar">
-                    ${initials}
-                </div>
-                <div class="comment-body">
-                    <div class="comment-header">
-                        <span class="comment-author">${userName}</span>
-                        <span class="comment-time">Just now</span>
-                    </div>
-                    <div class="comment-text">${text.replace(/\n/g, '<br>')}</div>
+            const res = await postEventComment(currentEvent.id, message);
+
+            if (res.success) {
+                commentInput.value = '';
+                showToast('Comment posted', 'success');
+                loadEventComments(currentEvent.id);
+            } else {
+                showToast(res.message || 'Could not post your comment.', 'error');
+            }
+
+            btnPostComment.disabled = false;
+            btnPostComment.textContent = 'Post comment';
+        });
+    }
+
+    // Delete own comment (organisers and admins can delete any)
+    if (commentsList) {
+        commentsList.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-action="delete-comment"]');
+            if (!btn) return;
+            if (!confirm('Delete this comment?')) return;
+
+            const res = await deleteEventComment(currentEvent.id, btn.dataset.id);
+            if (res.success) {
+                showToast('Comment deleted', 'success');
+                loadEventComments(currentEvent.id);
+            } else {
+                showToast(res.message || 'Could not delete the comment.', 'error');
+            }
+        });
+    }
+
+    async function loadEventComments(eventId) {
+        // looked up here rather than reused from the outer const, because this
+        // runs on page load before that declaration is reached
+        const list = document.getElementById('meetupCommentsList');
+        if (!list) return;
+
+        const res = await getEventComments(eventId);
+        const comments = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+
+        if (!comments.length) {
+            list.innerHTML = `
+                <div class="announcement-empty-state">
+                    <span class="material-symbols-outlined announcement-empty-icon">forum</span>
+                    <p class="announcement-empty-text">No comments yet. Start the discussion.</p>
                 </div>
             `;
-            commentsList.prepend(newComment);
-            commentInput.value = '';
-            if (typeof showToast === 'function') showToast('Comment posted!', 'success');
-        });
+            return;
+        }
+
+        const me = getUser() || {};
+
+        list.innerHTML = comments.map(c => {
+            const author = c.author_name || 'Community Member';
+            const initials = author.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+            const posted = new Date(c.created_at).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+            });
+
+            const canDelete = Number(c.user_id) === Number(me.id)
+                || me.role === 'admin'
+                || Number(currentEvent.organizer_id) === Number(me.id);
+
+            const deleteBtn = canDelete
+                ? `<button type="button" class="btn btn-outline btn-sm" data-action="delete-comment" data-id="${c.id}">Delete</button>`
+                : '';
+
+            return `
+                <div class="comment-item">
+                    <div class="comment-avatar">${escapeHtml(initials)}</div>
+                    <div class="comment-body">
+                        <div class="comment-header">
+                            <span class="comment-author">${escapeHtml(author)}</span>
+                            <span class="comment-time">${posted}</span>
+                            ${deleteBtn}
+                        </div>
+                        <div class="comment-text">${escapeHtml(c.message).replace(/\n/g, '<br>')}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     // Load Attendees function
@@ -449,10 +512,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="announcement-item-card">
                             <div class="announcement-card-header">
                                 <div class="d-flex items-center gap-0-75">
-                                    <div class="announcement-avatar">${authorInitials}</div>
+                                    <div class="announcement-avatar">${escapeHtml(authorInitials)}</div>
                                     <div>
                                         <div class="d-flex items-center gap-0-5">
-                                            <span class="announcement-author">${authorName}</span>
+                                            <span class="announcement-author">${escapeHtml(authorName)}</span>
                                             <span class="announcement-verified-badge">
                                                 <span class="material-symbols-outlined icon-verified">verified</span> Host
                                             </span>
@@ -461,8 +524,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     </div>
                                 </div>
                             </div>
-                            <h4 class="announcement-title">${item.title}</h4>
-                            <div class="announcement-message-text">${(item.message || '').replace(/\n/g, '<br>')}</div>
+                            <h4 class="announcement-title">${escapeHtml(item.title)}</h4>
+                            <div class="announcement-message-text">${escapeHtml(item.message || '').replace(/\n/g, '<br>')}</div>
                         </div>
                     `;
                 }).join('');

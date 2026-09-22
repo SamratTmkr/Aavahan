@@ -13,7 +13,7 @@ import {
     removeEventManager, 
     addManualAttendee 
 } from './api.js';
-import { showToast } from './main.js';
+import { showToast, escapeHtml } from './main.js';
 
 // Manage event logic
 
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const eventId = urlParams.get('id');
 
     if (!eventId) {
-        if (typeof showToast === 'function') showToast('No event ID provided.', 'error');
+        showToast('No event ID provided.', 'error');
         setTimeout(() => { window.location.href = 'my-activities.html'; }, 1000);
         return;
     }
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Hydrate Header
-    document.title = `Manage — ${currentEvent.title} | Aavahan`;
+    document.title = `Manage — ${escapeHtml(currentEvent.title)} | Aavahan`;
     const headerTitleEl = document.getElementById('manageEventTitle');
     const headerDateEl = document.getElementById('manageEventDate');
     const headerIdBadgeEl = document.getElementById('manageEventIdBadge');
@@ -285,8 +285,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const filter = statusFilter ? statusFilter.value.toLowerCase() : 'all';
 
         const filtered = attendeesList.filter(att => {
-            const nameMatch = (att.name || '').toLowerCase().includes(query);
-            const emailMatch = (att.email || '').toLowerCase().includes(query);
+            const nameMatch = escapeHtml(att.name || '').toLowerCase().includes(query);
+            const emailMatch = escapeHtml(att.email || '').toLowerCase().includes(query);
             const idMatch = String(att.id).includes(query);
             const matchesQuery = !query || nameMatch || emailMatch || idMatch;
 
@@ -360,7 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="timeline-item">
                 <div class="timeline-dot"></div>
                 <div class="timeline-time">${startTime} ${endTime ? '- ' + endTime : 'onwards'} • Main Hall</div>
-                <div class="timeline-title">${currentEvent.title}</div>
+                <div class="timeline-title">${escapeHtml(currentEvent.title)}</div>
                 <div class="timeline-speaker">${currentEvent.category || 'Community'} Session</div>
             </div>
             <div class="timeline-item">
@@ -376,21 +376,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnCancel = document.getElementById('btnCancelManageEvent');
     if (btnCancel) {
         btnCancel.addEventListener('click', async () => {
-            if (!confirm(`Are you sure you want to cancel and delete "${currentEvent.title}"? This cannot be undone.`)) return;
+            if (!confirm(`Are you sure you want to cancel and delete "${escapeHtml(currentEvent.title)}"? This cannot be undone.`)) return;
             btnCancel.disabled = true;
             btnCancel.textContent = 'Processing...';
             try {
                 const res = await deleteEvent(currentEvent.id);
                 if (res && res.success) {
-                    if (typeof showToast === 'function') showToast('Event cancelled successfully.', 'success');
+                    showToast('Event cancelled successfully.', 'success');
                     setTimeout(() => { window.location.href = 'my-activities.html'; }, 1000);
                 } else {
-                    if (typeof showToast === 'function') showToast(res?.message || 'Could not cancel event.', 'error');
+                    showToast(res?.message || 'Could not cancel event.', 'error');
                     btnCancel.disabled = false;
                     btnCancel.textContent = 'Cancel Event';
                 }
             } catch (e) {
-                if (typeof showToast === 'function') showToast('Network error cancelling event.', 'error');
+                showToast('Network error cancelling event.', 'error');
                 btnCancel.disabled = false;
                 btnCancel.textContent = 'Cancel Event';
             }
@@ -407,8 +407,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const headers = ['RSVP Code', 'Name', 'Email', 'Tier', 'Status', 'Registered At'];
         const rows = attendeesList.map(a => [
             `RSVP-${String(a.id).padStart(4, '0')}`,
-            `"${(a.name || 'Member').replace(/"/g, '""')}"`,
-            `"${(a.email || '').replace(/"/g, '""')}"`,
+            `"${escapeHtml(a.name || 'Member').replace(/"/g, '""')}"`,
+            `"${escapeHtml(a.email || '').replace(/"/g, '""')}"`,
             'General Admission',
             a.status === 'checked_in' ? 'Checked In' : 'Confirmed',
             `"${a.created_at || ''}"`
@@ -463,14 +463,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="announcement-manage-item">
                             <div class="d-flex justify-between items-start">
                                 <div>
-                                    <h4 class="announcement-item-title">${item.title}</h4>
+                                    <h4 class="announcement-item-title">${escapeHtml(item.title)}</h4>
                                     <span class="announcement-meta-time">Posted by ${item.author_name || 'Host'} • ${timeFormatted}</span>
                                 </div>
                                 <button type="button" class="btn btn-outline btn-outline-danger btn-sm" data-action="delete-announcement" data-id="${item.id}">
                                     <span class="material-symbols-outlined">delete</span>
                                 </button>
                             </div>
-                            <p class="announcement-item-body">${(item.message || '').replace(/\n/g, '<br>')}</p>
+                            <p class="announcement-item-body">${escapeHtml(item.message || '').replace(/\n/g, '<br>')}</p>
                         </div>
                     `;
                 }).join('');
@@ -562,14 +562,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const res = await getEventManagers(eventId);
             if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
                 container.innerHTML = res.data.map(m => {
-                    const initials = (m.name || 'Member').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                    const initials = escapeHtml(m.name || 'Member').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
                     return `
                         <div class="team-member-item">
                             <div class="d-flex items-center gap-0-75">
                                 <div class="team-member-avatar">${initials}</div>
                                 <div>
-                                    <div class="team-member-name">${m.name}</div>
-                                    <div class="team-member-email">${m.email}</div>
+                                    <div class="team-member-name">${escapeHtml(m.name)}</div>
+                                    <div class="team-member-email">${escapeHtml(m.email)}</div>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-outline btn-outline-danger btn-sm" data-action="remove-manager" data-id="${m.user_id}">
