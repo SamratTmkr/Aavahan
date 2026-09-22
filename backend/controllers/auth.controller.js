@@ -1,6 +1,13 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../src/db.js';
+import crypto from 'crypto';
+import { sendPasswordResetEmail } from '../utils/email.js';
+import { isValidEmail, isStrongPassword, normaliseEmail, PASSWORD_REQUIREMENTS } from '../utils/validators.js';
+
+const TOKEN_EXPIRY = process.env.JWT_EXPIRES_IN || '7d';
+
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 export const register = async (req, res) => {
     try {
@@ -15,22 +22,16 @@ export const register = async (req, res) => {
         }
 
         // Format email consistently
-        const emailValidate = email.trim().toLowerCase();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(emailValidate)) {
+        const emailValidate = normaliseEmail(email);
+        if (!isValidEmail(emailValidate)) {
             return res.status(400).json({
                 success: false,
                 message: "Please enter a valid email address"
             });
         }
 
-        // Check password complexity (at least 6 characters, uppercase, lowercase, and number)
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
-        if (!passwordRegex.test(password)) {
-            return res.status(400).json({
-                success: false,
-                message: "Password must be at least 6 characters and contain uppercase, lowercase, and a number"
-            });
+        if (!isStrongPassword(password)) {
+            return res.status(400).json({ success: false, message: PASSWORD_REQUIREMENTS });
         }
 
         // Check if email already exists
@@ -55,7 +56,7 @@ export const register = async (req, res) => {
             [displayName, emailValidate, hashedPassword]
         );
 
-        const token = jwt.sign({ id: result.insertId, role: 'user' }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ id: result.insertId, role: 'user' }, process.env.JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
 
         res.cookie('token', token, {
             httpOnly: true,
@@ -86,7 +87,7 @@ export const login = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    const emailValidate = email.trim().toLowerCase();
+    const emailValidate = normaliseEmail(email);
 
     try {
         const [users] = await pool.execute(
@@ -105,7 +106,7 @@ export const login = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
 
         res.cookie('token', token, {
             httpOnly: true,
@@ -136,6 +137,83 @@ export const logout = async (req, res) => {
 
         return res.json({ success: true, message: 'Logged out successfully' });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// POST /api/v1/auth/forgot-password — emails a reset link.
+// Always answers the same way, so this cannot be used to discover which
+// email addresses have accounts.
+export const forgotPassword = async (req, res) => {
+    const reply = {
+        success: true,
+        message: 'If that email has an account, a reset link is on its way.'
+    };
+
+    try {
+        const email = normaliseEmail(req.body.email);
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        const [users] = await pool.execute('SELECT id, name, email FROM users WHERE email = ?', [email]);
+        if (!users.length) return res.json(reply);
+
+        const user = users[0];
+        const token = crypto.randomBytes(32).toString('hex');
+
+        // Only the hash is stored, so a leaked database cannot be used to reset passwords
+        await pool.execute(
+            'INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))',
+            [user.id, hashToken(token)]
+        );
+
+        const base = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        sendPasswordResetEmail({
+            to: user.email,
+            userName: user.name,
+            resetUrl: `${base}/pages/reset-password.html?token=${token}`
+        }).catch(err => console.error('Password reset email failed:', err.message));
+
+        return res.json(reply);
+    } catch (error) {
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// POST /api/v1/auth/reset-password — sets a new password from a valid token
+export const resetPassword = async (req, res) => {
+    try {
+        const { token, password } = req.body;
+
+        if (!token || !password) {
+            return res.status(400).json({ success: false, message: 'Token and new password are required' });
+        }
+        if (!isStrongPassword(password)) {
+            return res.status(400).json({ success: false, message: PASSWORD_REQUIREMENTS });
+        }
+
+        const [rows] = await pool.execute(
+            `SELECT id, user_id FROM password_resets
+             WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW()`,
+            [hashToken(token)]
+        );
+
+        if (!rows.length) {
+            return res.status(400).json({ success: false, message: 'That reset link is invalid or has expired' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await pool.execute('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, rows[0].user_id]);
+
+        // Burn this token, and any other outstanding ones for the same user
+        await pool.execute('UPDATE password_resets SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL', [rows[0].user_id]);
+
+        return res.json({ success: true, message: 'Password updated. You can log in now.' });
+    } catch (error) {
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };

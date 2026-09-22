@@ -558,3 +558,32 @@ body.admin-body {
     margin-top: 2rem;
 }
 
+
+@media (max-width: 640px) {
+    /* the header row itself must wrap, or its actions are pushed off-screen */
+    .admin-header,
+    .admin-topbar {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .admin-header-left { min-width: 0; }
+
+    .admin-header-actions {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .admin-search-input { width: 100%; min-width: 0; }
+
+    /* the card clips by default, which hides table columns instead of letting
+       them be reached; on a phone let the table scroll sideways inside it */
+    .admin-card {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
+    /* keep columns legible while scrolling rather than crushing them */
+    .admin-table { min-width: 640px; }
+}

@@ -27,7 +27,7 @@
                 <div class="meetup-hero-grid">
                     <div>
                         <h1 class="meetup-hero-title">
-                            The people platform—Where interests become friendships
+                            The people platform Where interests become friendships
                         </h1>
                         <p class="meetup-hero-desc">
                             Whatever your interest, from hiking and coding to networking and skill sharing, there are thousands of people who share it on Aavahan. Events are happening every day—sign up to join the fun.
@@ -146,6 +146,10 @@
                     <div>
                         <h2 class="section-header-title">Friendships are made on Aavahan</h2>
                     </div>
+                    <a href="pages/explore.html" class="btn btn-outline-teal btn-pill btn-sm">
+                        <span>Explore more</span>
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem; line-height: 1;">arrow_forward</span>
+                    </a>
                 </div>
 
                 <div class="stories-grid" id="homepageStoriesGrid">
@@ -157,7 +161,15 @@
         <!-- 7. Popular Cities on Aavahan -->
         <section class="section">
             <div class="container">
-                <h2 class="section-header-title popular-cities-title">Popular cities on Aavahan</h2>
+                <div class="section-header-row">
+                    <div>
+                        <h2 class="section-header-title">Popular cities on Aavahan</h2>
+                    </div>
+                    <a href="pages/explore.html" class="btn btn-outline-teal btn-pill btn-sm">
+                        <span>Explore more</span>
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem; line-height: 1;">arrow_forward</span>
+                    </a>
+                </div>
                 <div class="cities-grid" id="homepageCitiesGrid">
                     <!-- Populated from API -->
                 </div>
@@ -192,6 +204,7 @@
     <script type="module" src="assets/js/main.js"></script>
     <script type="module">
         import { getEvents, getEventCities } from './assets/js/api.js';
+        import { escapeHtml } from './assets/js/main.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Category cover mapper using local high-res assets with clean fallbacks
@@ -256,7 +269,7 @@
                 }
 
                 eventsGrid.innerHTML = events.slice(0, 4).map(evt => {
-                    const group = evt.group_name || (evt.category ? `${evt.category} Community` : (evt.city ? `${evt.city} Community Group` : 'Community Group'));
+                    const group = escapeHtml(evt.group_name || (evt.category ? `${evt.category} Community` : (evt.city ? `${evt.city} Community Group` : 'Community Group')));
                     const count = evt.attendee_count || 1;
                     const isFree = evt.is_free || !evt.min_price || Number(evt.min_price) === 0;
                     const priceStr = isFree ? 'Free' : `NPR ${Number(evt.min_price).toLocaleString()}`;
@@ -267,13 +280,13 @@
                     return `
                     <div class="meetup-event-card">
                         <a href="${linkUrl}" class="meetup-card-media">
-                            <img src="${imgUrl}" alt="${evt.title}" class="meetup-card-img" loading="lazy">
+                            <img src="${imgUrl}" alt="${escapeHtml(evt.title)}" class="meetup-card-img" loading="lazy">
                             ${evt.is_online ? '<span class="meetup-card-badge">ONLINE EVENT</span>' : ''}
                         </a>
                         <div class="meetup-card-content">
                             <div class="meetup-card-date">${dateDisplay}</div>
                             <h3 class="meetup-card-title">
-                                <a href="${linkUrl}">${evt.title}</a>
+                                <a href="${linkUrl}">${escapeHtml(evt.title)}</a>
                             </h3>
                             <div class="meetup-card-group">${group}</div>
                             <div class="meetup-card-meta-row">
@@ -363,8 +376,8 @@
                     const countLabel = `${c.count} event${c.count === 1 ? '' : 's'}`;
                     return `
                     <a href="pages/explore.html?city=${encodeURIComponent(c.name)}" class="city-card">
-                        <img src="${c.img}" alt="${c.name}" class="city-card-avatar" loading="lazy">
-                        <div class="city-card-name">${c.name}</div>
+                        <img src="${c.img}" alt="${escapeHtml(c.name)}" class="city-card-avatar" loading="lazy">
+                        <div class="city-card-name">${escapeHtml(c.name)}</div>
                         <div class="city-card-count">${countLabel}</div>
                     </a>
                     `;

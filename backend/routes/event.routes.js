@@ -12,6 +12,7 @@ import {
     getMyOrganizerEvents, 
     getMyOrganizerRSVPs, 
     checkinAttendee, 
+    checkinByCode, 
     getMyActivities, 
     cancelRsvp,
     listEventManagers,
@@ -19,6 +20,7 @@ import {
     removeEventManager,
     addManualAttendee
 } from '../controllers/event.controller.js';
+import { getComments, postComment, removeComment } from '../controllers/comment.controller.js';
 import { 
     getAnnouncements, 
     postAnnouncement, 
@@ -38,6 +40,7 @@ eventRouter.get('/:id',             getEvent);              // public — single
 eventRouter.get('/:id/rsvps',    getEventAttendees);  // public — event attendees
 eventRouter.post('/:id/rsvp',    userAuth, rsvpEvent); // protected — RSVP to event
 eventRouter.delete('/:id/rsvp',  userAuth, cancelRsvp); // protected — cancel RSVP to event
+eventRouter.post('/checkin',    userAuth, checkinByCode); // protected — check in from a ticket code (QR or typed)
 eventRouter.patch('/:id/rsvps/:rsvpId/checkin', userAuth, checkinAttendee); // protected — check in attendee
 eventRouter.get('/group/:groupId', getGroupEvents);   // public — events by group
 eventRouter.post('/',            userAuth, uploadEventBanner, createNewEvent); // protected with banner upload
@@ -46,6 +49,11 @@ eventRouter.post('/',            userAuth, uploadEventBanner, createNewEvent); /
 eventRouter.get('/:id/announcements', getAnnouncements); // public / attendees
 eventRouter.post('/:id/announcements', userAuth, postAnnouncement); // protected (organizer/co-manager)
 eventRouter.delete('/:id/announcements/:announcementId', userAuth, removeAnnouncement); // protected
+
+// Discussion routes
+eventRouter.get('/:id/comments', getComments); // public
+eventRouter.post('/:id/comments', userAuth, postComment); // protected (any logged-in user)
+eventRouter.delete('/:id/comments/:commentId', userAuth, removeComment); // protected (author or organiser)
 
 // Co-managers routes
 eventRouter.get('/:id/managers', userAuth, listEventManagers); // protected (organizer/co-manager)

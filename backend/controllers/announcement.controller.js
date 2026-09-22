@@ -1,4 +1,33 @@
 import pool from '../src/db.js';
+import { sendAnnouncementEmail, wait } from '../utils/email.js';
+
+
+// Emails every registered attendee about a new announcement
+const notifyAttendees = async (eventId, title, message) => {
+    const [rows] = await pool.execute(
+        `SELECT u.name, u.email, e.title AS event_title
+         FROM rsvps r
+         JOIN users u ON r.user_id = u.id
+         JOIN events e ON r.event_id = e.id
+         WHERE r.event_id = ? AND r.status <> 'cancelled'`,
+        [eventId]
+    );
+
+    for (const [index, row] of rows.entries()) {
+        // Paced so the provider's per-second limit is not tripped
+        if (index > 0) await wait(2000);
+
+        await sendAnnouncementEmail({
+            to: row.email,
+            userName: row.name,
+            eventTitle: row.event_title,
+            title,
+            message
+        });
+    }
+
+    console.log(`Announcement emailed to ${rows.length} attendee(s) of event ${eventId}`);
+};
 
 // GET /api/v1/events/:id/announcements — List announcements for an event
 export const getAnnouncements = async (req, res) => {
@@ -65,6 +94,11 @@ export const postAnnouncement = async (req, res) => {
         );
 
         console.log('Announcement posted successfully for event:', eventId);
+
+        // Email everyone registered. Sent one by one so no attendee sees another's
+        // address, and detached so a mail failure cannot fail the announcement.
+        notifyAttendees(eventId, title.trim(), message.trim())
+            .catch(err => console.error('Announcement emails failed:', err.message));
 
         return res.status(201).json({
             success: true,
