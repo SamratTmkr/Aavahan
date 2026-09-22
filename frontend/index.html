@@ -140,24 +140,6 @@
         </section>
 
         <!-- 6. Friendships are made on Aavahan (Community Stories) -->
-        <section class="section section-subtle">
-            <div class="container">
-                <div class="section-header-row">
-                    <div>
-                        <h2 class="section-header-title">Friendships are made on Aavahan</h2>
-                    </div>
-                    <a href="pages/explore.html" class="btn btn-outline-teal btn-pill btn-sm">
-                        <span>Explore more</span>
-                        <span class="material-symbols-outlined" style="font-size: 1.1rem; line-height: 1;">arrow_forward</span>
-                    </a>
-                </div>
-
-                <div class="stories-grid" id="homepageStoriesGrid">
-                    <!-- Populated from API -->
-                </div>
-            </div>
-        </section>
-
         <!-- 7. Popular Cities on Aavahan -->
         <section class="section">
             <div class="container">
@@ -301,42 +283,6 @@
                 }).join('');
             }
 
-            // 2. Render Community Stories ("Friendships are made on Aavahan")
-            const storiesGrid = document.getElementById('homepageStoriesGrid');
-            if (storiesGrid) {
-                const stories = [
-                    {
-                        title: "From 5 coders in a cafe to a 2,500-strong tech collective",
-                        desc: "We started gathering on weekends to learn distributed systems and AI. Through Aavahan, we scaled into a vibrant network hosting monthly hackathons across the valley.",
-                        author: "Dr. Pratigya Sharma · Lead, Kathmandu Tech Innovators",
-                        img: "assets/images/tech-summit.jpg"
-                    },
-                    {
-                        title: "Founding the Himalayan trail running circle in Pokhara",
-                        desc: "Aavahan helped us connect 400+ trail runners, from beginners to ultra-marathoners. Every Saturday we hit the Sarangkot ridges and bond over dal bhat.",
-                        author: "Kripa Gurung · Organizer, Pokhara Trail Runners",
-                        img: "assets/images/outdoor-hiking.jpg"
-                    },
-                    {
-                        title: "Reviving local acoustics & indie music in Patan",
-                        desc: "Finding jamming partners in the city used to be tough. Through our weekly open-mic events, 12 new indie bands have formed and recorded their first tracks.",
-                        author: "Rohan Shrestha · Founder, Patan Music Circle",
-                        img: "assets/images/music-jam.jpg"
-                    }
-                ];
-
-                storiesGrid.innerHTML = stories.map(st => `
-                    <div class="story-card">
-                        <img src="${st.img}" alt="${st.title}" class="story-card-img" loading="lazy">
-                        <div class="story-card-body">
-                            <h3 class="story-card-title">${st.title}</h3>
-                            <p class="story-card-desc">${st.desc}</p>
-                            <div class="story-card-author">${st.author}</div>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
             // 3. Render Popular Cities on Aavahan
             const citiesGrid = document.getElementById('homepageCitiesGrid');
             if (citiesGrid) {
@@ -364,12 +310,11 @@
                     console.log('[Home] Could not fetch city statistics:', e);
                 }
 
+                // Nothing to show until events exist, so hide the whole section.
                 if (popularCities.length === 0) {
-                    popularCities = [
-                        { name: 'Kathmandu', count: 0, img: 'assets/images/city-kathmandu.jpg' },
-                        { name: 'Pokhara', count: 0, img: 'assets/images/city-pokhara.jpg' },
-                        { name: 'Lalitpur', count: 0, img: 'assets/images/city-lalitpur.jpg' }
-                    ];
+                    const section = citiesGrid.closest('section');
+                    if (section) section.hidden = true;
+                    return;
                 }
 
                 citiesGrid.innerHTML = popularCities.map(c => {

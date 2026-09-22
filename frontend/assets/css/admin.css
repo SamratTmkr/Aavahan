@@ -530,34 +530,6 @@ body.admin-body {
     width: 280px;
 }
 
-.admin-settings-card {
-    max-width: 680px;
-    padding: 2rem;
-}
-
-.admin-input-hint {
-    font-size: 0.8rem;
-    color: var(--admin-text-muted);
-    margin-top: 0.25rem;
-}
-
-.admin-setting-row {
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--admin-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.admin-setting-desc {
-    font-size: 0.8rem;
-    color: var(--admin-text-muted);
-}
-
-.admin-save-btn {
-    margin-top: 2rem;
-}
-
 
 @media (max-width: 640px) {
     /* the header row itself must wrap, or its actions are pushed off-screen */

@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dateFormatted = eventDate.toLocaleDateString('en-US', {
         weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
     });
-    const timeFormatted = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : '10:00 NPT';
+    const timeFormatted = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : 'Time to be announced';
     const venueText = currentEvent.is_online ? 'Online Event' : (currentEvent.venue || currentEvent.city || 'Location TBD');
 
     if (headerDateEl) {
@@ -122,7 +122,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderMetrics();
         renderAttendeesTable(attendeesList);
         renderTicketTiers();
-        renderEventSchedule();
     }
 
     // 5. Render Metrics Cards
@@ -334,39 +333,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="progress-track">
                     <div class="progress-fill ${fillClass} ${widthClass}"></div>
                 </div>
-                <button class="btn btn-outline btn-block btn-sm" onclick="showToast('Capacity settings active for this event', 'info')">Capacity Settings</button>
-            </div>
-        `;
-    }
-
-    // 10. Render Event Schedule Dynamically
-    function renderEventSchedule() {
-        const timeline = document.getElementById('manageScheduleTimeline');
-        if (!timeline) return;
-
-        const startTime = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : '10:00 NPT';
-        const endTime = currentEvent.end_time ? currentEvent.end_time.slice(0, 5) + ' NPT' : '';
-        const venue = escapeHtml(currentEvent.is_online ? 'Online Platform' : (currentEvent.venue || currentEvent.city || 'Event Venue'));
-        const organizer = escapeHtml(currentEvent.organizer_name || 'Event Host');
-
-        timeline.innerHTML = `
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-time">${startTime} • ${venue}</div>
-                <div class="timeline-title">Doors Open & Registration Check-in</div>
-                <div class="timeline-speaker">Organized by ${organizer}</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-time">${startTime} ${endTime ? '- ' + endTime : 'onwards'} • Main Hall</div>
-                <div class="timeline-title">${escapeHtml(currentEvent.title)}</div>
-                <div class="timeline-speaker">${escapeHtml(currentEvent.category || 'Community')} Session</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-time">${endTime || 'Wrap-up'} • ${venue}</div>
-                <div class="timeline-title">Community Networking & Concluding Remarks</div>
-                <div class="timeline-speaker">All Attendees & Guests</div>
             </div>
         `;
     }
