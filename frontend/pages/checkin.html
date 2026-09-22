@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check in — Aavahan</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/pages.css">
+</head>
+<body class="auth-page-body">
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="../index.html" class="brand">
+                <span>Aavahan</span>
+                <span class="brand-dot"></span>
+            </a>
+            <div class="nav-right">
+                <a href="my-activities.html" class="btn btn-outline btn-pill btn-sm">My Activities</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-heading">Check in an attendee</h1>
+            </div>
+
+            <!-- Result of scanning a ticket QR, or of typing a code below -->
+            <div id="checkinResult" class="checkin-result" hidden></div>
+
+            <form id="checkinForm">
+                <p class="auth-subtext">Scan a ticket QR with your phone camera, or type the 8-character code from the attendee's ticket.</p>
+
+                <div class="form-group">
+                    <label class="form-label" for="checkinCode">Ticket code</label>
+                    <input type="text" id="checkinCode" class="form-input" placeholder="e.g. K4T2MPQ7"
+                           maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+                </div>
+
+                <button type="submit" id="btnCheckin" class="btn btn-primary btn-pill btn-block btn-lg auth-submit-btn">Check in</button>
+            </form>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+
+    <script type="module" src="../assets/js/api.js"></script>
+    <script type="module" src="../assets/js/main.js"></script>
+    <script type="module" src="../assets/js/checkin.js"></script>
+</body>
+</html>

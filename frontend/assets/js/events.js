@@ -1,3 +1,4 @@
+import { escapeHtml } from './main.js';
 import { getEvents, getEventCities } from './api.js';
 
 // events.js
@@ -121,10 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     '<div class="event-feed-top">' +
                         '<div class="flex-1">' +
                             '<div class="event-feed-category">' +
-                                (event.category || 'General') +
+                                escapeHtml(event.category || 'General') +
                             '</div>' +
                             '<h2 class="event-feed-title">' +
-                                event.title +
+                                escapeHtml(event.title) +
                             '</h2>' +
                         '</div>' +
                         '<div class="top-actions-wrap">' +
@@ -133,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     '</div>' +
 
                     '<p class="event-feed-desc">' +
-                        (event.description || 'No description provided.') +
+                        escapeHtml(event.description || 'No description provided.') +
                     '</p>' +
 
                     '<div class="event-feed-meta">' +
@@ -143,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         '</span>' +
                         '<span class="event-feed-meta-item">' +
                             '<span class="material-symbols-outlined event-feed-meta-icon">' + (event.is_online ? 'videocam' : 'location_on') + '</span>' +
-                            (event.is_online ? 'Online Event' : (event.venue || event.city || 'Location TBD')) +
+                            (event.is_online ? 'Online Event' : escapeHtml(event.venue || event.city || 'Location TBD')) +
                         '</span>' +
                         attendeesBit + capacityBit +
                     '</div>' +

@@ -1,6 +1,6 @@
 import { isAuthenticated } from './authService.js';
 import { getMyActivities, getMyOrganizerEvents, cancelEventRsvp } from './api.js';
-import { showToast } from './main.js';
+import { showToast, escapeHtml } from './main.js';
 
 // My Activities & Created Events page logic
 
@@ -95,9 +95,7 @@ async function loadActivities() {
         renderList();
     } catch (err) {
         console.error('Error loading activities:', err);
-        if (typeof showToast === 'function') {
-            showToast('Failed to load your activities.', 'error');
-        }
+        showToast('Failed to load your activities.', 'error');
     }
 }
 
@@ -240,7 +238,7 @@ function renderJoinedList(listEl) {
 
         const isFree = ev.is_free || !ev.min_price || Number(ev.min_price) === 0;
         const priceLabel = isFree ? 'Free' : `NPR ${Number(ev.min_price).toLocaleString()}`;
-        const rsvpCode = `RSVP-${String(ev.rsvp_id).padStart(4, '0')}`;
+        const ticketCode = ev.checkin_code || '';
 
         // Exact location representation
         let locationMarkup = '';
@@ -267,7 +265,7 @@ function renderJoinedList(listEl) {
         const statusLabel = isCheckedIn ? 'Checked In' : 'Confirmed RSVP';
 
         const isUpcoming = isUpcomingDate(ev.event_date);
-        const escapedTitle = (ev.title || '').replace(/'/g, "\\'");
+        const escapedTitle = escapeHtml(ev.title || '').replace(/'/g, "\\'");
 
         const cancelButton = isUpcoming ? `
             <button type="button" class="btn btn-sm btn-pill btn-cancel-rsvp" data-action="cancel-rsvp" data-id="${ev.event_id}" data-title="${escapedTitle}">
@@ -275,7 +273,7 @@ function renderJoinedList(listEl) {
             </button>
         ` : '';
 
-        const groupTag = ev.group_name ? `<span>•</span><span>by <strong>${ev.group_name}</strong></span>` : '';
+        const groupTag = ev.group_name ? `<span>•</span><span>by <strong>${escapeHtml(ev.group_name)}</strong></span>` : '';
 
         return `
             <div class="activity-card">
@@ -292,13 +290,13 @@ function renderJoinedList(listEl) {
                             ${groupTag}
                         </div>
                         <a href="event-details.html?id=${ev.event_id}" class="activity-title">
-                            ${ev.title}
+                            ${escapeHtml(ev.title)}
                         </a>
                         ${locationMarkup}
                         <div class="activity-sub">
                             <span>🎟️ ${priceLabel}</span>
                             <span>•</span>
-                            <span>🔖 Ticket Code: <strong class="dash-mono-id">${rsvpCode}</strong></span>
+                            <span>🔖 Ticket Code: <strong class="dash-mono-id">${escapeHtml(ticketCode) || 'n/a'}</strong></span>
                         </div>
                     </div>
                 </div>
@@ -309,10 +307,52 @@ function renderJoinedList(listEl) {
                     </a>
                     ${cancelButton}
                 </div>
+                ${ticketCode ? `
+                <div class="activity-ticket">
+                    <button type="button" class="btn btn-outline btn-pill btn-sm"
+                            data-action="show-ticket" data-code="${escapeHtml(ticketCode)}" data-rsvp="${ev.rsvp_id}">
+                        Show ticket QR
+                    </button>
+                    <div class="ticket-qr-wrap" id="ticketQr-${ev.rsvp_id}" hidden></div>
+                </div>` : ''}
             </div>
         `;
     }).join('');
 }
+
+// Draws the ticket QR the first time it is asked for. The QR encodes a link to
+// the check-in page, so an organiser can scan it with an ordinary phone camera
+// and does not need a scanner built into the site.
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action="show-ticket"]');
+    if (!btn) return;
+
+    const wrap = document.getElementById(`ticketQr-${btn.dataset.rsvp}`);
+    if (!wrap) return;
+
+    if (!wrap.hidden) {
+        wrap.hidden = true;
+        btn.textContent = 'Show ticket QR';
+        return;
+    }
+
+    if (!wrap.dataset.drawn) {
+        const url = `${window.location.origin}/pages/checkin.html?code=${btn.dataset.code}`;
+        if (typeof QRCode === 'undefined') {
+            wrap.innerHTML = `<p class="activity-ticket-note">Show this code at the door: <strong>${btn.dataset.code}</strong></p>`;
+        } else {
+            new QRCode(wrap, { text: url, width: 160, height: 160 });
+            const note = document.createElement('p');
+            note.className = 'activity-ticket-note';
+            note.textContent = `Code: ${btn.dataset.code}`;
+            wrap.appendChild(note);
+        }
+        wrap.dataset.drawn = 'yes';
+    }
+
+    wrap.hidden = false;
+    btn.textContent = 'Hide ticket QR';
+});
 
 // Render "Events I've Created"
 function renderCreatedList(listEl) {
@@ -386,7 +426,7 @@ function renderCreatedList(listEl) {
             `;
         }
 
-        const groupTag = ev.group_name ? `<span>•</span><span>Community: <strong>${ev.group_name}</strong></span>` : '';
+        const groupTag = ev.group_name ? `<span>•</span><span>Community: <strong>${escapeHtml(ev.group_name)}</strong></span>` : '';
 
         return `
             <div class="activity-card activity-card-created">
@@ -403,7 +443,7 @@ function renderCreatedList(listEl) {
                             ${groupTag}
                         </div>
                         <a href="event-details.html?id=${ev.id}" class="activity-title">
-                            ${ev.title}
+                            ${escapeHtml(ev.title)}
                         </a>
                         ${locationMarkup}
                         <div class="activity-sub">

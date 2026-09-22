@@ -1,6 +1,15 @@
 import { createEvent, getAllEvents, getEventById, getEventsByGroup, updateEvent, deleteEvent } from '../models/event.model.js';
 import pool from '../src/db.js';
 import fs from 'fs';
+import { sendRegistrationConfirmation } from '../utils/email.js';
+import crypto from 'crypto';
+
+// Short code printed on a ticket and encoded in its QR. No 0/O/1/I so it can be
+// read aloud or typed in without confusion.
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const makeCheckinCode = () => Array.from(crypto.randomBytes(8))
+    .map(b => CODE_ALPHABET[b % CODE_ALPHABET.length])
+    .join('');
 
 // Helper to clean up uploaded file when validation fails
 const cleanupUploadedFile = (file) => {
@@ -20,7 +29,8 @@ export const getEvents = async (req, res) => {
         );
         return res.json({ success: true, data: events });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -31,7 +41,8 @@ export const getEvent = async (req, res) => {
         if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
         return res.json({ success: true, data: event });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -41,7 +52,8 @@ export const getGroupEvents = async (req, res) => {
         const events = await getEventsByGroup(req.params.groupId);
         return res.json({ success: true, data: events });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -153,7 +165,8 @@ export const createNewEvent = async (req, res) => {
         return res.json({ success: true, message: 'Event created successfully', data: { id, image_url: imageUrl } });
     } catch (error) {
         cleanupUploadedFile(req.file);
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -170,7 +183,8 @@ export const updateExistingEvent = async (req, res) => {
         await updateEvent(req.params.id, req.body);
         return res.json({ success: true, message: 'Event updated' });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -187,7 +201,8 @@ export const deleteExistingEvent = async (req, res) => {
         await deleteEvent(req.params.id);
         return res.json({ success: true, message: 'Event deleted' });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -205,7 +220,9 @@ export const rsvpEvent = async (req, res) => {
 
         // FOR UPDATE locks the event row until this transaction finishes
         const [events] = await connection.execute(
-            'SELECT capacity, attendee_count, registration_deadline FROM events WHERE id = ? FOR UPDATE',
+            `SELECT capacity, attendee_count, registration_deadline,
+                    title, event_date, start_time, is_date_tba, is_online, venue, city
+             FROM events WHERE id = ? FOR UPDATE`,
             [eventId]
         );
         if (!events.length) {
@@ -231,9 +248,10 @@ export const rsvpEvent = async (req, res) => {
             return res.status(409).json({ success: false, message: 'This event has reached full capacity.' });
         }
 
+        const checkinCode = makeCheckinCode();
         const [insertRes] = await connection.execute(
-            'INSERT INTO rsvps (event_id, user_id, status) VALUES (?, ?, ?)',
-            [eventId, userId, 'confirmed']
+            'INSERT INTO rsvps (event_id, user_id, status, checkin_code) VALUES (?, ?, ?, ?)',
+            [eventId, userId, 'confirmed', checkinCode]
         );
 
         await connection.execute(
@@ -242,13 +260,84 @@ export const rsvpEvent = async (req, res) => {
         );
 
         await connection.commit();
-        return res.json({ success: true, message: 'RSVP confirmed successfully!', rsvpId: insertRes.insertId });
+
+        // Fire and forget: a mail failure must not fail a confirmed registration
+        sendRegistrationConfirmation({
+            to: req.user.email,
+            userName: req.user.name,
+            event: events[0]
+        }).catch(err => console.error('Confirmation email failed:', err.message));
+
+        return res.json({ success: true, message: 'RSVP confirmed successfully!', rsvpId: insertRes.insertId, checkinCode });
     } catch (error) {
         await connection.rollback();
         console.log('Error creating RSVP:', error.message);
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     } finally {
         connection.release();
+    }
+};
+
+
+// POST /api/v1/events/checkin — check someone in from their ticket code.
+// The code identifies the registration, so the organiser does not need the ids.
+export const checkinByCode = async (req, res) => {
+    try {
+        const code = (req.body.code || '').trim().toUpperCase();
+        if (!code) {
+            return res.status(400).json({ success: false, message: 'Check-in code is required' });
+        }
+
+        const [rows] = await pool.execute(
+            `SELECT r.id, r.event_id, r.status, r.checked_in_at,
+                    u.name AS attendee_name, e.title AS event_title, e.organizer_id
+             FROM rsvps r
+             JOIN users u ON r.user_id = u.id
+             JOIN events e ON r.event_id = e.id
+             WHERE r.checkin_code = ?`,
+            [code]
+        );
+
+        if (!rows.length) {
+            return res.status(404).json({ success: false, message: 'No registration found for that code' });
+        }
+
+        const rsvp = rows[0];
+
+        // Only the organiser, a co-manager or an admin may check people in
+        const [manager] = await pool.execute(
+            'SELECT id FROM event_managers WHERE event_id = ? AND user_id = ?',
+            [rsvp.event_id, req.user.id]
+        );
+        const allowed = rsvp.organizer_id === req.user.id || manager.length > 0 || req.user.role === 'admin';
+        if (!allowed) {
+            return res.status(403).json({ success: false, message: 'You cannot check in attendees for this event' });
+        }
+
+        if (rsvp.status === 'checked_in') {
+            return res.json({
+                success: true,
+                alreadyCheckedIn: true,
+                message: `${rsvp.attendee_name} was already checked in`,
+                data: { attendeeName: rsvp.attendee_name, eventTitle: rsvp.event_title, checkedInAt: rsvp.checked_in_at }
+            });
+        }
+
+        await pool.execute(
+            'UPDATE rsvps SET status = ?, checked_in_at = NOW() WHERE id = ?',
+            ['checked_in', rsvp.id]
+        );
+
+        return res.json({
+            success: true,
+            alreadyCheckedIn: false,
+            message: `${rsvp.attendee_name} checked in`,
+            data: { attendeeName: rsvp.attendee_name, eventTitle: rsvp.event_title }
+        });
+    } catch (error) {
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -265,7 +354,8 @@ export const getEventAttendees = async (req, res) => {
         );
         return res.json({ success: true, data: rows });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -277,7 +367,8 @@ export const getEventCities = async (req, res) => {
         );
         return res.json({ success: true, data: rows });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -315,7 +406,8 @@ export const getMyOrganizerEvents = async (req, res) => {
             }
         });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -335,7 +427,8 @@ export const getMyOrganizerRSVPs = async (req, res) => {
         );
         return res.json({ success: true, data: rows });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -369,7 +462,8 @@ export const checkinAttendee = async (req, res) => {
         return res.json({ success: true, message: 'Attendee marked as checked in' });
     } catch (error) {
         console.log('Error checking in attendee:', error.message);
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -378,7 +472,7 @@ export const getMyActivities = async (req, res) => {
     try {
         const userId = req.user.id;
         const [rows] = await pool.execute(
-            `SELECT r.id AS rsvp_id, r.status AS rsvp_status, r.created_at AS rsvp_created_at,
+            `SELECT r.id AS rsvp_id, r.status AS rsvp_status, r.created_at AS rsvp_created_at, r.checkin_code,
                     e.id AS event_id, e.title, e.description, e.category, e.venue, e.address, 
                     e.city, e.event_date, e.start_time, e.end_time, e.is_free, e.min_price, 
                     e.currency, e.is_online, e.attendee_count, g.name AS group_name
@@ -413,7 +507,8 @@ export const getMyActivities = async (req, res) => {
             data: { upcoming, past, total: rows.length }
         });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -445,7 +540,8 @@ export const cancelRsvp = async (req, res) => {
         return res.json({ success: true, message: 'Registration cancelled successfully.' });
     } catch (error) {
         console.log('Error cancelling RSVP:', error.message);
-        return res.status(500).json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 

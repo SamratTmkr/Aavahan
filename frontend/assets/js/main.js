@@ -2,6 +2,18 @@ import { getToken, getUser, isAuthenticated, clearAuth } from './authService.js'
 
 // main.js
 
+// Anything typed by a user (event titles, names, comments) is dropped into
+// innerHTML templates, so it has to be escaped first or the browser will run it.
+export function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Toast notification
 export function showToast(message, type = 'info') {
     if (!message || /loading|cancelling|removing|processing|redirecting/i.test(message)) {
@@ -45,6 +57,7 @@ export function showToast(message, type = 'info') {
 
 if (typeof window !== 'undefined') {
     window.showToast = showToast;
+    window.escapeHtml = escapeHtml;
 }
 
 // Navbar auth state
