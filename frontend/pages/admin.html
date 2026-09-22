@@ -322,15 +322,21 @@
                 </div>
 
                 <div class="admin-card admin-settings-card">
+                    <p class="admin-notice">
+                        These platform settings are planned for a later iteration. The controls below
+                        show the intended configuration but are not connected to the database yet, so
+                        they are disabled.
+                    </p>
+
                     <div class="form-group">
                         <label class="form-label">Platform Service Commission (%)</label>
-                        <input type="number" class="form-input" value="3.5" min="0" max="20" step="0.1">
+                        <input type="number" class="form-input" value="3.5" min="0" max="20" step="0.1" disabled>
                         <div class="admin-input-hint">Standard fee deducted per paid ticket transaction.</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Default Currency</label>
-                        <select class="form-select">
+                        <select class="form-select" disabled>
                             <option value="NPR" selected>NPR (Nepalese Rupee)</option>
                             <option value="USD">USD (US Dollar)</option>
                         </select>
@@ -338,7 +344,7 @@
 
                     <div class="form-group">
                         <label class="form-label">Homepage Global Announcement Banner</label>
-                        <input type="text" class="form-input" value="🎉 Welcome to Aavahan — Nepal's community event platform!">
+                        <input type="text" class="form-input" value="🎉 Welcome to Aavahan — Nepal's community event platform!" disabled>
                     </div>
 
                     <div class="admin-setting-row">
@@ -346,10 +352,8 @@
                             <div class="fw-700">Automatic Event Publishing</div>
                             <div class="admin-setting-desc">Auto-approve verified organizer submissions.</div>
                         </div>
-                        <input type="checkbox" class="checkbox-custom" checked>
+                        <input type="checkbox" class="checkbox-custom" checked disabled>
                     </div>
-
-                    <button id="btnAdminSaveSettings" class="btn btn-teal btn-pill admin-save-btn">Save Changes</button>
                 </div>
             </div>
         </main>

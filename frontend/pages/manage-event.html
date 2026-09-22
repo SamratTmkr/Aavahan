@@ -266,9 +266,15 @@
             <div class="manage-settings-card">
                 <h3 class="manage-settings-title">Event Settings & Policies</h3>
 
+                <p class="admin-notice">
+                    Event status and refund policy are planned for a later iteration. The controls
+                    below show the intended options but are not stored yet, so they are disabled.
+                    Cancelling the event does work and is final.
+                </p>
+
                 <div class="form-group">
                     <label class="form-label" for="manageEventStatusSelect">Event Status</label>
-                    <select id="manageEventStatusSelect" class="form-select">
+                    <select id="manageEventStatusSelect" class="form-select" disabled>
                         <option value="published">Published & Accepting Registrations</option>
                         <option value="paused">Pause Ticket Sales</option>
                         <option value="completed">Mark as Completed</option>
@@ -277,7 +283,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Refund Policy</label>
-                    <select class="form-select">
+                    <select class="form-select" disabled>
                         <option>Full refund up to 7 days before event</option>
                         <option>Full refund up to 24 hours before event</option>
                         <option>No refunds</option>

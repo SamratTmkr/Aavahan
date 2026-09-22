@@ -36,13 +36,16 @@ export function showToast(message, type = 'info') {
     else if (type === 'error') icon = 'error';
     else if (type === 'warning') icon = 'warning';
 
+    // The message can carry text that came back from the server, so it goes in
+    // as text rather than markup.
     toast.innerHTML = `
         <span class="material-symbols-outlined toast-icon">${icon}</span>
-        <span class="toast-message">${message}</span>
+        <span class="toast-message"></span>
         <button type="button" aria-label="Dismiss" class="toast-close-btn">
             <span class="material-symbols-outlined toast-close-icon">close</span>
         </button>
     `;
+    toast.querySelector('.toast-message').textContent = message;
 
     const closeBtn = toast.querySelector('button');
     closeBtn.addEventListener('click', () => {
@@ -202,8 +205,6 @@ const DEFAULT_FOOTER_HTML = `
             </div>
             <div class="footer-legal-links">
                 <a href="{{PAGES}}explore.html" class="footer-link">Explore</a>
-                <a href="#" class="footer-link">Terms of Service</a>
-                <a href="#" class="footer-link">Privacy Policy</a>
             </div>
         </div>
     </div>

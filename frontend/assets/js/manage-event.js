@@ -73,12 +73,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Hydrate Header
-    document.title = `Manage — ${escapeHtml(currentEvent.title)} | Aavahan`;
+    document.title = `Manage — ${currentEvent.title} | Aavahan`;
     const headerTitleEl = document.getElementById('manageEventTitle');
     const headerDateEl = document.getElementById('manageEventDate');
     const headerIdBadgeEl = document.getElementById('manageEventIdBadge');
     const viewPublicBtn = document.getElementById('btnViewPublicPage');
-    const editEventBtn = document.getElementById('btnEditEvent');
 
     if (headerTitleEl) headerTitleEl.textContent = currentEvent.title;
     if (headerIdBadgeEl) headerIdBadgeEl.textContent = `Event #${currentEvent.id}`;
@@ -347,8 +346,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const startTime = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : '10:00 NPT';
         const endTime = currentEvent.end_time ? currentEvent.end_time.slice(0, 5) + ' NPT' : '';
-        const venue = currentEvent.is_online ? 'Online Platform' : (currentEvent.venue || currentEvent.city || 'Event Venue');
-        const organizer = currentEvent.organizer_name || 'Event Host';
+        const venue = escapeHtml(currentEvent.is_online ? 'Online Platform' : (currentEvent.venue || currentEvent.city || 'Event Venue'));
+        const organizer = escapeHtml(currentEvent.organizer_name || 'Event Host');
 
         timeline.innerHTML = `
             <div class="timeline-item">
@@ -361,7 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="timeline-dot"></div>
                 <div class="timeline-time">${startTime} ${endTime ? '- ' + endTime : 'onwards'} • Main Hall</div>
                 <div class="timeline-title">${escapeHtml(currentEvent.title)}</div>
-                <div class="timeline-speaker">${currentEvent.category || 'Community'} Session</div>
+                <div class="timeline-speaker">${escapeHtml(currentEvent.category || 'Community')} Session</div>
             </div>
             <div class="timeline-item">
                 <div class="timeline-dot"></div>

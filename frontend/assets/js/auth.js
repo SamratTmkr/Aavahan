@@ -1,4 +1,5 @@
 import { setAuth } from './authService.js';
+import { showToast } from './main.js';
 import { registerUser, loginUser } from './api.js';
 
 // Sign Up Form Handler
@@ -25,13 +26,13 @@ if (signupForm) {
                 const redirectUrl = urlParams.get('redirect') || (data.user?.role === 'admin' ? 'admin.html' : '../index.html');
                 window.location.href = redirectUrl;
             } else {
-                alert(data.message || 'Registration failed. Please try again.');
+                showToast(data.message || 'Registration failed. Please try again.', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Sign up';
             }
         } catch (error) {
             console.error('Registration error:', error);
-            alert('Something went wrong. Please check your connection.');
+            showToast('Something went wrong. Please check your connection.', 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Sign up';
         }
@@ -61,13 +62,13 @@ if (loginForm) {
                 const redirectUrl = urlParams.get('redirect') || (data.user?.role === 'admin' ? 'admin.html' : '../index.html');
                 window.location.href = redirectUrl;
             } else {
-                alert(data.message || 'Login failed. Please check your email and password.');
+                showToast(data.message || 'Login failed. Please check your email and password.', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Log in';
             }
         } catch (error) {
             console.error('Authentication error:', error);
-            alert('Unable to connect to the authentication service. Please check your network and verify the server is running.');
+            showToast('Unable to connect to the authentication service. Please check your network and verify the server is running.', 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Log in';
         }

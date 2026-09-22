@@ -512,14 +512,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Admin save settings button
-    var saveSettingsBtn = document.getElementById('btnAdminSaveSettings');
-    if (saveSettingsBtn) {
-        saveSettingsBtn.addEventListener('click', function() {
-            showToast('Platform settings saved!', 'success');
-        });
-    }
-
     // Admin logout link
     var logoutLink = document.getElementById('adminLogoutLink');
     if (logoutLink) {
