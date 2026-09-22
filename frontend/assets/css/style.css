@@ -1058,3 +1058,60 @@ body.modal-open { overflow: hidden; }
 .wizard-progress-fill.progress-step-1 { width: 33.33%; }
 .wizard-progress-fill.progress-step-2 { width: 66.66%; }
 .wizard-progress-fill.progress-step-3 { width: 100%; }
+
+/* ---------------------------------------------------------------------------
+   Small screens: stop fixed flex rows from pushing the page wider than the
+   viewport. Each of these was measured overflowing at 375px.
+   --------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+    /* header actions: let the buttons drop onto a second line */
+    .nav-right {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        flex-shrink: 1;
+    }
+
+    /* "Not a member yet?" is the widest thing in the auth header and adds nothing on a phone */
+    .auth-nav-note { display: none; }
+
+    /* event cards: badges wrap under the title instead of stretching the row */
+    .event-feed-top,
+    .top-actions-wrap {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* generic flex utility should wrap rather than overflow on a phone */
+    .d-flex { flex-wrap: wrap; }
+
+    /* a flex child will not shrink past its content unless told it may */
+    .flex-1 { min-width: 0; }
+
+    /* the navbar's 24px gaps and padding push the menu button off a 360px screen */
+    .nav-container {
+        gap: 0.5rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .nav-right { min-width: 0; }
+
+    /* wide tables scroll sideways inside their card instead of stretching the page */
+    .data-table-container,
+    .admin-card {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* long words and codes must not force the page wider */
+    body { overflow-x: hidden; }
+}
+
+/* Very narrow phones (iPhone SE and similar): claw back the side gutters */
+@media (max-width: 360px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}

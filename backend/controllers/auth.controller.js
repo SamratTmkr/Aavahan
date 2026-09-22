@@ -3,11 +3,10 @@ import jwt from 'jsonwebtoken';
 import pool from '../src/db.js';
 import crypto from 'crypto';
 import { sendPasswordResetEmail } from '../utils/email.js';
+import { isValidEmail, isStrongPassword, normaliseEmail, PASSWORD_REQUIREMENTS } from '../utils/validators.js';
 
 const TOKEN_EXPIRY = process.env.JWT_EXPIRES_IN || '7d';
 
-// Same rule as sign-up: at least 6 characters with an upper, a lower and a digit
-const PASSWORD_RULE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 export const register = async (req, res) => {
@@ -23,22 +22,16 @@ export const register = async (req, res) => {
         }
 
         // Format email consistently
-        const emailValidate = email.trim().toLowerCase();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(emailValidate)) {
+        const emailValidate = normaliseEmail(email);
+        if (!isValidEmail(emailValidate)) {
             return res.status(400).json({
                 success: false,
                 message: "Please enter a valid email address"
             });
         }
 
-        // Check password complexity (at least 6 characters, uppercase, lowercase, and number)
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
-        if (!passwordRegex.test(password)) {
-            return res.status(400).json({
-                success: false,
-                message: "Password must be at least 6 characters and contain uppercase, lowercase, and a number"
-            });
+        if (!isStrongPassword(password)) {
+            return res.status(400).json({ success: false, message: PASSWORD_REQUIREMENTS });
         }
 
         // Check if email already exists
@@ -94,7 +87,7 @@ export const login = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    const emailValidate = email.trim().toLowerCase();
+    const emailValidate = normaliseEmail(email);
 
     try {
         const [users] = await pool.execute(
@@ -159,7 +152,7 @@ export const forgotPassword = async (req, res) => {
     };
 
     try {
-        const email = (req.body.email || '').trim().toLowerCase();
+        const email = normaliseEmail(req.body.email);
         if (!email) {
             return res.status(400).json({ success: false, message: 'Email is required' });
         }
@@ -198,11 +191,8 @@ export const resetPassword = async (req, res) => {
         if (!token || !password) {
             return res.status(400).json({ success: false, message: 'Token and new password are required' });
         }
-        if (!PASSWORD_RULE.test(password)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Password must be at least 6 characters and contain uppercase, lowercase, and a number'
-            });
+        if (!isStrongPassword(password)) {
+            return res.status(400).json({ success: false, message: PASSWORD_REQUIREMENTS });
         }
 
         const [rows] = await pool.execute(

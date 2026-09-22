@@ -2,14 +2,7 @@ import { createEvent, getAllEvents, getEventById, getEventsByGroup, updateEvent,
 import pool from '../src/db.js';
 import fs from 'fs';
 import { sendRegistrationConfirmation } from '../utils/email.js';
-import crypto from 'crypto';
-
-// Short code printed on a ticket and encoded in its QR. No 0/O/1/I so it can be
-// read aloud or typed in without confusion.
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const makeCheckinCode = () => Array.from(crypto.randomBytes(8))
-    .map(b => CODE_ALPHABET[b % CODE_ALPHABET.length])
-    .join('');
+import { makeCheckinCode } from '../utils/checkin-code.js';
 
 // Helper to clean up uploaded file when validation fails
 const cleanupUploadedFile = (file) => {
