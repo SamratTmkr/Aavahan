@@ -2551,7 +2551,7 @@
 .activity-ticket {
     grid-column: 1 / -1;
     padding: 0.75rem 0 0.25rem;
-    border-top: 1px solid var(--border, #e2e8f0);
+    border-top: 1px solid var(--border-color);
     margin-top: 0.75rem;
 }
 
@@ -2559,9 +2559,9 @@
     margin-top: 0.75rem;
     display: inline-block;
     padding: 0.75rem;
-    background: #ffffff;
-    border: 1px solid var(--border, #e2e8f0);
-    border-radius: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
     text-align: center;
 }
 
@@ -2570,8 +2570,67 @@
     font-size: 0.8rem;
     letter-spacing: 0.05em;
     font-weight: 600;
-    color: var(--text-muted, #64748b);
+    color: var(--text-muted);
 }
 
-/* Check-in result banner */
-.checkin-result { margin-bottom: 1.25rem; }
+/* Short explanatory line under an auth heading */
+.auth-subtext {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+}
+
+/* Result banner on the check-in page */
+.checkin-result {
+    display: flex;
+    gap: 0.625rem;
+    align-items: flex-start;
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid transparent;
+    margin-bottom: 1.25rem;
+}
+
+.checkin-result .material-symbols-outlined { font-size: 1.25rem; }
+.checkin-result-title { font-weight: 700; }
+.checkin-result-detail { font-size: 0.82rem; margin-top: 0.125rem; }
+
+.checkin-result-success {
+    background: var(--success-light);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.checkin-result-warning {
+    background: var(--warning-light);
+    border-color: var(--warning);
+    color: #8a5a00;
+}
+
+.checkin-result-error {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary-hover);
+}
+
+.checkin-code-input {
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    /* a 1fr grid track will not shrink below its content; minmax(0, 1fr) lets it,
+       which stops the event page widening on very narrow phones */
+    .meetup-details-layout { grid-template-columns: minmax(0, 1fr); }
+    .meetup-details-layout > * { min-width: 0; }
+
+    /* attendee table scrolls sideways rather than widening the page */
+    .data-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table { min-width: 560px; }
+}

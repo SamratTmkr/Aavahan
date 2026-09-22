@@ -10,22 +10,15 @@ const input = document.getElementById('checkinCode');
 const result = document.getElementById('checkinResult');
 
 function showResult(state, title, detail) {
-    const colours = {
-        success: ['#f0fdfa', '#0f766e', 'check_circle'],
-        warning: ['#fffbeb', '#b45309', 'info'],
-        error: ['#fef2f2', '#b91c1c', 'error']
-    };
-    const [bg, fg, icon] = colours[state] || colours.error;
+    const icon = { success: 'check_circle', warning: 'info', error: 'error' }[state] || 'error';
 
     result.hidden = false;
-    result.style.cssText = `background:${bg};border:1px solid ${fg};color:${fg};border-radius:10px;padding:16px;margin-bottom:20px;`;
+    result.className = `checkin-result checkin-result-${state}`;
     result.innerHTML = `
-        <div style="display:flex;gap:10px;align-items:flex-start;">
-            <span class="material-symbols-outlined">${icon}</span>
-            <div>
-                <strong>${escapeHtml(title)}</strong>
-                ${detail ? `<div style="font-size:13px;margin-top:2px;">${escapeHtml(detail)}</div>` : ''}
-            </div>
+        <span class="material-symbols-outlined">${icon}</span>
+        <div>
+            <div class="checkin-result-title">${escapeHtml(title)}</div>
+            ${detail ? `<div class="checkin-result-detail">${escapeHtml(detail)}</div>` : ''}
         </div>
     `;
 }
