@@ -1,4 +1,5 @@
 import { isAuthenticated, clearAuth } from './authService.js';
+import { showToast } from './main.js';
 import { createEvent } from './api.js';
 
 // Event Creation Wizard State
@@ -70,7 +71,7 @@ bannerInput?.addEventListener("change", (e) => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-        alert("Please select an image.");
+        showToast("Please select an image.", 'error');
         e.target.value = "";
         return;
     }
@@ -160,12 +161,12 @@ function validateStep(step) {
         const title = document.getElementById('eventTitle')?.value.trim();
         const desc = document.getElementById('eventDesc')?.value.trim();
         if (!title) {
-            alert('Please enter an event title.');
+            showToast('Please enter an event title.', 'error');
             document.getElementById('eventTitle')?.focus();
             return false;
         }
         if (!desc) {
-            alert('Please describe your event.');
+            showToast('Please describe your event.', 'error');
             document.getElementById('eventDesc')?.focus();
             return false;
         }
@@ -182,29 +183,29 @@ function validateStep(step) {
         const todayStr = new Date().toISOString().split('T')[0];
 
         if (!city) {
-            alert('Please enter a city or region.');
+            showToast('Please enter a city or region.', 'error');
             document.getElementById('eventCity')?.focus();
             return false;
         }
         if (!venue) {
-            alert('Please enter the venue / address.');
+            showToast('Please enter the venue / address.', 'error');
             document.getElementById('eventVenue')?.focus();
             return false;
         }
 
         if (!isTba) {
             if (!date) {
-                alert('Please select an event date.');
+                showToast('Please select an event date.', 'error');
                 document.getElementById('eventDate')?.focus();
                 return false;
             }
             if (date < todayStr) {
-                alert('Event date cannot be in the past.');
+                showToast('Event date cannot be in the past.', 'error');
                 document.getElementById('eventDate')?.focus();
                 return false;
             }
             if (!time) {
-                alert('Please specify the start time.');
+                showToast('Please specify the start time.', 'error');
                 document.getElementById('eventStartTime')?.focus();
                 return false;
             }
@@ -212,7 +213,7 @@ function validateStep(step) {
                 const eventDateTime = new Date(`${date}T${time}`);
                 const deadlineTime = new Date(deadline);
                 if (deadlineTime >= eventDateTime) {
-                    alert('Registration deadline must be before the event date.');
+                    showToast('Registration deadline must be before the event date.', 'error');
                     document.getElementById('registrationDeadline')?.focus();
                     return false;
                 }
@@ -259,28 +260,28 @@ btnNext.addEventListener('click', async () => {
 
     // Final validation
     if (!title || !description || !city || !venue) {
-        alert('Please ensure all required fields are filled out.');
+        showToast('Please ensure all required fields are filled out.', 'error');
         return;
     }
 
     if (!isTba) {
         if (!eventDate) {
-            alert('Please select an event date.');
+            showToast('Please select an event date.', 'error');
             return;
         }
         if (eventDate < todayStr) {
-            alert('Event date cannot be in the past.');
+            showToast('Event date cannot be in the past.', 'error');
             return;
         }
         if (!startTime) {
-            alert('Please specify the start time.');
+            showToast('Please specify the start time.', 'error');
             return;
         }
         if (deadline) {
             const eventDateTime = new Date(`${eventDate}T${startTime}`);
             const deadlineTime = new Date(deadline);
             if (deadlineTime >= eventDateTime) {
-                alert('Registration deadline must be before the event date.');
+                showToast('Registration deadline must be before the event date.', 'error');
                 return;
             }
         }
@@ -320,23 +321,23 @@ btnNext.addEventListener('click', async () => {
 
         if (!eventData.success) {
             if (eventData.message && eventData.message.toLowerCase().includes('authenticat')) {
-                alert('Your session has expired. Please log in to publish your event.');
+                showToast('Your session has expired. Please log in to publish your event.', 'error');
                 clearAuth();
-                window.location.href = 'login.html?redirect=create-event.html';
+                setTimeout(() => { window.location.href = 'login.html?redirect=create-event.html'; }, 1500);
                 return;
             }
-            alert(eventData.message || 'Failed to create event.');
+            showToast(eventData.message || 'Failed to create event.', 'error');
             btnNext.disabled = false;
             btnNext.textContent = 'Publish Event';
             return;
         }
 
-        alert('Event published successfully!');
-        window.location.href = 'explore.html';
+        showToast('Event published successfully!', 'success');
+        setTimeout(() => { window.location.href = 'explore.html'; }, 1200);
 
     } catch (error) {
         console.error('Error creating event:', error);
-        alert('Something went wrong. Please check your connection.');
+        showToast('Something went wrong. Please check your connection.', 'error');
         btnNext.disabled = false;
         btnNext.textContent = 'Publish Event';
     }

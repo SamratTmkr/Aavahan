@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const topEventTitle = document.getElementById('topEventTitle');
     if (topEventTitle) {
         topEventTitle.textContent = currentEvent.title;
-        document.title = `${escapeHtml(currentEvent.title)} — Aavahan`;
+        document.title = `${currentEvent.title} — Aavahan`;
     }
 
     const topHostAvatar = document.getElementById('topHostAvatar');
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Sidebar widgets
     const sidebarGroupName = document.getElementById('sidebarGroupName');
-    if (sidebarGroupName) sidebarGroupName.textContent = currentEvent.group_name || (currentEvent.category ? `${escapeHtml(currentEvent.category)} Group` : (currentEvent.city ? `${escapeHtml(currentEvent.city)} Community Group` : 'Community Group'));
+    if (sidebarGroupName) sidebarGroupName.textContent = currentEvent.group_name || (currentEvent.category ? `${currentEvent.category} Group` : (currentEvent.city ? `${currentEvent.city} Community Group` : 'Community Group'));
 
     const sidebarDateText = document.getElementById('sidebarDateText');
     if (sidebarDateText) sidebarDateText.textContent = isTba ? 'Date to be Announced' : dateFormattedLong;

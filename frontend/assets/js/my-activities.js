@@ -216,7 +216,7 @@ function renderJoinedList(listEl) {
     if (!items || items.length === 0) {
         let emptyDesc = "You haven't joined any events in this section yet. Discover meetups, workshops, and gatherings happening across Nepal!";
         if (searchQuery.trim()) {
-            emptyDesc = `No joined events matching "${searchQuery}". Try a different keyword.`;
+            emptyDesc = `No joined events matching "${escapeHtml(searchQuery)}". Try a different keyword.`;
         }
         listEl.innerHTML = `
             <div class="activities-empty">
@@ -339,7 +339,7 @@ document.addEventListener('click', (e) => {
     if (!wrap.dataset.drawn) {
         const url = `${window.location.origin}/pages/checkin.html?code=${btn.dataset.code}`;
         if (typeof QRCode === 'undefined') {
-            wrap.innerHTML = `<p class="activity-ticket-note">Show this code at the door: <strong>${btn.dataset.code}</strong></p>`;
+            wrap.innerHTML = `<p class="activity-ticket-note">Show this code at the door: <strong>${escapeHtml(btn.dataset.code)}</strong></p>`;
         } else {
             new QRCode(wrap, { text: url, width: 160, height: 160 });
             const note = document.createElement('p');
@@ -376,7 +376,7 @@ function renderCreatedList(listEl) {
     if (!items || items.length === 0) {
         let emptyDesc = "You haven't hosted any events matching this section yet. Gather like-minded people by organizing a meetup or workshop!";
         if (searchQuery.trim()) {
-            emptyDesc = `No created events matching "${searchQuery}". Try a different keyword.`;
+            emptyDesc = `No created events matching "${escapeHtml(searchQuery)}". Try a different keyword.`;
         }
         listEl.innerHTML = `
             <div class="activities-empty">

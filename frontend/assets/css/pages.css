@@ -2634,3 +2634,29 @@
 
     .data-table { min-width: 560px; }
 }
+
+/* ---- Notice for controls that are designed but not wired up yet ---- */
+.admin-notice {
+    background: var(--warning-light);
+    border: 1px solid var(--warning);
+    border-left-width: 4px;
+    border-radius: var(--radius-md);
+    padding: 0.875rem 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.form-input:disabled,
+.form-select:disabled,
+.form-textarea:disabled {
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.checkbox-custom:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
