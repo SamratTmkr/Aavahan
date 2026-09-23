@@ -203,25 +203,24 @@ if (evSearchEl) {
 var allAdminGroups = [];
 
 async function loadAdminGroups() {
-    tableLoading('adminGroupsTableBody', 6);
+    tableLoading('adminGroupsTableBody', 5);
     try {
         var data = await getGroups();
         allAdminGroups = (data.success && data.data) ? data.data : [];
         renderAdminGroups(allAdminGroups);
     } catch(e) {
-        tableEmpty('adminGroupsTableBody', 6, 'Failed to load groups.');
+        tableEmpty('adminGroupsTableBody', 5, 'Failed to load groups.');
     }
 }
 
 function renderAdminGroups(groups) {
     var tbody = document.getElementById('adminGroupsTableBody');
     if (!tbody) return;
-    if (!groups.length) { tableEmpty('adminGroupsTableBody', 6, 'No groups found.'); return; }
+    if (!groups.length) { tableEmpty('adminGroupsTableBody', 5, 'No groups found.'); return; }
     tbody.innerHTML = groups.map(function(g) {
         return '<tr>' +
             '<td><div class="admin-user-cell">' + avatarEl(g.name) + '<div><div class="admin-table-title">' + escapeHtml(g.name) + '</div><div class="admin-table-sub">' + escapeHtml(g.city || '—') + '</div></div></div></td>' +
             '<td>' + escapeHtml(g.category || '—') + '</td>' +
-            '<td>' + (g.member_count || 0).toLocaleString() + '</td>' +
             '<td>' + (g.hosted_events_count || 0) + '</td>' +
             '<td><span class="mod-badge mod-badge-' + (g.is_public ? 'active' : 'suspended') + '">' + (g.is_public ? 'Public' : 'Private') + '</span></td>' +
             '<td><div class="admin-action-btn-group">' +
@@ -504,13 +503,6 @@ document.addEventListener('DOMContentLoaded', function() {
         exportReportBtn.addEventListener('click', exportAdminReportCSV);
     }
 
-    // Admin alerts button
-    var alertsBtn = document.getElementById('btnAdminAlerts');
-    if (alertsBtn) {
-        alertsBtn.addEventListener('click', function() {
-            showToast('No new unread platform alerts', 'info');
-        });
-    }
 
     // Admin logout link
     var logoutLink = document.getElementById('adminLogoutLink');
