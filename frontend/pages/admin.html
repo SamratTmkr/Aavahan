@@ -47,14 +47,6 @@
                 <span>Users</span>
                 <span class="nav-count">0</span>
             </a>
-            <a class="admin-nav-item" data-tab="tabAdminTransactions">
-                <span class="material-symbols-outlined">receipt_long</span>
-                <span>Transactions</span>
-            </a>
-            <a class="admin-nav-item" data-tab="tabAdminSettings">
-                <span class="material-symbols-outlined">settings</span>
-                <span>Settings</span>
-            </a>
         </nav>
 
         <div class="admin-sidebar-footer">
@@ -91,9 +83,6 @@
                     <span class="material-symbols-outlined icon-16">open_in_new</span>
                     <span>View Public Site</span>
                 </a>
-                <button id="btnAdminAlerts" class="btn btn-ghost btn-sm">
-                    <span class="material-symbols-outlined">notifications</span>
-                </button>
             </div>
         </header>
 
@@ -135,17 +124,6 @@
                         <div class="admin-metric-label">Live Events Hosted</div>
                         <div class="admin-metric-trend primary">
                             <span>Published on platform</span>
-                        </div>
-                    </div>
-
-                    <div class="admin-metric-card">
-                        <div class="admin-metric-icon success">
-                            <span class="material-symbols-outlined">payments</span>
-                        </div>
-                        <div id="kpiGrossVolume" class="admin-metric-val">—</div>
-                        <div class="admin-metric-label">Gross Ticket GMV</div>
-                        <div class="admin-metric-trend success">
-                            <span>Calculated from active events</span>
                         </div>
                     </div>
 
@@ -238,7 +216,6 @@
                             <tr>
                                 <th>Group Name</th>
                                 <th>Category</th>
-                                <th>Members</th>
                                 <th>Hosted Events</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -283,75 +260,6 @@
                 </div>
             </div>
 
-            <!-- TAB 5: TRANSACTIONS & TICKETS -->
-            <div class="admin-tab-pane" id="tabAdminTransactions">
-                <div class="admin-page-header">
-                    <div>
-                        <h1 class="admin-page-title">Transactions & Refunds</h1>
-                        <p class="admin-page-subtitle">Track ticket purchases, payment gateways, and issue customer refunds.</p>
-                    </div>
-                </div>
-
-                <div class="admin-card">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Transaction ID</th>
-                                <th>Buyer</th>
-                                <th>Event</th>
-                                <th>Amount</th>
-                                <th>Gateway</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminTransactionsTableBody">
-                            <!-- Injected dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- TAB 6: SETTINGS -->
-            <div class="admin-tab-pane" id="tabAdminSettings">
-                <div class="admin-page-header">
-                    <div>
-                        <h1 class="admin-page-title">Platform Settings</h1>
-                        <p class="admin-page-subtitle">Global configuration, ticketing commission, and operational switches.</p>
-                    </div>
-                </div>
-
-                <div class="admin-card admin-settings-card">
-                    <div class="form-group">
-                        <label class="form-label">Platform Service Commission (%)</label>
-                        <input type="number" class="form-input" value="3.5" min="0" max="20" step="0.1">
-                        <div class="admin-input-hint">Standard fee deducted per paid ticket transaction.</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Default Currency</label>
-                        <select class="form-select">
-                            <option value="NPR" selected>NPR (Nepalese Rupee)</option>
-                            <option value="USD">USD (US Dollar)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Homepage Global Announcement Banner</label>
-                        <input type="text" class="form-input" value="🎉 Welcome to Aavahan — Nepal's community event platform!">
-                    </div>
-
-                    <div class="admin-setting-row">
-                        <div>
-                            <div class="fw-700">Automatic Event Publishing</div>
-                            <div class="admin-setting-desc">Auto-approve verified organizer submissions.</div>
-                        </div>
-                        <input type="checkbox" class="checkbox-custom" checked>
-                    </div>
-
-                    <button id="btnAdminSaveSettings" class="btn btn-teal btn-pill admin-save-btn">Save Changes</button>
-                </div>
-            </div>
         </main>
     </div>
 

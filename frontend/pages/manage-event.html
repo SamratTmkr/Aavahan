@@ -28,7 +28,7 @@
             </div>
 
             <div class="nav-right">
-                <a href="dashboard.html" class="nav-link-group">Organizer Hub</a>
+                <a href="my-activities.html" class="nav-link-group">My Activities</a>
                 <a id="navBtnViewPublic" href="event-details.html" class="btn btn-outline btn-pill btn-sm">View Public Event</a>
                 <a href="create-event.html" class="btn btn-primary btn-pill btn-sm">+ Create Event</a>
             </div>
@@ -78,17 +78,6 @@
 
             <div class="metric-card">
                 <div class="metric-header">
-                    <div class="metric-icon-box icon-box-emerald">
-                        <span class="material-symbols-outlined">payments</span>
-                    </div>
-                    <span class="metric-trend text-success">Net Gross</span>
-                </div>
-                <div id="metricGrossSales" class="metric-number">NPR 0</div>
-                <div class="metric-label">Gross Ticket Sales</div>
-            </div>
-
-            <div class="metric-card">
-                <div class="metric-header">
                     <div class="metric-icon-box icon-box-sky">
                         <span class="material-symbols-outlined">qr_code_scanner</span>
                     </div>
@@ -108,10 +97,6 @@
             <div class="manage-tab-item" data-tab-target="tabTickets">
                 <span class="material-symbols-outlined icon-tab">confirmation_number</span>
                 <span>Ticket Tiers & Capacity</span>
-            </div>
-            <div class="manage-tab-item" data-tab-target="tabSchedule">
-                <span class="material-symbols-outlined icon-tab">schedule</span>
-                <span>Schedule & Stages</span>
             </div>
             <div class="manage-tab-item" data-tab-target="tabAnnouncements">
                 <span class="material-symbols-outlined icon-tab">campaign</span>
@@ -145,6 +130,10 @@
 
                 <div class="d-flex items-center gap-0-75">
                     <span id="attendeeTotalCount" class="attendee-total-count">0 attendees</span>
+                    <a href="checkin.html" class="btn btn-outline btn-sm">
+                        <span class="material-symbols-outlined">qr_code_scanner</span>
+                        <span>Check in by code</span>
+                    </a>
                     <button id="exportAttendeesBtn" class="btn btn-outline btn-sm">
                         <span class="material-symbols-outlined">download</span>
                         <span>Export CSV</span>
@@ -183,23 +172,7 @@
             </div>
         </div>
 
-        <!-- TAB 3: Schedule -->
-        <div class="manage-tab-pane" id="tabSchedule">
-            <div class="manage-schedule-card">
-                <div class="manage-schedule-header">
-                    <h3 class="manage-schedule-title">Event Schedule & Stages</h3>
-                    <button class="btn btn-outline-primary btn-sm" onclick="showToast('Session agenda updated', 'info')">
-                        <span class="material-symbols-outlined">add</span>
-                        <span>Add Agenda Item</span>
-                    </button>
-                </div>
-                <div class="timeline-list" id="manageScheduleTimeline">
-                    <!-- Populated dynamically by manage-event.js -->
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB: Announcements & Broadcasts -->
+        <!-- TAB 3: Announcements & Broadcasts -->
         <div class="manage-tab-pane" id="tabAnnouncements">
             <div class="manage-settings-card">
                 <h3 class="manage-settings-title">Post Official Broadcast</h3>
@@ -230,7 +203,7 @@
             </div>
         </div>
 
-        <!-- TAB: Team & Co-Managers -->
+        <!-- TAB 4: Team & Co-Managers -->
         <div class="manage-tab-pane" id="tabTeam">
             <div class="manage-settings-card">
                 <h3 class="manage-settings-title">Event Team & Co-Managers</h3>
@@ -257,28 +230,10 @@
             </div>
         </div>
 
-        <!-- TAB 4: Settings -->
+        <!-- TAB 5: Settings -->
         <div class="manage-tab-pane" id="tabSettings">
             <div class="manage-settings-card">
-                <h3 class="manage-settings-title">Event Settings & Policies</h3>
-
-                <div class="form-group">
-                    <label class="form-label" for="manageEventStatusSelect">Event Status</label>
-                    <select id="manageEventStatusSelect" class="form-select">
-                        <option value="published">Published & Accepting Registrations</option>
-                        <option value="paused">Pause Ticket Sales</option>
-                        <option value="completed">Mark as Completed</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Refund Policy</label>
-                    <select class="form-select">
-                        <option>Full refund up to 7 days before event</option>
-                        <option>Full refund up to 24 hours before event</option>
-                        <option>No refunds</option>
-                    </select>
-                </div>
+                <h3 class="manage-settings-title">Event Settings</h3>
 
                 <div class="manage-danger-row">
                     <div>

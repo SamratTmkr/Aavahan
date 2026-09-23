@@ -7,10 +7,9 @@ import {
     adminDeleteEvent,
     getGroups,
     adminDeleteGroup,
-    getAdminTransactions,
     logoutUser
 } from './api.js';
-import { showToast } from './main.js';
+import { showToast, escapeHtml } from './main.js';
 
 // Admin panel logic
 
@@ -55,7 +54,7 @@ function initials(name) {
     return (name || '?').split(' ').map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
 }
 function avatarEl(name) {
-    return '<div class="admin-avatar">' + initials(name) + '</div>';
+    return '<div class="admin-avatar">' + escapeHtml(initials(name)) + '</div>';
 }
 
 // Loading skeleton helper
@@ -94,25 +93,13 @@ async function loadOverview() {
         setCounter('kpiTotalEvents', events.length);
         setCounter('kpiTotalGroups', groups.length);
 
-        let totalGMV = 0;
-
-        for (let event of events) {
-            let price = Number(event.min_price);
-            let attendees = Number(event.attendee_count);
-
-            totalGMV = totalGMV + (price * attendees);
-        }
-
-        document.getElementById('kpiGrossVolume').textContent =
-            'NPR ' + totalGMV.toLocaleString();
-
         var tbody = document.getElementById('adminPendingQueue');
         if (!tbody) return;
         var recent = events.slice().sort(function(a,b){ return new Date(b.created_at)-new Date(a.created_at); }).slice(0,5);
         if (!recent.length) { tableEmpty('adminPendingQueue', 4, 'No events yet.'); return; }
         tbody.innerHTML = recent.map(function(ev) {
             return '<tr>' +
-                '<td><div class="admin-table-title">' + ev.title + '</div><div class="admin-table-sub">' + (ev.city || '—') + '</div></td>' +
+                '<td><div class="admin-table-title">' + escapeHtml(ev.title) + '</div><div class="admin-table-sub">' + escapeHtml(ev.city || '—') + '</div></td>' +
                 '<td>' + fmtDate(ev.event_date) + '</td>' +
                 '<td><span class="mod-badge mod-badge-published">Published</span></td>' +
                 '<td><div class="admin-action-btn-group">' +
@@ -157,9 +144,9 @@ function renderAdminEvents(events) {
             : '<span class="mod-badge mod-badge-published">In-Person</span>';
         var priceTxt = (ev.is_free || !ev.min_price || ev.min_price == 0) ? 'Free' : 'NPR ' + Number(ev.min_price).toLocaleString();
         return '<tr>' +
-            '<td><div class="admin-table-title admin-table-title-truncate">' + ev.title + '</div>' +
+            '<td><div class="admin-table-title admin-table-title-truncate">' + escapeHtml(ev.title) + '</div>' +
                 '<div class="admin-table-sub">' + fmtDate(ev.event_date) + (ev.start_time ? ' · ' + ev.start_time.slice(0,5) : '') + '</div></td>' +
-            '<td>' + (ev.city || '—') + '</td>' +
+            '<td>' + escapeHtml(ev.city || '—') + '</td>' +
             '<td>' + (ev.attendee_count || 0) + '</td>' +
             '<td>' + priceTxt + '</td>' +
             '<td>' + statusBadge + '</td>' +
@@ -203,25 +190,24 @@ if (evSearchEl) {
 var allAdminGroups = [];
 
 async function loadAdminGroups() {
-    tableLoading('adminGroupsTableBody', 6);
+    tableLoading('adminGroupsTableBody', 5);
     try {
         var data = await getGroups();
         allAdminGroups = (data.success && data.data) ? data.data : [];
         renderAdminGroups(allAdminGroups);
     } catch(e) {
-        tableEmpty('adminGroupsTableBody', 6, 'Failed to load groups.');
+        tableEmpty('adminGroupsTableBody', 5, 'Failed to load groups.');
     }
 }
 
 function renderAdminGroups(groups) {
     var tbody = document.getElementById('adminGroupsTableBody');
     if (!tbody) return;
-    if (!groups.length) { tableEmpty('adminGroupsTableBody', 6, 'No groups found.'); return; }
+    if (!groups.length) { tableEmpty('adminGroupsTableBody', 5, 'No groups found.'); return; }
     tbody.innerHTML = groups.map(function(g) {
         return '<tr>' +
-            '<td><div class="admin-user-cell">' + avatarEl(g.name) + '<div><div class="admin-table-title">' + g.name + '</div><div class="admin-table-sub">' + (g.city || '—') + '</div></div></div></td>' +
-            '<td>' + (g.category || '—') + '</td>' +
-            '<td>' + (g.member_count || 0).toLocaleString() + '</td>' +
+            '<td><div class="admin-user-cell">' + avatarEl(g.name) + '<div><div class="admin-table-title">' + escapeHtml(g.name) + '</div><div class="admin-table-sub">' + escapeHtml(g.city || '—') + '</div></div></div></td>' +
+            '<td>' + escapeHtml(g.category || '—') + '</td>' +
             '<td>' + (g.hosted_events_count || 0) + '</td>' +
             '<td><span class="mod-badge mod-badge-' + (g.is_public ? 'active' : 'suspended') + '">' + (g.is_public ? 'Public' : 'Private') + '</span></td>' +
             '<td><div class="admin-action-btn-group">' +
@@ -291,7 +277,7 @@ function renderAdminUsers(users) {
             ? '<button class="btn btn-outline btn-sm admin-btn-xs" data-action="toggle-role" data-id="' + u.id + '" data-role="user">Demote</button>'
             : '<button class="btn btn-outline btn-sm admin-btn-xs" data-action="toggle-role" data-id="' + u.id + '" data-role="admin">Make Admin</button>';
         return '<tr>' +
-            '<td><div class="admin-user-cell">' + avatarEl(u.name) + '<div><div class="admin-table-title">' + u.name + '</div><div class="admin-table-sub">' + u.email + '</div></div></div></td>' +
+            '<td><div class="admin-user-cell">' + avatarEl(u.name) + '<div><div class="admin-table-title">' + escapeHtml(u.name) + '</div><div class="admin-table-sub">' + escapeHtml(u.email) + '</div></div></div></td>' +
             '<td>' + roleBadge + '</td>' +
             '<td>' + fmtDate(u.created_at) + '</td>' +
             '<td>' + (u.total_rsvps || 0) + '</td>' +
@@ -364,44 +350,6 @@ if (globalSearchEl) {
     });
 }
 
-// Transactions and registrations tab
-async function loadAdminTransactions() {
-    var tbody = document.getElementById('adminTransactionsTableBody');
-    if (!tbody) return;
-    tableLoading('adminTransactionsTableBody', 7);
-
-    try {
-        var res = await getAdminTransactions();
-        var txList = (res && res.success && Array.isArray(res.data)) ? res.data : [];
-
-        if (!txList.length) {
-            tableEmpty('adminTransactionsTableBody', 7, 'No registrations or transactions recorded yet.');
-            return;
-        }
-
-        tbody.innerHTML = txList.map(function(tx) {
-            var isConfirmed = tx.status === 'confirmed' || tx.status === 'checked_in';
-            var statusBadge = isConfirmed
-                ? '<span class="mod-badge mod-badge-published">' + (tx.status === 'checked_in' ? 'Checked In' : 'Confirmed') + '</span>'
-                : '<span class="mod-badge mod-badge-flagged">' + tx.status + '</span>';
-            var formattedId = 'RSVP-' + String(tx.id).padStart(4, '0');
-
-            return '<tr>' +
-                '<td class="admin-mono-id">' + formattedId + '</td>' +
-                '<td class="admin-cell-semibold">' + (tx.buyer || 'Community Member') + '</td>' +
-                '<td>' + (tx.event || 'Meetup') + '</td>' +
-                '<td class="admin-cell-bold">' + tx.amount + '</td>' +
-                '<td>' + (tx.gateway || 'Direct RSVP') + '</td>' +
-                '<td>' + statusBadge + '</td>' +
-                '<td><span class="admin-table-sub">' + fmtDate(tx.created_at) + '</span></td>' +
-            '</tr>';
-        }).join('');
-    } catch (e) {
-        console.log('Error loading admin transactions:', e);
-        tableEmpty('adminTransactionsTableBody', 7, 'Failed to load transaction records.');
-    }
-}
-
 // Export real dynamic platform report CSV
 function exportAdminReportCSV() {
     if (!allAdminEvents || allAdminEvents.length === 0) {
@@ -441,7 +389,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadAdminEvents();
     loadAdminGroups();
     loadAdminUsers();
-    loadAdminTransactions();
 
     // Event delegation for pending queue
     var pendingQueue = document.getElementById('adminPendingQueue');
@@ -504,21 +451,6 @@ document.addEventListener('DOMContentLoaded', function() {
         exportReportBtn.addEventListener('click', exportAdminReportCSV);
     }
 
-    // Admin alerts button
-    var alertsBtn = document.getElementById('btnAdminAlerts');
-    if (alertsBtn) {
-        alertsBtn.addEventListener('click', function() {
-            showToast('No new unread platform alerts', 'info');
-        });
-    }
-
-    // Admin save settings button
-    var saveSettingsBtn = document.getElementById('btnAdminSaveSettings');
-    if (saveSettingsBtn) {
-        saveSettingsBtn.addEventListener('click', function() {
-            showToast('Platform settings saved!', 'success');
-        });
-    }
 
     // Admin logout link
     var logoutLink = document.getElementById('adminLogoutLink');

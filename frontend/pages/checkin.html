@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log in — Aavahan</title>
+    <title>Check in — Aavahan</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,58 +16,45 @@
     <link rel="stylesheet" href="../assets/css/pages.css">
 </head>
 <body class="auth-page-body">
-    <!-- Top Navigation Bar -->
     <header class="navbar">
         <div class="container nav-container">
             <a href="../index.html" class="brand">
                 <span>Aavahan</span>
                 <span class="brand-dot"></span>
             </a>
-
             <div class="nav-right">
-                <span class="auth-nav-note">Not a member yet?</span>
-                <a href="signup.html" class="btn btn-outline btn-pill btn-sm">Sign up</a>
+                <a href="my-activities.html" class="btn btn-outline btn-pill btn-sm">My Activities</a>
             </div>
         </div>
     </header>
 
-    <!-- Centered Auth Box -->
     <main class="container auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="brand auth-brand">
-                    <span>Aavahan</span>
-                    <span class="brand-dot"></span>
-                </div>
-                <h1 class="auth-heading">Log in</h1>
+                <h1 class="auth-heading">Check in an attendee</h1>
             </div>
 
-            <!-- Main Login Form -->
-            <form id="loginForm">
-                <div class="form-group">
-                    <label class="form-label" for="email">Email address</label>
-                    <input type="email" id="email" class="form-input" placeholder="you@example.com" required autocomplete="email">
-                </div>
+            <!-- Result of scanning a ticket QR, or of typing a code below -->
+            <div id="checkinResult" class="checkin-result" hidden></div>
+
+            <form id="checkinForm">
+                <p class="auth-subtext">Scan a ticket QR with your phone camera, or type the 8-character code from the attendee's ticket.</p>
 
                 <div class="form-group">
-                    <div class="auth-password-header">
-                        <label class="form-label auth-password-label" for="password">Password</label>
-                        <a href="reset-password.html" class="auth-forgot-link">Forgot password?</a>
-                    </div>
-                    <input type="password" id="password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+                    <label class="form-label" for="checkinCode">Ticket code</label>
+                    <input type="text" id="checkinCode" class="form-input checkin-code-input" placeholder="e.g. K4T2MPQ7"
+                           maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
                 </div>
 
-                <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-pill btn-block btn-lg auth-submit-btn">Log in</button>
+                <button type="submit" id="btnCheckin" class="btn btn-primary btn-pill btn-block btn-lg auth-submit-btn">Check in</button>
             </form>
         </div>
     </main>
 
-    <!-- Footer Component -->
     <div id="site-footer"></div>
 
-    <!-- Scripts -->
     <script type="module" src="../assets/js/api.js"></script>
     <script type="module" src="../assets/js/main.js"></script>
-    <script type="module" src="../assets/js/auth.js"></script>
+    <script type="module" src="../assets/js/checkin.js"></script>
 </body>
 </html>

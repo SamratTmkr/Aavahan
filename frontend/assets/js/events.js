@@ -1,3 +1,4 @@
+import { escapeHtml } from './main.js';
 import { getEvents, getEventCities } from './api.js';
 
 // events.js
@@ -9,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterCity     = document.getElementById('filterCitySelect');
     const filterCategory = document.getElementById('filterCategorySelect');
     const filterType     = document.getElementById('filterTypeSelect');
-    const filterDay      = document.getElementById('filterDaySelect');
     const filterSort     = document.getElementById('filterSortSelect');
 
     let allEvents   = [];
@@ -47,36 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let formatted = d.toLocaleDateString('en-US', options);
         if (timeStr) formatted += ' · ' + timeStr.slice(0, 5);
         return formatted;
-    }
-
-    function isToday(dateStr) {
-        const d = new Date(dateStr), t = new Date();
-        return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
-    }
-
-    function isTomorrow(dateStr) {
-        const d = new Date(dateStr), t = new Date();
-        t.setDate(t.getDate() + 1);
-        return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
-    }
-
-    function isThisWeekend(dateStr) {
-        const d = new Date(dateStr), now = new Date();
-        const diffToSat = (6 - now.getDay() + 7) % 7;
-        const sat = new Date(now); sat.setDate(now.getDate() + diffToSat);
-        const sun = new Date(sat); sun.setDate(sat.getDate() + 1);
-        return d.toDateString() === sat.toDateString() || d.toDateString() === sun.toDateString();
-    }
-
-    function isNextWeek(dateStr) {
-        const d = new Date(dateStr), now = new Date();
-        const start = new Date(now);
-        start.setDate(now.getDate() + (7 - now.getDay() + 1));
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        end.setHours(23, 59, 59, 999);
-        return d >= start && d <= end;
     }
 
     // Render events list
@@ -121,10 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     '<div class="event-feed-top">' +
                         '<div class="flex-1">' +
                             '<div class="event-feed-category">' +
-                                (event.category || 'General') +
+                                escapeHtml(event.category || 'General') +
                             '</div>' +
                             '<h2 class="event-feed-title">' +
-                                event.title +
+                                escapeHtml(event.title) +
                             '</h2>' +
                         '</div>' +
                         '<div class="top-actions-wrap">' +
@@ -133,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     '</div>' +
 
                     '<p class="event-feed-desc">' +
-                        (event.description || 'No description provided.') +
+                        escapeHtml(event.description || 'No description provided.') +
                     '</p>' +
 
                     '<div class="event-feed-meta">' +
@@ -143,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         '</span>' +
                         '<span class="event-feed-meta-item">' +
                             '<span class="material-symbols-outlined event-feed-meta-icon">' + (event.is_online ? 'videocam' : 'location_on') + '</span>' +
-                            (event.is_online ? 'Online Event' : (event.venue || event.city || 'Location TBD')) +
+                            (event.is_online ? 'Online Event' : escapeHtml(event.venue || event.city || 'Location TBD')) +
                         '</span>' +
                         attendeesBit + capacityBit +
                     '</div>' +
@@ -156,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyLocalFilters() {
         const category = filterCategory ? filterCategory.value : 'all';
         const type     = filterType     ? filterType.value     : 'all';
-        const day      = filterDay      ? filterDay.value      : 'all';
         const sort     = filterSort     ? filterSort.value     : 'date';
 
         let filtered = allEvents.filter(function(event) {
@@ -165,10 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (type === 'online'    && !event.is_online) return false;
             if (type === 'in-person' &&  event.is_online) return false;
-            if (day === 'today'    && !isToday(event.event_date))       return false;
-            if (day === 'tomorrow' && !isTomorrow(event.event_date))    return false;
-            if (day === 'weekend'  && !isThisWeekend(event.event_date)) return false;
-            if (day === 'week'     && !isNextWeek(event.event_date))    return false;
             return true;
         });
 
@@ -216,10 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
             var typeLabel = filterType.options[filterType.selectedIndex] ? filterType.options[filterType.selectedIndex].text : filterType.value;
             active.push({ label: typeLabel, clear: function() { filterType.value = 'all'; applyLocalFilters(); } });
         }
-        if (filterDay && filterDay.value && filterDay.value !== 'all') {
-            var dayLabel = filterDay.options[filterDay.selectedIndex] ? filterDay.options[filterDay.selectedIndex].text : filterDay.value;
-            active.push({ label: dayLabel, clear: function() { filterDay.value = 'all'; applyLocalFilters(); } });
-        }
 
         if (active.length === 0) { bar.innerHTML = ''; return; }
 
@@ -251,7 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (filterCity)     filterCity.value = 'all';
         if (filterCategory) filterCategory.value = 'all';
         if (filterType)     filterType.value = 'all';
-        if (filterDay)      filterDay.value = 'all';
         triggerServerSearch();
     }
 
@@ -295,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filterCity)     filterCity.addEventListener('change',  fetchAndRender);
     if (filterCategory) filterCategory.addEventListener('change', applyLocalFilters);
     if (filterType)     filterType.addEventListener('change',     applyLocalFilters);
-    if (filterDay)      filterDay.addEventListener('change',      applyLocalFilters);
     if (filterSort)     filterSort.addEventListener('change',     applyLocalFilters);
     async function populateCityFilter() {
         if (!filterCity) return;

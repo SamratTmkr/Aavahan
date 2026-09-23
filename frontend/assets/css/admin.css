@@ -331,7 +331,6 @@ body.admin-body {
 .mod-badge-published { background-color: #ecfdf5; color: #059669; }
 .mod-badge-pending { background-color: #fffbeb; color: #d97706; }
 .mod-badge-featured { background-color: #fef0f2; color: #f64060; }
-.mod-badge-flagged { background-color: #fef2f2; color: #dc2626; }
 .mod-badge-active { background-color: #ecfdf5; color: #059669; }
 .mod-badge-suspended { background-color: #f1f5f9; color: #64748b; }
 
@@ -405,20 +404,6 @@ body.admin-body {
 .admin-btn-xs {
     font-size: 0.78rem;
     padding: 0.2rem 0.6rem;
-}
-
-.admin-mono-id {
-    font-family: monospace;
-    font-size: 0.8rem;
-    color: var(--admin-text-muted);
-}
-
-.admin-cell-semibold {
-    font-weight: 600;
-}
-
-.admin-cell-bold {
-    font-weight: 700;
 }
 
 /* Responsive */
@@ -530,31 +515,32 @@ body.admin-body {
     width: 280px;
 }
 
-.admin-settings-card {
-    max-width: 680px;
-    padding: 2rem;
-}
 
-.admin-input-hint {
-    font-size: 0.8rem;
-    color: var(--admin-text-muted);
-    margin-top: 0.25rem;
-}
+@media (max-width: 640px) {
+    /* the header row itself must wrap, or its actions are pushed off-screen */
+    .admin-header,
+    .admin-topbar {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
 
-.admin-setting-row {
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--admin-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+    .admin-header-left { min-width: 0; }
 
-.admin-setting-desc {
-    font-size: 0.8rem;
-    color: var(--admin-text-muted);
-}
+    .admin-header-actions {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        width: 100%;
+    }
 
-.admin-save-btn {
-    margin-top: 2rem;
-}
+    .admin-search-input { width: 100%; min-width: 0; }
 
+    /* the card clips by default, which hides table columns instead of letting
+       them be reached; on a phone let the table scroll sideways inside it */
+    .admin-card {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
+    /* keep columns legible while scrolling rather than crushing them */
+    .admin-table { min-width: 640px; }
+}

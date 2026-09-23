@@ -27,7 +27,7 @@
                 <div class="meetup-hero-grid">
                     <div>
                         <h1 class="meetup-hero-title">
-                            The people platform—Where interests become friendships
+                            The people platform Where interests become friendships
                         </h1>
                         <p class="meetup-hero-desc">
                             Whatever your interest, from hiking and coding to networking and skill sharing, there are thousands of people who share it on Aavahan. Events are happening every day—sign up to join the fun.
@@ -140,24 +140,18 @@
         </section>
 
         <!-- 6. Friendships are made on Aavahan (Community Stories) -->
-        <section class="section section-subtle">
-            <div class="container">
-                <div class="section-header-row">
-                    <div>
-                        <h2 class="section-header-title">Friendships are made on Aavahan</h2>
-                    </div>
-                </div>
-
-                <div class="stories-grid" id="homepageStoriesGrid">
-                    <!-- Populated from API -->
-                </div>
-            </div>
-        </section>
-
         <!-- 7. Popular Cities on Aavahan -->
         <section class="section">
             <div class="container">
-                <h2 class="section-header-title popular-cities-title">Popular cities on Aavahan</h2>
+                <div class="section-header-row">
+                    <div>
+                        <h2 class="section-header-title">Popular cities on Aavahan</h2>
+                    </div>
+                    <a href="pages/explore.html" class="btn btn-outline-teal btn-pill btn-sm">
+                        <span>Explore more</span>
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem; line-height: 1;">arrow_forward</span>
+                    </a>
+                </div>
                 <div class="cities-grid" id="homepageCitiesGrid">
                     <!-- Populated from API -->
                 </div>
@@ -192,6 +186,7 @@
     <script type="module" src="assets/js/main.js"></script>
     <script type="module">
         import { getEvents, getEventCities } from './assets/js/api.js';
+        import { escapeHtml } from './assets/js/main.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Category cover mapper using local high-res assets with clean fallbacks
@@ -256,7 +251,7 @@
                 }
 
                 eventsGrid.innerHTML = events.slice(0, 4).map(evt => {
-                    const group = evt.group_name || (evt.category ? `${evt.category} Community` : (evt.city ? `${evt.city} Community Group` : 'Community Group'));
+                    const group = escapeHtml(evt.group_name || (evt.category ? `${evt.category} Community` : (evt.city ? `${evt.city} Community Group` : 'Community Group')));
                     const count = evt.attendee_count || 1;
                     const isFree = evt.is_free || !evt.min_price || Number(evt.min_price) === 0;
                     const priceStr = isFree ? 'Free' : `NPR ${Number(evt.min_price).toLocaleString()}`;
@@ -267,13 +262,13 @@
                     return `
                     <div class="meetup-event-card">
                         <a href="${linkUrl}" class="meetup-card-media">
-                            <img src="${imgUrl}" alt="${evt.title}" class="meetup-card-img" loading="lazy">
+                            <img src="${imgUrl}" alt="${escapeHtml(evt.title)}" class="meetup-card-img" loading="lazy">
                             ${evt.is_online ? '<span class="meetup-card-badge">ONLINE EVENT</span>' : ''}
                         </a>
                         <div class="meetup-card-content">
                             <div class="meetup-card-date">${dateDisplay}</div>
                             <h3 class="meetup-card-title">
-                                <a href="${linkUrl}">${evt.title}</a>
+                                <a href="${linkUrl}">${escapeHtml(evt.title)}</a>
                             </h3>
                             <div class="meetup-card-group">${group}</div>
                             <div class="meetup-card-meta-row">
@@ -286,42 +281,6 @@
                     </div>
                     `;
                 }).join('');
-            }
-
-            // 2. Render Community Stories ("Friendships are made on Aavahan")
-            const storiesGrid = document.getElementById('homepageStoriesGrid');
-            if (storiesGrid) {
-                const stories = [
-                    {
-                        title: "From 5 coders in a cafe to a 2,500-strong tech collective",
-                        desc: "We started gathering on weekends to learn distributed systems and AI. Through Aavahan, we scaled into a vibrant network hosting monthly hackathons across the valley.",
-                        author: "Dr. Pratigya Sharma · Lead, Kathmandu Tech Innovators",
-                        img: "assets/images/tech-summit.jpg"
-                    },
-                    {
-                        title: "Founding the Himalayan trail running circle in Pokhara",
-                        desc: "Aavahan helped us connect 400+ trail runners, from beginners to ultra-marathoners. Every Saturday we hit the Sarangkot ridges and bond over dal bhat.",
-                        author: "Kripa Gurung · Organizer, Pokhara Trail Runners",
-                        img: "assets/images/outdoor-hiking.jpg"
-                    },
-                    {
-                        title: "Reviving local acoustics & indie music in Patan",
-                        desc: "Finding jamming partners in the city used to be tough. Through our weekly open-mic events, 12 new indie bands have formed and recorded their first tracks.",
-                        author: "Rohan Shrestha · Founder, Patan Music Circle",
-                        img: "assets/images/music-jam.jpg"
-                    }
-                ];
-
-                storiesGrid.innerHTML = stories.map(st => `
-                    <div class="story-card">
-                        <img src="${st.img}" alt="${st.title}" class="story-card-img" loading="lazy">
-                        <div class="story-card-body">
-                            <h3 class="story-card-title">${st.title}</h3>
-                            <p class="story-card-desc">${st.desc}</p>
-                            <div class="story-card-author">${st.author}</div>
-                        </div>
-                    </div>
-                `).join('');
             }
 
             // 3. Render Popular Cities on Aavahan
@@ -351,20 +310,19 @@
                     console.log('[Home] Could not fetch city statistics:', e);
                 }
 
+                // Nothing to show until events exist, so hide the whole section.
                 if (popularCities.length === 0) {
-                    popularCities = [
-                        { name: 'Kathmandu', count: 0, img: 'assets/images/city-kathmandu.jpg' },
-                        { name: 'Pokhara', count: 0, img: 'assets/images/city-pokhara.jpg' },
-                        { name: 'Lalitpur', count: 0, img: 'assets/images/city-lalitpur.jpg' }
-                    ];
+                    const section = citiesGrid.closest('section');
+                    if (section) section.hidden = true;
+                    return;
                 }
 
                 citiesGrid.innerHTML = popularCities.map(c => {
                     const countLabel = `${c.count} event${c.count === 1 ? '' : 's'}`;
                     return `
                     <a href="pages/explore.html?city=${encodeURIComponent(c.name)}" class="city-card">
-                        <img src="${c.img}" alt="${c.name}" class="city-card-avatar" loading="lazy">
-                        <div class="city-card-name">${c.name}</div>
+                        <img src="${c.img}" alt="${escapeHtml(c.name)}" class="city-card-avatar" loading="lazy">
+                        <div class="city-card-name">${escapeHtml(c.name)}</div>
                         <div class="city-card-count">${countLabel}</div>
                     </a>
                     `;

@@ -2,6 +2,18 @@ import { getToken, getUser, isAuthenticated, clearAuth } from './authService.js'
 
 // main.js
 
+// Anything typed by a user (event titles, names, comments) is dropped into
+// innerHTML templates, so it has to be escaped first or the browser will run it.
+export function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Toast notification
 export function showToast(message, type = 'info') {
     if (!message || /loading|cancelling|removing|processing|redirecting/i.test(message)) {
@@ -24,13 +36,16 @@ export function showToast(message, type = 'info') {
     else if (type === 'error') icon = 'error';
     else if (type === 'warning') icon = 'warning';
 
+    // The message can carry text that came back from the server, so it goes in
+    // as text rather than markup.
     toast.innerHTML = `
         <span class="material-symbols-outlined toast-icon">${icon}</span>
-        <span class="toast-message">${message}</span>
+        <span class="toast-message"></span>
         <button type="button" aria-label="Dismiss" class="toast-close-btn">
             <span class="material-symbols-outlined toast-close-icon">close</span>
         </button>
     `;
+    toast.querySelector('.toast-message').textContent = message;
 
     const closeBtn = toast.querySelector('button');
     closeBtn.addEventListener('click', () => {
@@ -45,6 +60,7 @@ export function showToast(message, type = 'info') {
 
 if (typeof window !== 'undefined') {
     window.showToast = showToast;
+    window.escapeHtml = escapeHtml;
 }
 
 // Navbar auth state
@@ -167,7 +183,7 @@ const DEFAULT_HEADER_HTML = `
         <a href="{{ROOT}}index.html" class="mobile-nav-link">Home</a>
         <a href="{{PAGES}}explore.html" class="mobile-nav-link">Find Events</a>
         <a href="{{PAGES}}create-event.html" class="mobile-nav-link">Start an Event</a>
-        <a href="{{PAGES}}dashboard.html" class="mobile-nav-link">Organizer Hub</a>
+        <a href="{{PAGES}}my-activities.html" class="mobile-nav-link">My Activities</a>
     </div>
     <div class="mobile-drawer-auth">
         <a href="{{PAGES}}login.html" class="btn btn-outline btn-block">Log in</a>
@@ -189,8 +205,6 @@ const DEFAULT_FOOTER_HTML = `
             </div>
             <div class="footer-legal-links">
                 <a href="{{PAGES}}explore.html" class="footer-link">Explore</a>
-                <a href="#" class="footer-link">Terms of Service</a>
-                <a href="#" class="footer-link">Privacy Policy</a>
             </div>
         </div>
     </div>

@@ -13,7 +13,7 @@ import {
     removeEventManager, 
     addManualAttendee 
 } from './api.js';
-import { showToast } from './main.js';
+import { showToast, escapeHtml } from './main.js';
 
 // Manage event logic
 
@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const eventId = urlParams.get('id');
 
     if (!eventId) {
-        if (typeof showToast === 'function') showToast('No event ID provided.', 'error');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+        showToast('No event ID provided.', 'error');
+        setTimeout(() => { window.location.href = 'my-activities.html'; }, 1000);
         return;
     }
 
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span class="material-symbols-outlined dash-empty-icon">event_busy</span>
                     <h2 class="dash-empty-title">Event Not Found</h2>
                     <p class="dash-empty-desc">This event may have been deleted or does not exist.</p>
-                    <a href="dashboard.html" class="btn btn-primary btn-pill">Return to Organizer Hub</a>
+                    <a href="my-activities.html" class="btn btn-primary btn-pill">Return to My Activities</a>
                 </div>
             `;
             return;
@@ -78,7 +78,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const headerDateEl = document.getElementById('manageEventDate');
     const headerIdBadgeEl = document.getElementById('manageEventIdBadge');
     const viewPublicBtn = document.getElementById('btnViewPublicPage');
-    const editEventBtn = document.getElementById('btnEditEvent');
 
     if (headerTitleEl) headerTitleEl.textContent = currentEvent.title;
     if (headerIdBadgeEl) headerIdBadgeEl.textContent = `Event #${currentEvent.id}`;
@@ -87,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dateFormatted = eventDate.toLocaleDateString('en-US', {
         weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
     });
-    const timeFormatted = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : '10:00 NPT';
+    const timeFormatted = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : 'Time to be announced';
     const venueText = currentEvent.is_online ? 'Online Event' : (currentEvent.venue || currentEvent.city || 'Location TBD');
 
     if (headerDateEl) {
@@ -123,7 +122,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderMetrics();
         renderAttendeesTable(attendeesList);
         renderTicketTiers();
-        renderEventSchedule();
     }
 
     // 5. Render Metrics Cards
@@ -131,12 +129,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const totalRegistrations = attendeesList.length;
         const capacity = currentEvent.capacity || 0;
         const checkedInCount = attendeesList.filter(a => a.status === 'checked_in').length;
-        const isFree = currentEvent.is_free || !currentEvent.min_price || Number(currentEvent.min_price) === 0;
-        const ticketPrice = isFree ? 0 : Number(currentEvent.min_price);
-        const grossSales = totalRegistrations * ticketPrice;
 
         const metricRegEl = document.getElementById('metricTotalRegistrations');
-        const metricSalesEl = document.getElementById('metricGrossSales');
         const metricCheckinEl = document.getElementById('metricCheckedIn');
         const metricTrendRegEl = document.getElementById('metricTrendReg');
         const metricTrendCheckinEl = document.getElementById('metricTrendCheckin');
@@ -149,10 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             metricTrendRegEl.textContent = `${pct}% Capacity`;
         } else if (metricTrendRegEl) {
             metricTrendRegEl.textContent = `Open capacity`;
-        }
-
-        if (metricSalesEl) {
-            metricSalesEl.textContent = isFree ? 'Free Event' : `NPR ${grossSales.toLocaleString()}`;
         }
 
         if (metricCheckinEl) {
@@ -285,8 +275,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const filter = statusFilter ? statusFilter.value.toLowerCase() : 'all';
 
         const filtered = attendeesList.filter(att => {
-            const nameMatch = (att.name || '').toLowerCase().includes(query);
-            const emailMatch = (att.email || '').toLowerCase().includes(query);
+            const nameMatch = escapeHtml(att.name || '').toLowerCase().includes(query);
+            const emailMatch = escapeHtml(att.email || '').toLowerCase().includes(query);
             const idMatch = String(att.id).includes(query);
             const matchesQuery = !query || nameMatch || emailMatch || idMatch;
 
@@ -335,39 +325,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="progress-track">
                     <div class="progress-fill ${fillClass} ${widthClass}"></div>
                 </div>
-                <button class="btn btn-outline btn-block btn-sm" onclick="showToast('Capacity settings active for this event', 'info')">Capacity Settings</button>
-            </div>
-        `;
-    }
-
-    // 10. Render Event Schedule Dynamically
-    function renderEventSchedule() {
-        const timeline = document.getElementById('manageScheduleTimeline');
-        if (!timeline) return;
-
-        const startTime = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : '10:00 NPT';
-        const endTime = currentEvent.end_time ? currentEvent.end_time.slice(0, 5) + ' NPT' : '';
-        const venue = currentEvent.is_online ? 'Online Platform' : (currentEvent.venue || currentEvent.city || 'Event Venue');
-        const organizer = currentEvent.organizer_name || 'Event Host';
-
-        timeline.innerHTML = `
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-time">${startTime} • ${venue}</div>
-                <div class="timeline-title">Doors Open & Registration Check-in</div>
-                <div class="timeline-speaker">Organized by ${organizer}</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-time">${startTime} ${endTime ? '- ' + endTime : 'onwards'} • Main Hall</div>
-                <div class="timeline-title">${currentEvent.title}</div>
-                <div class="timeline-speaker">${currentEvent.category || 'Community'} Session</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-time">${endTime || 'Wrap-up'} • ${venue}</div>
-                <div class="timeline-title">Community Networking & Concluding Remarks</div>
-                <div class="timeline-speaker">All Attendees & Guests</div>
             </div>
         `;
     }
@@ -376,21 +333,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnCancel = document.getElementById('btnCancelManageEvent');
     if (btnCancel) {
         btnCancel.addEventListener('click', async () => {
-            if (!confirm(`Are you sure you want to cancel and delete "${currentEvent.title}"? This cannot be undone.`)) return;
+            if (!confirm(`Are you sure you want to cancel and delete "${escapeHtml(currentEvent.title)}"? This cannot be undone.`)) return;
             btnCancel.disabled = true;
             btnCancel.textContent = 'Processing...';
             try {
                 const res = await deleteEvent(currentEvent.id);
                 if (res && res.success) {
-                    if (typeof showToast === 'function') showToast('Event cancelled successfully.', 'success');
-                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+                    showToast('Event cancelled successfully.', 'success');
+                    setTimeout(() => { window.location.href = 'my-activities.html'; }, 1000);
                 } else {
-                    if (typeof showToast === 'function') showToast(res?.message || 'Could not cancel event.', 'error');
+                    showToast(res?.message || 'Could not cancel event.', 'error');
                     btnCancel.disabled = false;
                     btnCancel.textContent = 'Cancel Event';
                 }
             } catch (e) {
-                if (typeof showToast === 'function') showToast('Network error cancelling event.', 'error');
+                showToast('Network error cancelling event.', 'error');
                 btnCancel.disabled = false;
                 btnCancel.textContent = 'Cancel Event';
             }
@@ -407,8 +364,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const headers = ['RSVP Code', 'Name', 'Email', 'Tier', 'Status', 'Registered At'];
         const rows = attendeesList.map(a => [
             `RSVP-${String(a.id).padStart(4, '0')}`,
-            `"${(a.name || 'Member').replace(/"/g, '""')}"`,
-            `"${(a.email || '').replace(/"/g, '""')}"`,
+            `"${escapeHtml(a.name || 'Member').replace(/"/g, '""')}"`,
+            `"${escapeHtml(a.email || '').replace(/"/g, '""')}"`,
             'General Admission',
             a.status === 'checked_in' ? 'Checked In' : 'Confirmed',
             `"${a.created_at || ''}"`
@@ -463,14 +420,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="announcement-manage-item">
                             <div class="d-flex justify-between items-start">
                                 <div>
-                                    <h4 class="announcement-item-title">${item.title}</h4>
+                                    <h4 class="announcement-item-title">${escapeHtml(item.title)}</h4>
                                     <span class="announcement-meta-time">Posted by ${item.author_name || 'Host'} • ${timeFormatted}</span>
                                 </div>
                                 <button type="button" class="btn btn-outline btn-outline-danger btn-sm" data-action="delete-announcement" data-id="${item.id}">
                                     <span class="material-symbols-outlined">delete</span>
                                 </button>
                             </div>
-                            <p class="announcement-item-body">${(item.message || '').replace(/\n/g, '<br>')}</p>
+                            <p class="announcement-item-body">${escapeHtml(item.message || '').replace(/\n/g, '<br>')}</p>
                         </div>
                     `;
                 }).join('');
@@ -562,14 +519,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const res = await getEventManagers(eventId);
             if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
                 container.innerHTML = res.data.map(m => {
-                    const initials = (m.name || 'Member').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                    const initials = escapeHtml(m.name || 'Member').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
                     return `
                         <div class="team-member-item">
                             <div class="d-flex items-center gap-0-75">
                                 <div class="team-member-avatar">${initials}</div>
                                 <div>
-                                    <div class="team-member-name">${m.name}</div>
-                                    <div class="team-member-email">${m.email}</div>
+                                    <div class="team-member-name">${escapeHtml(m.name)}</div>
+                                    <div class="team-member-email">${escapeHtml(m.email)}</div>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-outline btn-outline-danger btn-sm" data-action="remove-manager" data-id="${m.user_id}">

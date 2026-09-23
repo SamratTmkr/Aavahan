@@ -14,6 +14,9 @@ services:
     volumes:
       - mysqldata:/var/lib/mysql
       - ./database/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
+      - ./database/migrations/002_announcements_and_managers.sql:/docker-entrypoint-initdb.d/002_announcements_and_managers.sql
+      - ./database/migrations/003_event_comments.sql:/docker-entrypoint-initdb.d/003_event_comments.sql
+      - ./database/migrations/004_checkin_codes_and_password_reset.sql:/docker-entrypoint-initdb.d/004_checkin_codes_and_password_reset.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uaavahan_user", "-paavahan_pass"]
       interval: 10s
@@ -32,7 +35,7 @@ services:
       DB_NAME: aavahan
       DB_USER: aavahan_user
       DB_PASSWORD: aavahan_pass
-      JWT_SECRET: supersecretjwtkey_aavahan_2026
+      JWT_SECRET: ${JWT_SECRET:-dev_only_change_me}
       JWT_EXPIRES_IN: 7d
       PORT: 3000
     depends_on:

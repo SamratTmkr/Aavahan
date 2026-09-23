@@ -1,9 +1,12 @@
 import { getToken, clearAuth } from './authService.js';
 
-const API = (window.location.protocol === 'file:' || window.location.port === '5500')
+// When Express serves the pages (npm start, or Docker on any port) the API is on the same
+// origin. When the page is opened from the file system or from a separate static server
+// such as VS Code Live Server, call the local backend directly.
+const LIVE_SERVER_PORTS = ['5500', '5501'];
+const API = (window.location.protocol === 'file:' || LIVE_SERVER_PORTS.includes(window.location.port))
     ? 'http://localhost:3000/api/v1'
     : '/api/v1';
-
 
 // Returns headers including Bearer token if stored
 function getHeaders() {
@@ -45,21 +48,12 @@ async function logoutUser() {
         console.log('Logout API error:', e);
     }
     clearAuth();
-    
+
     // Redirect to public homepage
     const isSubfolder = window.location.pathname.includes('/pages/');
     window.location.href = isSubfolder ? '../index.html' : 'index.html';
 }
 
-async function createGroup(data) {
-    const res = await fetch(`${API}/groups`, {
-        method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify(data),
-    });
-    return res.json();
-}
 
 async function createEvent(data) {
     const isFormData = data instanceof FormData;
@@ -79,9 +73,9 @@ async function createEvent(data) {
 async function getEvents(city = null, search = null) {
     try {
         const params = new URLSearchParams();
-        if (city && city !== 'all')   params.set('city', city);
-        if (search && search.trim())  params.set('search', search.trim());
-        const qs  = params.toString();
+        if (city && city !== 'all') params.set('city', city);
+        if (search && search.trim()) params.set('search', search.trim());
+        const qs = params.toString();
         const url = qs ? `${API}/events?${qs}` : `${API}/events`;
         const res = await fetch(url, { headers: getHeaders() });
         return await res.json();
@@ -156,9 +150,6 @@ async function checkinEventAttendee(eventId, rsvpId) {
     }
 }
 
-async function searchEvents(query, city = null) {
-    return getEvents(city, query);
-}
 
 async function getEventCities() {
     try {
@@ -180,35 +171,11 @@ async function getMyOrganizerEvents() {
         return await res.json();
     } catch (e) {
         console.log('API getMyOrganizerEvents error:', e);
-        return { success: false, data: [], stats: { totalEvents: 0, totalRSVPs: 0, grossVolume: 0 } };
+        return { success: false, data: [], stats: { totalEvents: 0, totalRSVPs: 0 } };
     }
 }
 
-async function getMyOrganizerRSVPs() {
-    try {
-        const res = await fetch(`${API}/events/organizer/rsvps`, {
-            headers: getHeaders(),
-            credentials: 'include'
-        });
-        return await res.json();
-    } catch (e) {
-        console.log('API getMyOrganizerRSVPs error:', e);
-        return { success: false, data: [] };
-    }
-}
 
-async function getMyOrganizerGroups() {
-    try {
-        const res = await fetch(`${API}/groups/organizer/mine`, {
-            headers: getHeaders(),
-            credentials: 'include'
-        });
-        return await res.json();
-    } catch (e) {
-        console.log('API getMyOrganizerGroups error:', e);
-        return { success: false, data: [] };
-    }
-}
 
 async function updateEvent(id, eventData) {
     try {
@@ -289,20 +256,6 @@ async function adminDeleteGroup(groupId) {
     return res.json();
 }
 
-async function getAdminTransactions() {
-    try {
-        const res = await fetch(`${API}/users/admin/transactions`, {
-            headers: getHeaders(),
-            credentials: 'include'
-        });
-        return await res.json();
-    } catch (e) {
-        console.log('API getAdminTransactions error:', e);
-        return { success: false, data: [] };
-    }
-}
-
-// Announcements API
 async function getEventAnnouncements(eventId) {
     try {
         const res = await fetch(`${API}/events/${eventId}/announcements`, { headers: getHeaders() });
@@ -398,7 +351,98 @@ async function addManualAttendee(eventId, email) {
     }
 }
 
+// Comments API
+async function getEventComments(eventId) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/comments`, { headers: getHeaders() });
+        return await res.json();
+    } catch (e) {
+        console.log('API getEventComments error:', e);
+        return { success: false, data: [] };
+    }
+}
+
+async function postEventComment(eventId, message) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/comments`, {
+            method: 'POST',
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify({ message })
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API postEventComment error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+async function deleteEventComment(eventId, commentId) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: getHeaders(),
+            credentials: 'include'
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API deleteEventComment error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+// Password reset
+async function requestPasswordReset(email) {
+    try {
+        const res = await fetch(`${API}/auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API requestPasswordReset error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+async function resetPassword(token, password) {
+    try {
+        const res = await fetch(`${API}/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, password })
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API resetPassword error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+// Check in from a ticket code (scanned QR or typed by hand)
+async function checkinByCode(code) {
+    try {
+        const res = await fetch(`${API}/events/checkin`, {
+            method: 'POST',
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify({ code })
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API checkinByCode error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
 export {
+    requestPasswordReset,
+    resetPassword,
+    checkinByCode,
+    getEventComments,
+    postEventComment,
+    deleteEventComment,
     registerUser,
     loginUser,
     logoutUser,
@@ -410,19 +454,16 @@ export {
     getMyActivities,
     getEventAttendees,
     checkinEventAttendee,
-    searchEvents,
     getEventCities,
     deleteEvent,
     updateEvent,
     getMyOrganizerEvents,
-    getMyOrganizerRSVPs,
     getAdminUsers,
     updateUserRole,
     adminDeleteUser,
     adminDeleteEvent,
     getGroups,
     adminDeleteGroup,
-    getAdminTransactions,
     getEventAnnouncements,
     createEventAnnouncement,
     deleteEventAnnouncement,

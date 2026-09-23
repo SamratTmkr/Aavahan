@@ -7,7 +7,8 @@ export const getGroups = async (req, res) => {
         const groups = await getAllGroups(req.query.city || null);
         return res.json({ success: true, data: groups });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -15,10 +16,11 @@ export const getGroups = async (req, res) => {
 export const getGroup = async (req, res) => {
     try {
         const group = await getGroupById(req.params.id);
-        if (!group) return res.json({ success: false, message: 'Group not found' });
+        if (!group) return res.status(404).json({ success: false, message: 'Group not found' });
         return res.json({ success: true, data: group });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -27,14 +29,15 @@ export const createNewGroup = async (req, res) => {
     const { name, city } = req.body;
 
     if (!name || !city) {
-        return res.json({ success: false, message: 'Name and city are required' });
+        return res.status(400).json({ success: false, message: 'Name and city are required' });
     }
 
     try {
         const id = await createGroup({ ...req.body, organizer_id: req.user.id });
         return res.json({ success: true, message: 'Group created', data: { id } });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -42,16 +45,17 @@ export const createNewGroup = async (req, res) => {
 export const updateExistingGroup = async (req, res) => {
     try {
         const group = await getGroupById(req.params.id);
-        if (!group) return res.json({ success: false, message: 'Group not found' });
+        if (!group) return res.status(404).json({ success: false, message: 'Group not found' });
 
         if (group.organizer_id !== req.user.id && req.user.role !== 'admin') {
-            return res.json({ success: false, message: 'Not authorised' });
+            return res.status(403).json({ success: false, message: 'Not authorised' });
         }
 
         await updateGroup(req.params.id, req.body);
         return res.json({ success: true, message: 'Group updated' });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -59,16 +63,17 @@ export const updateExistingGroup = async (req, res) => {
 export const deleteExistingGroup = async (req, res) => {
     try {
         const group = await getGroupById(req.params.id);
-        if (!group) return res.json({ success: false, message: 'Group not found' });
+        if (!group) return res.status(404).json({ success: false, message: 'Group not found' });
 
         if (group.organizer_id !== req.user.id && req.user.role !== 'admin') {
-            return res.json({ success: false, message: 'Not authorised' });
+            return res.status(403).json({ success: false, message: 'Not authorised' });
         }
 
         await deleteGroup(req.params.id);
         return res.json({ success: true, message: 'Group deleted' });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
@@ -78,7 +83,8 @@ export const getMyOrganizerGroups = async (req, res) => {
         const [rows] = await pool.execute('SELECT * FROM `groups` WHERE organizer_id = ? ORDER BY created_at DESC', [req.user.id]);
         return res.json({ success: true, data: rows });
     } catch (error) {
-        return res.json({ success: false, message: error.message });
+        console.error(`${req.method} ${req.originalUrl} failed:`, error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 
