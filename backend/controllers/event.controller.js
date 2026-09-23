@@ -380,13 +380,8 @@ export const getMyOrganizerEvents = async (req, res) => {
 
         // Compute metrics
         let totalRSVPs = 0;
-        let grossVolume = 0;
         rows.forEach(ev => {
-            const count = ev.attendee_count || 0;
-            totalRSVPs += count;
-            if (!ev.is_free && ev.min_price) {
-                grossVolume += count * Number(ev.min_price);
-            }
+            totalRSVPs += ev.attendee_count || 0;
         });
 
         return res.json({
@@ -394,8 +389,7 @@ export const getMyOrganizerEvents = async (req, res) => {
             data: rows,
             stats: {
                 totalEvents: rows.length,
-                totalRSVPs,
-                grossVolume
+                totalRSVPs
             }
         });
     } catch (error) {

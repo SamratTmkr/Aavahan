@@ -129,12 +129,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const totalRegistrations = attendeesList.length;
         const capacity = currentEvent.capacity || 0;
         const checkedInCount = attendeesList.filter(a => a.status === 'checked_in').length;
-        const isFree = currentEvent.is_free || !currentEvent.min_price || Number(currentEvent.min_price) === 0;
-        const ticketPrice = isFree ? 0 : Number(currentEvent.min_price);
-        const grossSales = totalRegistrations * ticketPrice;
 
         const metricRegEl = document.getElementById('metricTotalRegistrations');
-        const metricSalesEl = document.getElementById('metricGrossSales');
         const metricCheckinEl = document.getElementById('metricCheckedIn');
         const metricTrendRegEl = document.getElementById('metricTrendReg');
         const metricTrendCheckinEl = document.getElementById('metricTrendCheckin');
@@ -147,10 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             metricTrendRegEl.textContent = `${pct}% Capacity`;
         } else if (metricTrendRegEl) {
             metricTrendRegEl.textContent = `Open capacity`;
-        }
-
-        if (metricSalesEl) {
-            metricSalesEl.textContent = isFree ? 'Free Event' : `NPR ${grossSales.toLocaleString()}`;
         }
 
         if (metricCheckinEl) {

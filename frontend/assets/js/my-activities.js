@@ -84,10 +84,10 @@ async function loadActivities() {
                 upcoming: up,
                 past: pst,
                 all: raw,
-                stats: createdRes.stats || { totalEvents: raw.length, totalRSVPs: 0, grossVolume: 0 }
+                stats: createdRes.stats || { totalEvents: raw.length, totalRSVPs: 0 }
             };
         } else {
-            createdData = { upcoming: [], past: [], all: [], stats: { totalEvents: 0, totalRSVPs: 0, grossVolume: 0 } };
+            createdData = { upcoming: [], past: [], all: [], stats: { totalEvents: 0, totalRSVPs: 0 } };
         }
 
         updateStatsAndBadges();

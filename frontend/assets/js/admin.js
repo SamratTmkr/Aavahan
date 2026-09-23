@@ -7,7 +7,6 @@ import {
     adminDeleteEvent,
     getGroups,
     adminDeleteGroup,
-    getAdminTransactions,
     logoutUser
 } from './api.js';
 import { showToast, escapeHtml } from './main.js';
@@ -93,18 +92,6 @@ async function loadOverview() {
         setCounter('kpiTotalUsers',  users.length);
         setCounter('kpiTotalEvents', events.length);
         setCounter('kpiTotalGroups', groups.length);
-
-        let totalGMV = 0;
-
-        for (let event of events) {
-            let price = Number(event.min_price);
-            let attendees = Number(event.attendee_count);
-
-            totalGMV = totalGMV + (price * attendees);
-        }
-
-        document.getElementById('kpiGrossVolume').textContent =
-            'NPR ' + totalGMV.toLocaleString();
 
         var tbody = document.getElementById('adminPendingQueue');
         if (!tbody) return;
@@ -363,44 +350,6 @@ if (globalSearchEl) {
     });
 }
 
-// Transactions and registrations tab
-async function loadAdminTransactions() {
-    var tbody = document.getElementById('adminTransactionsTableBody');
-    if (!tbody) return;
-    tableLoading('adminTransactionsTableBody', 7);
-
-    try {
-        var res = await getAdminTransactions();
-        var txList = (res && res.success && Array.isArray(res.data)) ? res.data : [];
-
-        if (!txList.length) {
-            tableEmpty('adminTransactionsTableBody', 7, 'No registrations or transactions recorded yet.');
-            return;
-        }
-
-        tbody.innerHTML = txList.map(function(tx) {
-            var isConfirmed = tx.status === 'confirmed' || tx.status === 'checked_in';
-            var statusBadge = isConfirmed
-                ? '<span class="mod-badge mod-badge-published">' + (tx.status === 'checked_in' ? 'Checked In' : 'Confirmed') + '</span>'
-                : '<span class="mod-badge mod-badge-flagged">' + escapeHtml(tx.status) + '</span>';
-            var formattedId = 'RSVP-' + String(tx.id).padStart(4, '0');
-
-            return '<tr>' +
-                '<td class="admin-mono-id">' + formattedId + '</td>' +
-                '<td class="admin-cell-semibold">' + escapeHtml(tx.buyer || 'Community Member') + '</td>' +
-                '<td>' + escapeHtml(tx.event || 'Meetup') + '</td>' +
-                '<td class="admin-cell-bold">' + escapeHtml(tx.amount) + '</td>' +
-                '<td>' + escapeHtml(tx.gateway || 'Direct RSVP') + '</td>' +
-                '<td>' + statusBadge + '</td>' +
-                '<td><span class="admin-table-sub">' + fmtDate(tx.created_at) + '</span></td>' +
-            '</tr>';
-        }).join('');
-    } catch (e) {
-        console.log('Error loading admin transactions:', e);
-        tableEmpty('adminTransactionsTableBody', 7, 'Failed to load transaction records.');
-    }
-}
-
 // Export real dynamic platform report CSV
 function exportAdminReportCSV() {
     if (!allAdminEvents || allAdminEvents.length === 0) {
@@ -440,7 +389,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadAdminEvents();
     loadAdminGroups();
     loadAdminUsers();
-    loadAdminTransactions();
 
     // Event delegation for pending queue
     var pendingQueue = document.getElementById('adminPendingQueue');

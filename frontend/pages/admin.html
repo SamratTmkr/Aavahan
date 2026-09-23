@@ -47,10 +47,6 @@
                 <span>Users</span>
                 <span class="nav-count">0</span>
             </a>
-            <a class="admin-nav-item" data-tab="tabAdminTransactions">
-                <span class="material-symbols-outlined">receipt_long</span>
-                <span>Transactions</span>
-            </a>
         </nav>
 
         <div class="admin-sidebar-footer">
@@ -128,17 +124,6 @@
                         <div class="admin-metric-label">Live Events Hosted</div>
                         <div class="admin-metric-trend primary">
                             <span>Published on platform</span>
-                        </div>
-                    </div>
-
-                    <div class="admin-metric-card">
-                        <div class="admin-metric-icon success">
-                            <span class="material-symbols-outlined">payments</span>
-                        </div>
-                        <div id="kpiGrossVolume" class="admin-metric-val">—</div>
-                        <div class="admin-metric-label">Gross Ticket GMV</div>
-                        <div class="admin-metric-trend success">
-                            <span>Calculated from active events</span>
                         </div>
                     </div>
 
@@ -269,35 +254,6 @@
                             </tr>
                         </thead>
                         <tbody id="adminUsersTableBody">
-                            <!-- Injected dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- TAB 5: TRANSACTIONS & TICKETS -->
-            <div class="admin-tab-pane" id="tabAdminTransactions">
-                <div class="admin-page-header">
-                    <div>
-                        <h1 class="admin-page-title">Transactions & Refunds</h1>
-                        <p class="admin-page-subtitle">Track ticket purchases, payment gateways, and issue customer refunds.</p>
-                    </div>
-                </div>
-
-                <div class="admin-card">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Transaction ID</th>
-                                <th>Buyer</th>
-                                <th>Event</th>
-                                <th>Amount</th>
-                                <th>Gateway</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminTransactionsTableBody">
                             <!-- Injected dynamically -->
                         </tbody>
                     </table>
