@@ -67,7 +67,7 @@ async function seedDatabase() {
             category: 'Technology & AI',
             city: 'Kathmandu',
             organizer_id: userIds['user@aavahan.com'], // Owned by Demo User so their organizer dashboard is populated!
-            member_count: 2450
+            member_count: 0
         },
         {
             name: 'Pokhara Trail Running & Outdoor Adventure',
@@ -75,7 +75,7 @@ async function seedDatabase() {
             category: 'Nature & Outdoors',
             city: 'Pokhara',
             organizer_id: userIds['kripa.gurung@pokhararunners.org'],
-            member_count: 820
+            member_count: 0
         },
         {
             name: 'Patan Live Music & Acoustic Circle',
@@ -83,7 +83,7 @@ async function seedDatabase() {
             category: 'Live Music',
             city: 'Lalitpur',
             organizer_id: userIds['rohan.shrestha@patanmusic.np'],
-            member_count: 1140
+            member_count: 0
         },
         {
             name: 'Himalayan Founders & Angel Network',
@@ -91,7 +91,7 @@ async function seedDatabase() {
             category: 'Career & Business',
             city: 'Kathmandu',
             organizer_id: userIds['sarita.s@foundersnepal.com'],
-            member_count: 1650
+            member_count: 0
         }
     ];
 
