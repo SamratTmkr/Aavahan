@@ -331,7 +331,6 @@ body.admin-body {
 .mod-badge-published { background-color: #ecfdf5; color: #059669; }
 .mod-badge-pending { background-color: #fffbeb; color: #d97706; }
 .mod-badge-featured { background-color: #fef0f2; color: #f64060; }
-.mod-badge-flagged { background-color: #fef2f2; color: #dc2626; }
 .mod-badge-active { background-color: #ecfdf5; color: #059669; }
 .mod-badge-suspended { background-color: #f1f5f9; color: #64748b; }
 
@@ -405,20 +404,6 @@ body.admin-body {
 .admin-btn-xs {
     font-size: 0.78rem;
     padding: 0.2rem 0.6rem;
-}
-
-.admin-mono-id {
-    font-family: monospace;
-    font-size: 0.8rem;
-    color: var(--admin-text-muted);
-}
-
-.admin-cell-semibold {
-    font-weight: 600;
-}
-
-.admin-cell-bold {
-    font-weight: 700;
 }
 
 /* Responsive */

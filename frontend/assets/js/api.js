@@ -171,7 +171,7 @@ async function getMyOrganizerEvents() {
         return await res.json();
     } catch (e) {
         console.log('API getMyOrganizerEvents error:', e);
-        return { success: false, data: [], stats: { totalEvents: 0, totalRSVPs: 0, grossVolume: 0 } };
+        return { success: false, data: [], stats: { totalEvents: 0, totalRSVPs: 0 } };
     }
 }
 
@@ -256,20 +256,6 @@ async function adminDeleteGroup(groupId) {
     return res.json();
 }
 
-async function getAdminTransactions() {
-    try {
-        const res = await fetch(`${API}/users/admin/transactions`, {
-            headers: getHeaders(),
-            credentials: 'include'
-        });
-        return await res.json();
-    } catch (e) {
-        console.log('API getAdminTransactions error:', e);
-        return { success: false, data: [] };
-    }
-}
-
-// Announcements API
 async function getEventAnnouncements(eventId) {
     try {
         const res = await fetch(`${API}/events/${eventId}/announcements`, { headers: getHeaders() });
@@ -478,7 +464,6 @@ export {
     adminDeleteEvent,
     getGroups,
     adminDeleteGroup,
-    getAdminTransactions,
     getEventAnnouncements,
     createEventAnnouncement,
     deleteEventAnnouncement,
