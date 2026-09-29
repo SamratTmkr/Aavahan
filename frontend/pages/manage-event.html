@@ -44,7 +44,7 @@
         <div class="manage-header-card">
             <div>
                 <div class="manage-status-row">
-                    <span class="badge badge-status-confirmed">Published Event</span>
+                    <span id="manageStatusBadge" class="badge badge-status-confirmed">Published Event</span>
                     <span id="manageEventIdBadge" class="manage-id-badge"></span>
                 </div>
                 <h1 id="manageEventTitle" class="manage-event-title">Loading Event…</h1>
@@ -63,6 +63,12 @@
             </div>
         </div>
 
+        <!-- Shown instead of the edit controls once the event is over -->
+        <div id="pastEventNotice" class="manage-past-notice is-hidden">
+            <span class="material-symbols-outlined">lock</span>
+            <span>This event has ended. You can still view its details, attendees and announcements, but nothing can be changed except marking payments as paid or unpaid.</span>
+        </div>
+
         <!-- Metric Summary Cards -->
         <div class="metrics-row manage-metrics-row">
             <div class="metric-card">
@@ -79,7 +85,7 @@
             <div class="metric-card">
                 <div class="metric-header">
                     <div class="metric-icon-box icon-box-sky">
-                        <span class="material-symbols-outlined">qr_code_scanner</span>
+                        <span class="material-symbols-outlined">task_alt</span>
                     </div>
                     <span id="metricTrendCheckin" class="metric-trend">Gate Check-in</span>
                 </div>
@@ -90,25 +96,142 @@
 
         <!-- Manage Hub Tabs -->
         <div class="manage-tabs-bar">
+            <div class="manage-tab-item" data-tab-target="tabDetails">
+                <span class="material-symbols-outlined icon-tab">edit</span>
+                <span id="detailsTabLabel">Edit Details</span>
+            </div>
             <div class="manage-tab-item active" data-tab-target="tabAttendees">
                 <span class="material-symbols-outlined icon-tab">badge</span>
-                <span>Registrations & Gate Check-in</span>
+                <span>Registrations</span>
             </div>
             <div class="manage-tab-item" data-tab-target="tabTickets">
                 <span class="material-symbols-outlined icon-tab">confirmation_number</span>
-                <span>Ticket Tiers & Capacity</span>
+                <span>Tickets & Capacity</span>
             </div>
             <div class="manage-tab-item" data-tab-target="tabAnnouncements">
                 <span class="material-symbols-outlined icon-tab">campaign</span>
-                <span>Announcements & Broadcasts</span>
+                <span>Announcements</span>
             </div>
             <div class="manage-tab-item" data-tab-target="tabTeam">
                 <span class="material-symbols-outlined icon-tab">shield_person</span>
-                <span>Team & Co-Managers</span>
+                <span>Team</span>
             </div>
-            <div class="manage-tab-item" data-tab-target="tabSettings">
+            <div class="manage-tab-item edit-only" data-tab-target="tabSettings">
                 <span class="material-symbols-outlined icon-tab">settings</span>
-                <span>Event Settings</span>
+                <span>Settings</span>
+            </div>
+        </div>
+
+        <!-- Edit Details -->
+        <div class="manage-tab-pane" id="tabDetails">
+            <div class="manage-settings-card">
+                <h3 id="detailsPanelTitle" class="manage-settings-title">Edit Event Details</h3>
+                <p class="manage-panel-desc mb-1-5 edit-only">Changes show up on the public event page as soon as you save.</p>
+
+                <form id="formEditEvent">
+                    <div class="form-group">
+                        <label class="form-label" for="editTitle">Event Title *</label>
+                        <input type="text" id="editTitle" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="editCategory">Category</label>
+                        <input type="text" id="editCategory" class="form-input" placeholder="e.g. Tech & Startups">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="editDescription">Description</label>
+                        <textarea id="editDescription" class="form-textarea" rows="5"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="editBanner">Event Banner</label>
+                        <div id="editBannerPreviewWrapper" class="banner-preview-wrapper is-hidden">
+                            <img id="editBannerPreview" class="banner-preview-img" alt="Event banner">
+                        </div>
+                        <input type="file" id="editBanner" class="form-input" accept="image/*">
+                        <small class="form-hint edit-only">Choose a new image to replace the current banner (max 5MB).</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="editHostName">Hosted by <span class="form-hint-inline">(optional)</span></label>
+                        <input type="text" id="editHostName" class="form-input" maxlength="150" placeholder="Leave empty to show your own name">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="editHostLogo">Host Logo <span class="form-hint-inline">(optional)</span></label>
+                        <img id="editHostLogoPreview" class="host-logo-preview is-hidden" alt="Host logo">
+                        <input type="file" id="editHostLogo" class="form-input" accept="image/*">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="editContactNumber">Contact Number <span class="form-hint-inline">(optional)</span></label>
+                        <div class="phone-input-row">
+                            <input type="text" id="editContactCode" class="form-input phone-code-input" maxlength="4" placeholder="+977" aria-label="Country code">
+                            <input type="tel" id="editContactNumber" class="form-input" inputmode="numeric" placeholder="Leave empty for no contact number">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="editCity">City or Region</label>
+                            <input type="text" id="editCity" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editVenue">Venue / Address</label>
+                            <input type="text" id="editVenue" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="editDate">Start Date</label>
+                            <input type="date" id="editDate" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editEndDate">End Date <span class="form-hint-inline">(optional, for multi-day)</span></label>
+                            <input type="date" id="editEndDate" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="editStartTime">Start Time</label>
+                            <input type="time" id="editStartTime" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editEndTime">End Time</label>
+                            <input type="time" id="editEndTime" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="editDeadline">Registration Deadline</label>
+                            <input type="datetime-local" id="editDeadline" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editCapacity">Capacity</label>
+                            <input type="number" id="editCapacity" class="form-input" min="1" placeholder="Leave empty for unlimited">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label-styled">
+                            <input type="checkbox" id="editIsOnline" class="checkbox-styled">
+                            This is an Online / Virtual event
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label-styled">
+                            <input type="checkbox" id="editRequirePhone" class="checkbox-styled">
+                            Require attendees to give a phone number when they register
+                        </label>
+                    </div>
+
+                    <button type="submit" id="btnSaveEvent" class="btn btn-primary btn-pill edit-only">Save Changes</button>
+                </form>
             </div>
         </div>
 
@@ -119,26 +242,24 @@
                 <div class="manage-filter-inputs">
                     <div class="input-icon-wrapper manage-search-wrap">
                         <span class="material-symbols-outlined input-icon-left">search</span>
-                        <input type="text" id="attendeeSearchInput" class="form-input" placeholder="Search by name, email, or order ID...">
+                        <input type="text" id="attendeeSearchInput" class="form-input" placeholder="Search by name, email, phone or order ID...">
                     </div>
                     <select id="attendeeStatusFilter" class="form-select select-w-160">
                         <option value="all">All Statuses</option>
                         <option value="Confirmed">Confirmed</option>
                         <option value="Checked In">Checked In</option>
+                        <option value="paid">Paid</option>
+                        <option value="unpaid">Unpaid</option>
                     </select>
                 </div>
 
                 <div class="d-flex items-center gap-0-75">
                     <span id="attendeeTotalCount" class="attendee-total-count">0 attendees</span>
-                    <a href="checkin.html" class="btn btn-outline btn-sm">
-                        <span class="material-symbols-outlined">qr_code_scanner</span>
-                        <span>Check in by code</span>
-                    </a>
                     <button id="exportAttendeesBtn" class="btn btn-outline btn-sm">
                         <span class="material-symbols-outlined">download</span>
                         <span>Export CSV</span>
                     </button>
-                    <button id="btnAddManualAttendeeBtn" class="btn btn-primary btn-sm">
+                    <button id="btnAddManualAttendeeBtn" class="btn btn-primary btn-sm edit-only">
                         <span class="material-symbols-outlined">person_add</span>
                         <span>+ Add Attendee</span>
                     </button>
@@ -151,9 +272,9 @@
                     <thead>
                         <tr>
                             <th>Attendee</th>
+                            <th>Phone</th>
                             <th>Order ID</th>
-                            <th>Ticket Tier</th>
-                            <th>Total Paid</th>
+                            <th>Payment</th>
                             <th>Check-in Status</th>
                             <th>Action</th>
                         </tr>
@@ -178,7 +299,7 @@
                 <h3 class="manage-settings-title">Post Official Broadcast</h3>
                 <p class="manage-panel-desc mb-1-5">Broadcast verified one-way updates to all attendees (e.g. WiFi credentials, room/schedule changes, kickoff alerts).</p>
 
-                <form id="formPostAnnouncement" class="broadcast-composer-form mb-2">
+                <form id="formPostAnnouncement" class="broadcast-composer-form mb-2 edit-only">
                     <div class="form-group">
                         <label class="form-label" for="announcementTitleInput">Headline / Title *</label>
                         <input type="text" id="announcementTitleInput" class="form-input" placeholder="e.g. Hackathon Kickoff & API Keys Released" required>
@@ -195,7 +316,7 @@
                     </button>
                 </form>
 
-                <hr class="manage-divider my-2">
+                <hr class="manage-divider my-2 edit-only">
                 <h4 class="manage-sub-heading mb-1">Previous Announcements</h4>
                 <div id="manageAnnouncementsList" class="announcements-manage-list">
                     <!-- Populated dynamically -->
@@ -207,13 +328,13 @@
         <div class="manage-tab-pane" id="tabTeam">
             <div class="manage-settings-card">
                 <h3 class="manage-settings-title">Event Team & Co-Managers</h3>
-                <p class="manage-panel-desc mb-1-5">Add team members or volunteers by email. Co-managers can check in attendees at the gate and post official broadcasts.</p>
+                <p class="manage-panel-desc mb-1-5">Add team members or volunteers by their email or full name. They must already have an Aavahan account. Co-managers can edit event details, check in attendees at the gate and post official broadcasts.</p>
 
-                <form id="formAddManager" class="team-add-form mb-2">
+                <form id="formAddManager" class="team-add-form mb-2 edit-only">
                     <div class="form-group mb-1">
-                        <label class="form-label" for="managerEmailInput">Team Member's Registered Email *</label>
+                        <label class="form-label" for="managerEmailInput">Team Member's Email or Name *</label>
                         <div class="d-flex gap-1">
-                            <input type="email" id="managerEmailInput" class="form-input" placeholder="e.g. volunteer@aavahan.com" required>
+                            <input type="text" id="managerEmailInput" class="form-input" placeholder="e.g. volunteer@aavahan.com or Sita Sharma" required>
                             <button type="submit" id="btnAddManagerSubmit" class="btn btn-primary btn-pill" style="white-space: nowrap;">
                                 <span class="material-symbols-outlined">person_add</span>
                                 <span>Add Co-Manager</span>
@@ -222,7 +343,7 @@
                     </div>
                 </form>
 
-                <hr class="manage-divider my-2">
+                <hr class="manage-divider my-2 edit-only">
                 <h4 class="manage-sub-heading mb-1">Active Co-Managers</h4>
                 <div id="manageTeamList" class="team-roster-list">
                     <!-- Populated dynamically -->
@@ -249,8 +370,8 @@
     </main>
 
     <!-- Manual Attendee Modal -->
-    <div id="manualAttendeeModal" class="modal-overlay">
-        <div class="modal-card">
+    <div id="manualAttendeeModal" class="modal-backdrop">
+        <div class="modal-dialog">
             <div class="modal-header">
                 <h3 class="modal-title">Register Attendee by Email</h3>
                 <button type="button" class="modal-close" id="btnCloseManualRsvp">&times;</button>

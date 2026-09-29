@@ -1,5 +1,3 @@
-import pool from '../src/db.js';
-
 // User schema descriptor — mirrors the 'users' table
 export const userSchema = {
   tableName: 'users',

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Aavahan Platform Admin & Operations Dashboard. Superadmin moderation, events, groups, and analytics.">
+    <meta name="description" content="Aavahan Platform Admin & Operations Dashboard. Superadmin moderation, events, users, and analytics.">
     <title>Platform Admin Panel — Aavahan</title>
 
     <!-- Google Fonts -->
@@ -35,11 +35,6 @@
             <a class="admin-nav-item" data-tab="tabAdminEvents">
                 <span class="material-symbols-outlined">event</span>
                 <span>Events</span>
-                <span class="nav-count">0</span>
-            </a>
-            <a class="admin-nav-item" data-tab="tabAdminGroups">
-                <span class="material-symbols-outlined">groups</span>
-                <span>Groups</span>
                 <span class="nav-count">0</span>
             </a>
             <a class="admin-nav-item" data-tab="tabAdminUsers">
@@ -74,7 +69,7 @@
                 </button>
                 <div class="admin-search-box">
                     <span class="material-symbols-outlined admin-search-icon">search</span>
-                    <input type="text" id="globalAdminSearch" class="admin-search-input" placeholder="Search events, groups, or users...">
+                    <input type="text" id="globalAdminSearch" class="admin-search-input" placeholder="Search events or users...">
                 </div>
             </div>
 
@@ -126,17 +121,6 @@
                             <span>Published on platform</span>
                         </div>
                     </div>
-
-                    <div class="admin-metric-card">
-                        <div class="admin-metric-icon amber">
-                            <span class="material-symbols-outlined">verified</span>
-                        </div>
-                        <div id="kpiTotalGroups" class="admin-metric-val">—</div>
-                        <div class="admin-metric-label">Active Meetup Groups</div>
-                        <div class="admin-metric-trend amber">
-                            <span>Community organizers</span>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Platform Activity & Moderation Queue -->
@@ -152,7 +136,7 @@
                     <table class="admin-table">
                         <thead>
                             <tr>
-                                <th>Event Title & Group</th>
+                                <th>Event Title & City</th>
                                 <th>Event Date</th>
                                 <th>Status</th>
                                 <th>Moderation Actions</th>
@@ -197,38 +181,7 @@
                 </div>
             </div>
 
-            <!-- TAB 3: GROUPS MANAGEMENT -->
-            <div class="admin-tab-pane" id="tabAdminGroups">
-                <div class="admin-page-header">
-                    <div>
-                        <h1 class="admin-page-title">Groups & Communities</h1>
-                        <p class="admin-page-subtitle">Manage organizer communities, verify badges, and oversee member health.</p>
-                    </div>
-                    <div class="admin-search-box w-280">
-                        <span class="material-symbols-outlined admin-search-icon">search</span>
-                        <input type="text" id="searchAdminGroups" class="admin-search-input" placeholder="Search group name...">
-                    </div>
-                </div>
-
-                <div class="admin-card">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Group Name</th>
-                                <th>Category</th>
-                                <th>Hosted Events</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminGroupsTableBody">
-                            <!-- Injected dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- TAB 4: USERS MANAGEMENT -->
+            <!-- TAB 3: USERS MANAGEMENT -->
             <div class="admin-tab-pane" id="tabAdminUsers">
                 <div class="admin-page-header">
                     <div>

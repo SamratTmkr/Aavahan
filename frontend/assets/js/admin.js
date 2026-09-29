@@ -1,12 +1,10 @@
-import { getToken, getUser, isAuthenticated, clearAuth } from './authService.js';
+import { getUser, isAuthenticated, clearAuth } from './authService.js';
 import { 
     getEvents,
     getAdminUsers,
     updateUserRole,
     adminDeleteUser,
     adminDeleteEvent,
-    getGroups,
-    adminDeleteGroup,
     logoutUser
 } from './api.js';
 import { showToast, escapeHtml } from './main.js';
@@ -72,26 +70,21 @@ function tableEmpty(tbodyId, cols, msg) {
 // Overview stats and recent events
 async function loadOverview() {
     try {
-        var [evRes, usRes, grRes] = await Promise.all([
+        var [evRes, usRes] = await Promise.all([
             getEvents(),
-            getAdminUsers(),
-            getGroups()
+            getAdminUsers()
         ]);
 
         var events = (evRes.success && evRes.data) ? evRes.data : [];
         var users  = (usRes.success && usRes.data) ? usRes.data : [];
-        var groups = (grRes.success && grRes.data) ? grRes.data : [];
 
         var navEvCount = document.querySelector('.admin-nav-item[data-tab="tabAdminEvents"] .nav-count');
-        var navGrCount = document.querySelector('.admin-nav-item[data-tab="tabAdminGroups"] .nav-count');
         var navUsCount = document.querySelector('.admin-nav-item[data-tab="tabAdminUsers"] .nav-count');
         if (navEvCount) navEvCount.textContent = events.length;
-        if (navGrCount) navGrCount.textContent = groups.length;
         if (navUsCount) navUsCount.textContent = users.length;
 
         setCounter('kpiTotalUsers',  users.length);
         setCounter('kpiTotalEvents', events.length);
-        setCounter('kpiTotalGroups', groups.length);
 
         var tbody = document.getElementById('adminPendingQueue');
         if (!tbody) return;
@@ -182,65 +175,6 @@ if (evSearchEl) {
         evSearchDebounce = setTimeout(function() {
             var q = evSearchEl.value.toLowerCase().trim();
             renderAdminEvents(q ? allAdminEvents.filter(function(e){ return e.title.toLowerCase().includes(q) || (e.city||'').toLowerCase().includes(q); }) : allAdminEvents);
-        }, 250);
-    });
-}
-
-// Groups tab
-var allAdminGroups = [];
-
-async function loadAdminGroups() {
-    tableLoading('adminGroupsTableBody', 5);
-    try {
-        var data = await getGroups();
-        allAdminGroups = (data.success && data.data) ? data.data : [];
-        renderAdminGroups(allAdminGroups);
-    } catch(e) {
-        tableEmpty('adminGroupsTableBody', 5, 'Failed to load groups.');
-    }
-}
-
-function renderAdminGroups(groups) {
-    var tbody = document.getElementById('adminGroupsTableBody');
-    if (!tbody) return;
-    if (!groups.length) { tableEmpty('adminGroupsTableBody', 5, 'No groups found.'); return; }
-    tbody.innerHTML = groups.map(function(g) {
-        return '<tr>' +
-            '<td><div class="admin-user-cell">' + avatarEl(g.name) + '<div><div class="admin-table-title">' + escapeHtml(g.name) + '</div><div class="admin-table-sub">' + escapeHtml(g.city || '—') + '</div></div></div></td>' +
-            '<td>' + escapeHtml(g.category || '—') + '</td>' +
-            '<td>' + (g.hosted_events_count || 0) + '</td>' +
-            '<td><span class="mod-badge mod-badge-' + (g.is_public ? 'active' : 'suspended') + '">' + (g.is_public ? 'Public' : 'Private') + '</span></td>' +
-            '<td><div class="admin-action-btn-group">' +
-                '<button class="btn btn-sm btn-danger-light admin-btn-xs" data-action="delete-group" data-id="' + g.id + '">Delete</button>' +
-            '</div></td>' +
-        '</tr>';
-    }).join('');
-}
-
-async function adminRemoveGroup(id, btn) {
-    if (!confirm('Delete this group? This cannot be undone.')) return;
-    btn.disabled = true; btn.textContent = '…';
-    var res = await adminDeleteGroup(id);
-    if (res.success) {
-        showToast('Group deleted.', 'success');
-        allAdminGroups = allAdminGroups.filter(function(g){ return g.id !== id; });
-        renderAdminGroups(allAdminGroups);
-        loadOverview();
-    } else {
-        showToast(res.message || 'Delete failed.', 'error');
-        btn.disabled = false; btn.textContent = 'Delete';
-    }
-}
-
-// Groups search
-var grSearchDebounce;
-var grSearchEl = document.getElementById('searchAdminGroups');
-if (grSearchEl) {
-    grSearchEl.addEventListener('input', function() {
-        clearTimeout(grSearchDebounce);
-        grSearchDebounce = setTimeout(function() {
-            var q = grSearchEl.value.toLowerCase().trim();
-            renderAdminGroups(q ? allAdminGroups.filter(function(g){ return g.name.toLowerCase().includes(q) || (g.city||'').toLowerCase().includes(q) || (g.category||'').toLowerCase().includes(q); }) : allAdminGroups);
         }, 250);
     });
 }
@@ -387,7 +321,6 @@ function exportAdminReportCSV() {
 document.addEventListener('DOMContentLoaded', function() {
     loadOverview();
     loadAdminEvents();
-    loadAdminGroups();
     loadAdminUsers();
 
     // Event delegation for pending queue
@@ -410,18 +343,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btn) {
                 var id = Number(btn.getAttribute('data-id'));
                 adminRemoveEvent(id, btn);
-            }
-        });
-    }
-
-    // Event delegation for groups table
-    var groupsTable = document.getElementById('adminGroupsTableBody');
-    if (groupsTable) {
-        groupsTable.addEventListener('click', function(e) {
-            var btn = e.target.closest('[data-action="delete-group"]');
-            if (btn) {
-                var id = Number(btn.getAttribute('data-id'));
-                adminRemoveGroup(id, btn);
             }
         });
     }

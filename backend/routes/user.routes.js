@@ -4,7 +4,7 @@ import { userAuth, adminAuth } from '../middleware/auth.middleware.js';
 
 const userRouter = Router();
 
-// GET /api/v1/users â€” admin only: list all users
+// GET /api/v1/users — admin only: list all users
 userRouter.get('/', userAuth, adminAuth, async (req, res) => {
     try {
         const search = req.query.search || null;
@@ -38,14 +38,14 @@ userRouter.get('/', userAuth, adminAuth, async (req, res) => {
     }
 });
 
-// GET /api/v1/users/:id â€” admin only: get a single user
+// GET /api/v1/users/:id — admin only: get a single user
 userRouter.get('/:id', userAuth, adminAuth, async (req, res) => {
     try {
         const [rows] = await pool.execute(
             'SELECT id, name, email, role, avatar_url, created_at FROM users WHERE id = ?',
             [req.params.id]
         );
-        if (!rows.length) return res.json({ success: false, message: 'User not found' });
+        if (!rows.length) return res.status(404).json({ success: false, message: 'User not found' });
         return res.json({ success: true, data: rows[0] });
     } catch (error) {
         console.error(`${req.method} ${req.originalUrl} failed:`, error);
@@ -53,11 +53,11 @@ userRouter.get('/:id', userAuth, adminAuth, async (req, res) => {
     }
 });
 
-// PATCH /api/v1/users/:id/role â€” admin only: promote or demote a user
+// PATCH /api/v1/users/:id/role — admin only: promote or demote a user
 userRouter.patch('/:id/role', userAuth, adminAuth, async (req, res) => {
     const { role } = req.body;
     if (!['user', 'admin'].includes(role)) {
-        return res.json({ success: false, message: 'Role must be "user" or "admin"' });
+        return res.status(400).json({ success: false, message: 'Role must be "user" or "admin"' });
     }
     try {
         await pool.execute('UPDATE users SET role = ? WHERE id = ?', [role, req.params.id]);
@@ -68,13 +68,21 @@ userRouter.patch('/:id/role', userAuth, adminAuth, async (req, res) => {
     }
 });
 
-// DELETE /api/v1/users/:id â€” admin only: delete a user
+// DELETE /api/v1/users/:id — admin only: delete a user
 userRouter.delete('/:id', userAuth, adminAuth, async (req, res) => {
     try {
         // Prevent self-deletion
         if (parseInt(req.params.id) === req.user.id) {
-            return res.json({ success: false, message: 'You cannot delete your own account.' });
+            return res.status(400).json({ success: false, message: 'You cannot delete your own account.' });
         }
+        // Deleting the user also deletes their registrations (ON DELETE CASCADE),
+        // so take them off each event's attendee count first
+        await pool.execute(
+            `UPDATE events e JOIN rsvps r ON r.event_id = e.id
+             SET e.attendee_count = GREATEST(0, e.attendee_count - 1)
+             WHERE r.user_id = ?`,
+            [req.params.id]
+        );
         await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id]);
         return res.json({ success: true, message: 'User deleted' });
     } catch (error) {

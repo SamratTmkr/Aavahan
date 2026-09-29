@@ -1,7 +1,7 @@
 import { getUser, isAuthenticated } from './authService.js';
-import { getEvent, getEventAttendees, rsvpToEvent, cancelEventRsvp, getEventAnnouncements,
-         getEventComments, postEventComment, deleteEventComment } from './api.js';
+import { getEvent, getEventAttendees, rsvpToEvent, cancelEventRsvp, getEventAnnouncements } from './api.js';
 import { showToast, escapeHtml } from './main.js';
+import { phoneProblem } from './phone.js';
 
 // Event details page logic
 
@@ -10,24 +10,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const eventIdParam = urlParams.get('id');
 
-    // Category banner fallback image generator
-    const categoryImages = {
-        'tech': 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-        'software': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80',
-        'business': 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=80',
-        'design': 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1200&q=80',
-        'music': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80',
-        'health': 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80',
-        'social': 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80',
-    };
-
+    // Cover for events without an uploaded banner, from the bundled images (same mapping as the home page)
     function getCoverImage(cat) {
-        if (!cat) return categoryImages['tech'];
-        const lower = cat.toLowerCase();
-        for (const [key, url] of Object.entries(categoryImages)) {
-            if (lower.includes(key)) return url;
-        }
-        return categoryImages['tech'];
+        const lower = (cat || '').toLowerCase();
+        if (/tech|software|\bai\b|code/.test(lower)) return '../assets/images/tech-summit.jpg';
+        if (/music|concert|live/.test(lower)) return '../assets/images/music-jam.jpg';
+        if (/outdoor|hiking|nature|trail/.test(lower)) return '../assets/images/outdoor-hiking.jpg';
+        if (/business|pitch|career|startup/.test(lower)) return '../assets/images/startup-pitch.jpg';
+        return '../assets/images/community-banner.jpg';
     }
 
     let currentEvent = null;
@@ -70,20 +60,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         day: 'numeric'
     }).toUpperCase();
 
-    const timeStr = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) : '10:00 AM';
+    const timeStr = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) : '';
     const endTimeStr = currentEvent.end_time ? currentEvent.end_time.slice(0, 5) : '';
+    // "SAT, OCT 4 · 18:00 NPT", or just the date when no start time is set
+    const shortWhen = timeStr ? `${dateFormattedShort} · ${timeStr} NPT` : dateFormattedShort;
 
     // Price formatting
     const isFree = currentEvent.is_free || !currentEvent.min_price || currentEvent.min_price == 0;
     const priceText = isFree ? 'FREE' : `NPR ${Number(currentEvent.min_price).toLocaleString()}`;
 
     // Host initials
-    const hostName = currentEvent.organizer_name || 'Community Organizer';
+    const hostName = currentEvent.host_name || currentEvent.organizer_name || 'Community Organizer';
     const hostInitials = hostName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'CO';
 
     // 4. Hydrate DOM elements
     const topEventDate = document.getElementById('topEventDate');
-    if (topEventDate) topEventDate.textContent = isTba ? 'Date to be Announced' : `${dateFormattedShort} · ${timeStr} NPT`;
+    if (topEventDate) topEventDate.textContent = isTba ? 'Date to be Announced' : shortWhen;
 
     const topEventTitle = document.getElementById('topEventTitle');
     if (topEventTitle) {
@@ -92,36 +84,84 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const topHostAvatar = document.getElementById('topHostAvatar');
-    if (topHostAvatar) topHostAvatar.textContent = hostInitials;
+    if (topHostAvatar) {
+        topHostAvatar.textContent = hostInitials;
+        if (currentEvent.host_logo_url) {
+            const logo = document.createElement('img');
+            logo.src = currentEvent.host_logo_url;
+            logo.alt = hostName;
+            // keep the initials if the logo file cannot be loaded
+            logo.addEventListener('load', () => {
+                topHostAvatar.textContent = '';
+                topHostAvatar.classList.add('has-logo');
+                topHostAvatar.appendChild(logo);
+            });
+        }
+    }
 
     const topHostName = document.getElementById('topHostName');
     if (topHostName) topHostName.textContent = `Hosted by ${hostName}`;
 
+    // Show "Manage Event" button in the banner actions if the viewer is the organiser or an admin
+    const storedUserForManage = getUser();
+    const isOrganizer = storedUserForManage &&
+        (Number(storedUserForManage.id) === Number(currentEvent.organizer_id) ||
+         storedUserForManage.role === 'admin');
+    if (isOrganizer) {
+        const topActionsWrap = document.querySelector('.meetup-top-container .top-actions-wrap');
+        if (topActionsWrap) {
+            const manageBtn = document.createElement('a');
+            manageBtn.href = `manage-event.html?id=${currentEvent.id}`;
+            manageBtn.className = 'btn btn-outline-teal btn-pill';
+            manageBtn.innerHTML = '<span class="material-symbols-outlined">tune</span><span>Manage Event</span>';
+            // Insert before the Share button so it stays leftmost
+            topActionsWrap.insertBefore(manageBtn, topActionsWrap.firstChild);
+        }
+    }
+
+
     const eventCoverImg = document.getElementById('eventCoverImg');
-    if (eventCoverImg) eventCoverImg.src = currentEvent.image_url || getCoverImage(currentEvent.category);
+    if (eventCoverImg) {
+        // If the uploaded banner file is missing, fall back to the category cover
+        eventCoverImg.addEventListener('error', () => {
+            eventCoverImg.src = getCoverImage(currentEvent.category);
+        }, { once: true });
+        eventCoverImg.src = currentEvent.image_url || getCoverImage(currentEvent.category);
+    }
 
     const eventDetailsText = document.getElementById('eventDetailsText');
     if (eventDetailsText) {
-        eventDetailsText.innerHTML = escapeHtml(currentEvent.description || 'Join us for this exciting community gathering. Connect with like-minded individuals, share knowledge, and learn something new.')
+        eventDetailsText.innerHTML = escapeHtml(currentEvent.description || 'No description provided.')
             .split('\n\n')
             .map(p => `<p class="mb-1">${p.replace(/\n/g, '<br>')}</p>`)
             .join('');
     }
 
     // Sidebar widgets
+    // Only show the group card when the event really belongs to a group
     const sidebarGroupName = document.getElementById('sidebarGroupName');
-    if (sidebarGroupName) sidebarGroupName.textContent = currentEvent.group_name || (currentEvent.category ? `${currentEvent.category} Group` : (currentEvent.city ? `${currentEvent.city} Community Group` : 'Community Group'));
+    if (sidebarGroupName) {
+        if (currentEvent.group_name) {
+            sidebarGroupName.textContent = currentEvent.group_name;
+        } else {
+            sidebarGroupName.closest('.meetup-sidebar-widget').classList.add('is-hidden');
+        }
+    }
 
     const sidebarDateText = document.getElementById('sidebarDateText');
     if (sidebarDateText) sidebarDateText.textContent = isTba ? 'Date to be Announced' : dateFormattedLong;
 
     const sidebarTimeText = document.getElementById('sidebarTimeText');
-    if (sidebarTimeText) sidebarTimeText.textContent = isTba ? 'Time to be Announced' : (endTimeStr ? `${timeStr} to ${endTimeStr} NPT` : `${timeStr} NPT onwards`);
+    if (sidebarTimeText) sidebarTimeText.textContent = (isTba || !timeStr) ? 'Time to be Announced' : (endTimeStr ? `${timeStr} to ${endTimeStr} NPT` : `${timeStr} NPT onwards`);
 
     // Registration deadline display
     const isDeadlinePassed = Boolean(
         currentEvent.registration_deadline && new Date() > new Date(currentEvent.registration_deadline)
     );
+
+    // An event that has ended cannot be registered for (the API refuses it too)
+    const lastDay = currentEvent.end_date || currentEvent.event_date;
+    const isPast = lastDay ? lastDay.slice(0, 10) < new Date().toISOString().slice(0, 10) : false;
     const sidebarDeadlineContainer = document.getElementById('sidebarDeadlineContainer');
     const sidebarDeadlineText = document.getElementById('sidebarDeadlineText');
     if (sidebarDeadlineContainer && sidebarDeadlineText) {
@@ -135,10 +175,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const sidebarVenueName = document.getElementById('sidebarVenueName');
-    if (sidebarVenueName) sidebarVenueName.textContent = currentEvent.is_online ? 'Online Zoom / Google Meet' : (currentEvent.venue || currentEvent.city || 'Location TBD');
+    if (sidebarVenueName) sidebarVenueName.textContent = currentEvent.is_online ? 'Online event' : (currentEvent.venue || currentEvent.city || 'Location TBD');
 
     const sidebarAddressText = document.getElementById('sidebarAddressText');
-    if (sidebarAddressText) sidebarAddressText.textContent = currentEvent.is_online ? 'Link will be sent to registered attendees' : (currentEvent.address || currentEvent.city || 'Location TBD');
+    if (sidebarAddressText) sidebarAddressText.textContent = currentEvent.is_online ? 'Hosted online' : (currentEvent.address || currentEvent.city || 'Location TBD');
 
     const sidebarPriceText = document.getElementById('sidebarPriceText');
     if (sidebarPriceText) sidebarPriceText.textContent = priceText;
@@ -172,12 +212,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (storedUser.name) {
         const rsvpNameInput = document.getElementById('rsvpFullName');
         if (rsvpNameInput) rsvpNameInput.value = storedUser.name;
-        const commentAvatar = document.getElementById('commentUserAvatar');
-        if (commentAvatar) commentAvatar.textContent = storedUser.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
     }
     if (storedUser.email) {
         const rsvpEmailInput = document.getElementById('rsvpEmail');
         if (rsvpEmailInput) rsvpEmailInput.value = storedUser.email;
+    }
+
+    // Organiser contact number, if they gave one
+    if (currentEvent.contact_phone) {
+        const contactLink = document.getElementById('sidebarContactText');
+        contactLink.textContent = currentEvent.contact_phone;
+        contactLink.href = 'tel:' + currentEvent.contact_phone.replace(/\s/g, '');
+        document.getElementById('sidebarContactContainer').classList.remove('is-hidden');
+    }
+
+    // Ask for a phone number in the RSVP form when the organiser requires one
+    const rsvpPhoneCode = document.getElementById('rsvpPhoneCode');
+    const rsvpPhoneNumber = document.getElementById('rsvpPhoneNumber');
+    if (currentEvent.require_phone) {
+        rsvpPhoneNumber.required = true;
+        document.getElementById('rsvpPhoneGroup').classList.remove('is-hidden');
     }
 
     // Hydrate Attendees Faces
@@ -185,7 +239,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Hydrate Announcements
     loadEventAnnouncements(currentEvent.id);
-    loadEventComments(currentEvent.id);
 
     // 5. RSVP Modal Controls
     const rsvpModal = document.getElementById('meetupRsvpModal');
@@ -214,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btn.classList.add('btn-cancel-rsvp');
                 btn.classList.remove('btn-primary');
                 btn.disabled = false;
-            } else if (isDeadlinePassed) {
+            } else if (isDeadlinePassed || isPast) {
                 btn.textContent = 'Registration Closed';
                 btn.classList.remove('btn-cancel-rsvp');
                 btn.classList.remove('btn-primary');
@@ -290,11 +343,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         rsvpForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = rsvpForm.querySelector('button[type="submit"]');
+
+            const details = {};
+            if (currentEvent.require_phone) {
+                const problem = phoneProblem(rsvpPhoneCode.value, rsvpPhoneNumber.value);
+                if (problem) {
+                    showToast(problem, 'error');
+                    rsvpPhoneNumber.focus();
+                    return;
+                }
+                details.phone_code = rsvpPhoneCode.value;
+                details.phone_number = rsvpPhoneNumber.value.trim();
+            }
+
             submitBtn.disabled = true;
             submitBtn.textContent = 'Processing RSVP…';
 
             try {
-                const res = await rsvpToEvent(currentEvent.id);
+                const res = await rsvpToEvent(currentEvent.id, details);
                 if (res && res.success) {
                     const formPane = document.getElementById('rsvpFormPane');
                     const successPane = document.getElementById('rsvpSuccessPane');
@@ -311,7 +377,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const fullName = document.getElementById('rsvpFullName')?.value || 'Guest Member';
                     if (passUserName) passUserName.textContent = fullName;
                     if (passEventName) passEventName.textContent = currentEvent.title;
-                    if (passEventTime) passEventTime.textContent = `${dateFormattedShort} · ${timeStr} NPT`;
+                    if (passEventTime) passEventTime.textContent = isTba ? 'Date to be Announced' : shortWhen;
                     if (passEventVenue) passEventVenue.textContent = currentEvent.is_online ? 'Online Event' : (currentEvent.venue || currentEvent.city || 'Location TBD');
                     const dynamicTicketCode = res.rsvpId ? `RSVP-${String(res.rsvpId).padStart(4, '0')}` : `RSVP-${currentEvent.id}`;
                     if (passTicketId) passTicketId.textContent = dynamicTicketCode;
@@ -340,113 +406,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 7. Discussion & Comments
-    const commentInput = document.getElementById('commentInput');
-    const btnPostComment = document.getElementById('btnPostComment');
-    const commentsList = document.getElementById('meetupCommentsList');
-
-    if (btnPostComment && commentInput) {
-        btnPostComment.addEventListener('click', async () => {
-            const message = commentInput.value.trim();
-
-            if (!message) {
-                showToast('Please enter a comment.', 'info');
-                return;
-            }
-
-            if (!isAuthenticated()) {
-                showToast('Please log in to join the discussion.', 'info');
-                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
-                return;
-            }
-
-            btnPostComment.disabled = true;
-            btnPostComment.textContent = 'Posting...';
-
-            const res = await postEventComment(currentEvent.id, message);
-
-            if (res.success) {
-                commentInput.value = '';
-                showToast('Comment posted', 'success');
-                loadEventComments(currentEvent.id);
-            } else {
-                showToast(res.message || 'Could not post your comment.', 'error');
-            }
-
-            btnPostComment.disabled = false;
-            btnPostComment.textContent = 'Post comment';
-        });
-    }
-
-    // Delete own comment (organisers and admins can delete any)
-    if (commentsList) {
-        commentsList.addEventListener('click', async (e) => {
-            const btn = e.target.closest('[data-action="delete-comment"]');
-            if (!btn) return;
-            if (!confirm('Delete this comment?')) return;
-
-            const res = await deleteEventComment(currentEvent.id, btn.dataset.id);
-            if (res.success) {
-                showToast('Comment deleted', 'success');
-                loadEventComments(currentEvent.id);
-            } else {
-                showToast(res.message || 'Could not delete the comment.', 'error');
-            }
-        });
-    }
-
-    async function loadEventComments(eventId) {
-        // looked up here rather than reused from the outer const, because this
-        // runs on page load before that declaration is reached
-        const list = document.getElementById('meetupCommentsList');
-        if (!list) return;
-
-        const res = await getEventComments(eventId);
-        const comments = (res && res.success && Array.isArray(res.data)) ? res.data : [];
-
-        if (!comments.length) {
-            list.innerHTML = `
-                <div class="announcement-empty-state">
-                    <span class="material-symbols-outlined announcement-empty-icon">forum</span>
-                    <p class="announcement-empty-text">No comments yet. Start the discussion.</p>
-                </div>
-            `;
-            return;
-        }
-
-        const me = getUser() || {};
-
-        list.innerHTML = comments.map(c => {
-            const author = c.author_name || 'Community Member';
-            const initials = author.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-            const posted = new Date(c.created_at).toLocaleDateString('en-US', {
-                month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
-            });
-
-            const canDelete = Number(c.user_id) === Number(me.id)
-                || me.role === 'admin'
-                || Number(currentEvent.organizer_id) === Number(me.id);
-
-            const deleteBtn = canDelete
-                ? `<button type="button" class="btn btn-outline btn-sm" data-action="delete-comment" data-id="${c.id}">Delete</button>`
-                : '';
-
-            return `
-                <div class="comment-item">
-                    <div class="comment-avatar">${escapeHtml(initials)}</div>
-                    <div class="comment-body">
-                        <div class="comment-header">
-                            <span class="comment-author">${escapeHtml(author)}</span>
-                            <span class="comment-time">${posted}</span>
-                            ${deleteBtn}
-                        </div>
-                        <div class="comment-text">${escapeHtml(c.message).replace(/\n/g, '<br>')}</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
     // Load Attendees function
     async function loadAttendeesList(eventId) {
         const grid = document.getElementById('attendeesFacesGrid');
@@ -467,11 +426,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const name = attendee.name || 'Member';
                         const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
                         return `
-                            <div class="attendee-face-item" title="${name}">
+                            <div class="attendee-face-item" title="${escapeHtml(name)}">
                                 <div class="attendee-face-circle">
-                                    ${initials}
+                                    ${escapeHtml(initials)}
                                 </div>
-                                <span class="attendee-face-name">${name.split(' ')[0]}</span>
+                                <span class="attendee-face-name">${escapeHtml(name.split(' ')[0])}</span>
                             </div>
                         `;
                     }).join('');

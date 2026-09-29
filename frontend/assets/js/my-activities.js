@@ -19,9 +19,10 @@ function requireAuth() {
     return true;
 }
 
-// Check if an event date is today or in the future
-function isUpcomingDate(dateStr) {
-    if (!dateStr) return false;
+// An event is upcoming until its last day is over. Events with no date yet (TBA) are upcoming.
+function isUpcomingEvent(ev) {
+    const dateStr = ev.end_date || ev.event_date;
+    if (!dateStr) return true;
     const evDate = new Date(dateStr);
     evDate.setHours(0, 0, 0, 0);
     const now = new Date();
@@ -70,7 +71,7 @@ async function loadActivities() {
             const pst = [];
 
             raw.forEach(ev => {
-                if (isUpcomingDate(ev.event_date)) {
+                if (isUpcomingEvent(ev)) {
                     up.push(ev);
                 } else {
                     pst.push(ev);
@@ -238,7 +239,6 @@ function renderJoinedList(listEl) {
 
         const isFree = ev.is_free || !ev.min_price || Number(ev.min_price) === 0;
         const priceLabel = isFree ? 'Free' : `NPR ${Number(ev.min_price).toLocaleString()}`;
-        const ticketCode = ev.checkin_code || '';
 
         // Exact location representation
         let locationMarkup = '';
@@ -246,7 +246,7 @@ function renderJoinedList(listEl) {
             locationMarkup = `
                 <div class="activity-location-highlight">
                     <span class="material-symbols-outlined activity-location-icon online">videocam</span>
-                    <span><strong>Online Event:</strong> Zoom / Google Meet · Join link provided to attendees</span>
+                    <span><strong>Online event</strong></span>
                 </div>
             `;
         } else {
@@ -255,7 +255,7 @@ function renderJoinedList(listEl) {
             locationMarkup = `
                 <div class="activity-location-highlight">
                     <span class="material-symbols-outlined activity-location-icon">location_on</span>
-                    <span><strong>Where:</strong> ${fullLoc}</span>
+                    <span><strong>Where:</strong> ${escapeHtml(fullLoc)}</span>
                 </div>
             `;
         }
@@ -264,7 +264,7 @@ function renderJoinedList(listEl) {
         const badgeClass = isCheckedIn ? 'badge-status-checked' : 'badge-status-confirmed';
         const statusLabel = isCheckedIn ? 'Checked In' : 'Confirmed RSVP';
 
-        const isUpcoming = isUpcomingDate(ev.event_date);
+        const isUpcoming = isUpcomingEvent(ev);
         const escapedTitle = escapeHtml(ev.title || '').replace(/'/g, "\\'");
 
         const cancelButton = isUpcoming ? `
@@ -286,7 +286,7 @@ function renderJoinedList(listEl) {
                         <div class="activity-meta">
                             <span>📅 ${dateFormatted} · ${timeFormatted}</span>
                             <span>•</span>
-                            <span class="activity-category-pill">${ev.category || 'Event'}</span>
+                            <span class="activity-category-pill">${escapeHtml(ev.category || 'Event')}</span>
                             ${groupTag}
                         </div>
                         <a href="event-details.html?id=${ev.event_id}" class="activity-title">
@@ -295,8 +295,6 @@ function renderJoinedList(listEl) {
                         ${locationMarkup}
                         <div class="activity-sub">
                             <span>🎟️ ${priceLabel}</span>
-                            <span>•</span>
-                            <span>🔖 Ticket Code: <strong class="dash-mono-id">${escapeHtml(ticketCode) || 'n/a'}</strong></span>
                         </div>
                     </div>
                 </div>
@@ -307,52 +305,10 @@ function renderJoinedList(listEl) {
                     </a>
                     ${cancelButton}
                 </div>
-                ${ticketCode ? `
-                <div class="activity-ticket">
-                    <button type="button" class="btn btn-outline btn-pill btn-sm"
-                            data-action="show-ticket" data-code="${escapeHtml(ticketCode)}" data-rsvp="${ev.rsvp_id}">
-                        Show ticket QR
-                    </button>
-                    <div class="ticket-qr-wrap" id="ticketQr-${ev.rsvp_id}" hidden></div>
-                </div>` : ''}
             </div>
         `;
     }).join('');
 }
-
-// Draws the ticket QR the first time it is asked for. The QR encodes a link to
-// the check-in page, so an organiser can scan it with an ordinary phone camera
-// and does not need a scanner built into the site.
-document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action="show-ticket"]');
-    if (!btn) return;
-
-    const wrap = document.getElementById(`ticketQr-${btn.dataset.rsvp}`);
-    if (!wrap) return;
-
-    if (!wrap.hidden) {
-        wrap.hidden = true;
-        btn.textContent = 'Show ticket QR';
-        return;
-    }
-
-    if (!wrap.dataset.drawn) {
-        const url = `${window.location.origin}/pages/checkin.html?code=${btn.dataset.code}`;
-        if (typeof QRCode === 'undefined') {
-            wrap.innerHTML = `<p class="activity-ticket-note">Show this code at the door: <strong>${escapeHtml(btn.dataset.code)}</strong></p>`;
-        } else {
-            new QRCode(wrap, { text: url, width: 160, height: 160 });
-            const note = document.createElement('p');
-            note.className = 'activity-ticket-note';
-            note.textContent = `Code: ${btn.dataset.code}`;
-            wrap.appendChild(note);
-        }
-        wrap.dataset.drawn = 'yes';
-    }
-
-    wrap.hidden = false;
-    btn.textContent = 'Hide ticket QR';
-});
 
 // Render "Events I've Created"
 function renderCreatedList(listEl) {
@@ -396,7 +352,7 @@ function renderCreatedList(listEl) {
         const dateFormatted = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
         const timeFormatted = ev.start_time ? ev.start_time.slice(0, 5) + ' NPT' : 'Time TBD';
 
-        const isUpcoming = isUpcomingDate(ev.event_date);
+        const isUpcoming = isUpcomingEvent(ev);
         const statusBadge = isUpcoming 
             ? `<span class="badge badge-status-active"><span class="material-symbols-outlined icon-badge-inline">check_circle</span> Active & Upcoming</span>`
             : `<span class="badge badge-status-past"><span class="material-symbols-outlined icon-badge-inline">history</span> Past Hosted</span>`;
@@ -412,7 +368,7 @@ function renderCreatedList(listEl) {
             locationMarkup = `
                 <div class="activity-location-highlight">
                     <span class="material-symbols-outlined activity-location-icon online">videocam</span>
-                    <span><strong>Online Event:</strong> Virtual Meeting Platform (Zoom / Meet)</span>
+                    <span><strong>Online event</strong></span>
                 </div>
             `;
         } else {
@@ -421,7 +377,7 @@ function renderCreatedList(listEl) {
             locationMarkup = `
                 <div class="activity-location-highlight">
                     <span class="material-symbols-outlined activity-location-icon">location_on</span>
-                    <span><strong>Where:</strong> ${fullLoc}</span>
+                    <span><strong>Where:</strong> ${escapeHtml(fullLoc)}</span>
                 </div>
             `;
         }
@@ -439,7 +395,7 @@ function renderCreatedList(listEl) {
                         <div class="activity-meta">
                             <span>📅 ${dateFormatted} · ${timeFormatted}</span>
                             <span>•</span>
-                            <span class="activity-category-pill">${ev.category || 'Event'}</span>
+                            <span class="activity-category-pill">${escapeHtml(ev.category || 'Event')}</span>
                             ${groupTag}
                         </div>
                         <a href="event-details.html?id=${ev.id}" class="activity-title">

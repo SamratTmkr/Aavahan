@@ -95,13 +95,49 @@ async function getEvent(id) {
     }
 }
 
-async function rsvpToEvent(eventId) {
+async function rsvpToEvent(eventId, details = {}) {
     const res = await fetch(`${API}/events/${eventId}/rsvp`, {
         method: 'POST',
         headers: getHeaders(),
         credentials: 'include',
+        body: JSON.stringify(details),
     });
     return res.json();
+}
+
+// Attendee list with email and phone, only for the event's organiser and co-managers
+async function getAttendeeDetails(eventId) {
+    const res = await fetch(`${API}/events/${eventId}/attendees`, { headers: getHeaders() });
+    return res.json();
+}
+
+async function setAttendeePayment(eventId, rsvpId, paid) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/rsvps/${rsvpId}/payment`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify({ paid })
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API setAttendeePayment error:', e);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+async function removeEventAttendee(eventId, rsvpId) {
+    try {
+        const res = await fetch(`${API}/events/${eventId}/rsvps/${rsvpId}`, {
+            method: 'DELETE',
+            headers: getHeaders(),
+            credentials: 'include'
+        });
+        return await res.json();
+    } catch (e) {
+        console.log('API removeEventAttendee error:', e);
+        return { success: false, message: 'Network error' };
+    }
 }
 
 async function cancelEventRsvp(eventId) {
@@ -179,11 +215,16 @@ async function getMyOrganizerEvents() {
 
 async function updateEvent(id, eventData) {
     try {
+        const isFormData = eventData instanceof FormData;
+        const headers = getHeaders();
+        if (isFormData) {
+            delete headers['Content-Type'];
+        }
         const res = await fetch(`${API}/events/${id}`, {
             method: 'PUT',
-            headers: getHeaders(),
+            headers: headers,
             credentials: 'include',
-            body: JSON.stringify(eventData),
+            body: isFormData ? eventData : JSON.stringify(eventData),
         });
         return await res.json();
     } catch (e) {
@@ -241,21 +282,6 @@ async function adminDeleteEvent(eventId) {
     return res.json();
 }
 
-async function getGroups(city = null) {
-    const url = city ? `${API}/groups?city=${encodeURIComponent(city)}` : `${API}/groups`;
-    const res = await fetch(url, { headers: getHeaders() });
-    return res.json();
-}
-
-async function adminDeleteGroup(groupId) {
-    const res = await fetch(`${API}/groups/${groupId}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-        credentials: 'include',
-    });
-    return res.json();
-}
-
 async function getEventAnnouncements(eventId) {
     try {
         const res = await fetch(`${API}/events/${eventId}/announcements`, { headers: getHeaders() });
@@ -306,13 +332,13 @@ async function getEventManagers(eventId) {
     }
 }
 
-async function addEventManager(eventId, email) {
+async function addEventManager(eventId, user) {
     try {
         const res = await fetch(`${API}/events/${eventId}/managers`, {
             method: 'POST',
             headers: getHeaders(),
             credentials: 'include',
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ user })
         });
         return await res.json();
     } catch (e) {
@@ -351,46 +377,6 @@ async function addManualAttendee(eventId, email) {
     }
 }
 
-// Comments API
-async function getEventComments(eventId) {
-    try {
-        const res = await fetch(`${API}/events/${eventId}/comments`, { headers: getHeaders() });
-        return await res.json();
-    } catch (e) {
-        console.log('API getEventComments error:', e);
-        return { success: false, data: [] };
-    }
-}
-
-async function postEventComment(eventId, message) {
-    try {
-        const res = await fetch(`${API}/events/${eventId}/comments`, {
-            method: 'POST',
-            headers: getHeaders(),
-            credentials: 'include',
-            body: JSON.stringify({ message })
-        });
-        return await res.json();
-    } catch (e) {
-        console.log('API postEventComment error:', e);
-        return { success: false, message: 'Network error' };
-    }
-}
-
-async function deleteEventComment(eventId, commentId) {
-    try {
-        const res = await fetch(`${API}/events/${eventId}/comments/${commentId}`, {
-            method: 'DELETE',
-            headers: getHeaders(),
-            credentials: 'include'
-        });
-        return await res.json();
-    } catch (e) {
-        console.log('API deleteEventComment error:', e);
-        return { success: false, message: 'Network error' };
-    }
-}
-
 // Password reset
 async function requestPasswordReset(email) {
     try {
@@ -420,29 +406,12 @@ async function resetPassword(token, password) {
     }
 }
 
-// Check in from a ticket code (scanned QR or typed by hand)
-async function checkinByCode(code) {
-    try {
-        const res = await fetch(`${API}/events/checkin`, {
-            method: 'POST',
-            headers: getHeaders(),
-            credentials: 'include',
-            body: JSON.stringify({ code })
-        });
-        return await res.json();
-    } catch (e) {
-        console.log('API checkinByCode error:', e);
-        return { success: false, message: 'Network error' };
-    }
-}
-
 export {
+    getAttendeeDetails,
+    removeEventAttendee,
+    setAttendeePayment,
     requestPasswordReset,
     resetPassword,
-    checkinByCode,
-    getEventComments,
-    postEventComment,
-    deleteEventComment,
     registerUser,
     loginUser,
     logoutUser,
@@ -462,8 +431,6 @@ export {
     updateUserRole,
     adminDeleteUser,
     adminDeleteEvent,
-    getGroups,
-    adminDeleteGroup,
     getEventAnnouncements,
     createEventAnnouncement,
     deleteEventAnnouncement,

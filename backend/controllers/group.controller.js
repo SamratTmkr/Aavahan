@@ -51,7 +51,19 @@ export const updateExistingGroup = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Not authorised' });
         }
 
-        await updateGroup(req.params.id, req.body);
+        // Only these columns can be changed. The keys become column names in the
+        // UPDATE, so anything else in the body must never reach the query.
+        const editable = ['name', 'description', 'category', 'city', 'avatar_url', 'is_public'];
+        const fields = {};
+        editable.forEach(key => {
+            if (req.body[key] !== undefined) fields[key] = req.body[key];
+        });
+
+        if (Object.keys(fields).length === 0) {
+            return res.status(400).json({ success: false, message: 'Nothing to update' });
+        }
+
+        await updateGroup(req.params.id, fields);
         return res.json({ success: true, message: 'Group updated' });
     } catch (error) {
         console.error(`${req.method} ${req.originalUrl} failed:`, error);

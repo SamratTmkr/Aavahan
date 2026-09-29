@@ -13,11 +13,16 @@ export const eventSchema = {
         city:           { type: 'VARCHAR(100)', required: false },
         country:        { type: 'VARCHAR(80)', default: 'Nepal' },
         event_date:     { type: 'DATE', required: false },
+        end_date:       { type: 'DATE', required: false },
         start_time:     { type: 'TIME', required: false },
         end_time:       { type: 'TIME', required: false },
         is_date_tba:    { type: 'BOOLEAN', default: false },
         registration_deadline: { type: 'DATETIME', required: false },
         image_url:      { type: 'VARCHAR(500)', required: false },
+        host_name:      { type: 'VARCHAR(150)', required: false },
+        host_logo_url:  { type: 'VARCHAR(500)', required: false },
+        contact_phone:  { type: 'VARCHAR(20)', required: false },
+        require_phone:  { type: 'BOOLEAN', default: false },
         is_free:        { type: 'BOOLEAN', default: true },
         min_price:      { type: 'DECIMAL(10,2)', default: 0 },
         currency:       { type: 'VARCHAR(10)', default: 'NPR' },
@@ -41,6 +46,7 @@ export async function createEvent({
     city = null,
     country = 'Nepal',
     event_date = null,
+    end_date = null,
     start_time = null,
     end_time = null,
     is_date_tba = false,
@@ -52,12 +58,16 @@ export async function createEvent({
     is_online = false,
     capacity = null,
     group_id = null,
-    organizer_id = null
+    organizer_id = null,
+    host_name = null,
+    host_logo_url = null,
+    contact_phone = null,
+    require_phone = false
 }) {
     const [result] = await pool.execute(
         `INSERT INTO events
-         (title, description, category, venue, address, city, country, event_date, start_time, end_time, is_date_tba, registration_deadline, image_url, is_free, min_price, currency, is_online, capacity, group_id, organizer_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (title, description, category, venue, address, city, country, event_date, end_date, start_time, end_time, is_date_tba, registration_deadline, image_url, is_free, min_price, currency, is_online, capacity, group_id, organizer_id, host_name, host_logo_url, contact_phone, require_phone)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             title,
             description ?? null,
@@ -67,6 +77,7 @@ export async function createEvent({
             city ?? null,
             country ?? 'Nepal',
             event_date ?? null,
+            end_date ?? null,
             start_time ?? null,
             end_time ?? null,
             is_date_tba ? 1 : 0,
@@ -78,7 +89,11 @@ export async function createEvent({
             is_online ?? false,
             capacity ?? null,
             group_id ?? null,
-            organizer_id ?? null
+            organizer_id ?? null,
+            host_name ?? null,
+            host_logo_url ?? null,
+            contact_phone ?? null,
+            require_phone ? 1 : 0
         ]
     );
     return result.insertId;

@@ -70,13 +70,24 @@
                     <div class="tag-pills-row">
                         <span class="topic-tag-pill selected">💻 Software Engineering</span>
                         <span class="topic-tag-pill">🤖 Artificial Intelligence</span>
-                        <span class="topic-tag-pill">🚀 Startup & Business</span>
-                        <span class="topic-tag-pill">🎸 Music & Concerts</span>
-                        <span class="topic-tag-pill">🏔️ Outdoor & Hiking</span>
-                        <span class="topic-tag-pill">🎨 Design & Creative</span>
-                        <span class="topic-tag-pill">🧘 Wellness & Fitness</span>
-                        <span class="topic-tag-pill">🍕 Social & Networking</span>
-                        <span class="topic-tag-pill">📚 Workshop & Training</span>
+                        <span class="topic-tag-pill">🚀 Startup &amp; Business</span>
+                        <span class="topic-tag-pill">🎸 Music &amp; Concerts</span>
+                        <span class="topic-tag-pill">🏔️ Outdoor &amp; Hiking</span>
+                        <span class="topic-tag-pill">🎨 Design &amp; Creative</span>
+                        <span class="topic-tag-pill">🧘 Wellness &amp; Fitness</span>
+                        <span class="topic-tag-pill">🍕 Social &amp; Networking</span>
+                        <span class="topic-tag-pill">📚 Workshop &amp; Training</span>
+                        <span class="topic-tag-pill">📷 Photography &amp; Film</span>
+                        <span class="topic-tag-pill">🎮 Gaming &amp; Esports</span>
+                        <span class="topic-tag-pill">🌍 Culture &amp; Language</span>
+                        <span class="topic-tag-pill">🏛️ Education &amp; Science</span>
+                        <span class="topic-tag-pill">💰 Finance &amp; Investing</span>
+                        <span class="topic-tag-pill">✏️ Other</span>
+                    </div>
+                    <!-- Custom category input shown only when "Other" is selected -->
+                    <div id="customCategoryWrapper" class="is-hidden" style="margin-top:10px;">
+                        <input type="text" id="customCategoryInput" class="form-input"
+                            placeholder="e.g. Robotics, Spirituality, Book Club..." maxlength="80">
                     </div>
                 </div>
 
@@ -92,6 +103,28 @@
                     <div id="bannerPreviewWrapper" class="banner-preview-wrapper is-hidden">
                         <img id="bannerPreview" class="banner-preview-img" alt="Banner Preview">
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="hostName">Hosted by <span class="form-hint-inline">(optional)</span></label>
+                    <input type="text" id="hostName" class="form-input" maxlength="150"
+                        placeholder="e.g. Kathmandu Tech Community">
+                    <small class="form-hint">The organiser shown on the event page. Leave empty to show your own name.</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="hostLogo">Host Logo <span class="form-hint-inline">(optional)</span></label>
+                    <input type="file" id="hostLogo" class="form-input" accept="image/*">
+                    <img id="hostLogoPreview" class="host-logo-preview is-hidden" alt="Host logo preview">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="contactPhoneNumber">Contact Number <span class="form-hint-inline">(optional)</span></label>
+                    <div class="phone-input-row">
+                        <input type="text" id="contactPhoneCode" class="form-input phone-code-input" maxlength="4" placeholder="+977" aria-label="Country code">
+                        <input type="tel" id="contactPhoneNumber" class="form-input" inputmode="numeric" placeholder="e.g. 9812345678">
+                    </div>
+                    <small class="form-hint">Shown on the event page so attendees can reach you.</small>
                 </div>
             </div>
 
@@ -121,26 +154,31 @@
 
                 <div class="form-grid-2">
                     <div class="form-group">
-                        <label class="form-label" for="eventDate">Date *</label>
+                        <label class="form-label" for="eventDate">Start Date *</label>
                         <input type="date" id="eventDate" class="form-input" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="eventStartTime">Start Time *</label>
-                        <input type="time" id="eventStartTime" class="form-input" required>
+                        <label class="form-label" for="eventEndDate">End Date <span class="form-hint-inline">(optional, for multi-day)</span></label>
+                        <input type="date" id="eventEndDate" class="form-input">
                     </div>
                 </div>
 
                 <div class="form-grid-2">
                     <div class="form-group">
+                        <label class="form-label" for="eventStartTime">Start Time *</label>
+                        <input type="time" id="eventStartTime" class="form-input" required>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label" for="eventEndTime">End Time (Optional)</label>
                         <input type="time" id="eventEndTime" class="form-input">
                     </div>
-                    <div class="form-group checkbox-align-group">
-                        <label class="checkbox-label-styled">
-                            <input type="checkbox" id="eventIsOnline" class="checkbox-styled">
-                            This is an Online / Virtual event
-                        </label>
-                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label-styled">
+                        <input type="checkbox" id="eventIsOnline" class="checkbox-styled">
+                        This is an Online / Virtual event
+                    </label>
                 </div>
 
                 <div class="form-group">
@@ -165,6 +203,13 @@
                         <label class="form-label" for="eventCapacity">Attendee Capacity (Optional)</label>
                         <input type="number" id="eventCapacity" class="form-input" min="1" placeholder="e.g. 50 (leave empty for unlimited)">
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label-styled">
+                        <input type="checkbox" id="requirePhone" class="checkbox-styled">
+                        Require attendees to give a phone number when they register
+                    </label>
                 </div>
 
                 <!-- Live Summary Box -->

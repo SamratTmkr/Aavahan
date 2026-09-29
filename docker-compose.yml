@@ -17,6 +17,10 @@ services:
       - ./database/migrations/002_announcements_and_managers.sql:/docker-entrypoint-initdb.d/002_announcements_and_managers.sql
       - ./database/migrations/003_event_comments.sql:/docker-entrypoint-initdb.d/003_event_comments.sql
       - ./database/migrations/004_checkin_codes_and_password_reset.sql:/docker-entrypoint-initdb.d/004_checkin_codes_and_password_reset.sql
+      - ./database/migrations/005_event_end_date.sql:/docker-entrypoint-initdb.d/005_event_end_date.sql
+      - ./database/migrations/006_event_host.sql:/docker-entrypoint-initdb.d/006_event_host.sql
+      - ./database/migrations/007_phone_numbers.sql:/docker-entrypoint-initdb.d/007_phone_numbers.sql
+      - ./database/migrations/008_rsvp_payment.sql:/docker-entrypoint-initdb.d/008_rsvp_payment.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uaavahan_user", "-paavahan_pass"]
       interval: 10s
@@ -27,16 +31,19 @@ services:
   backend:
     build: .
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
     ports:
-      - "3000:3000"
+      - "3001:3000"
+    volumes:
+      # Keep uploaded banners on the host so rebuilding the container does not delete them
+      - ./backend/uploads:/app/backend/uploads
     environment:
       DB_HOST: db
       DB_PORT: 3306
       DB_NAME: aavahan
       DB_USER: aavahan_user
       DB_PASSWORD: aavahan_pass
-      JWT_SECRET: ${JWT_SECRET:-dev_only_change_me}
-      JWT_EXPIRES_IN: 7d
       PORT: 3000
     depends_on:
       db:

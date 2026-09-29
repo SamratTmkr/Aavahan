@@ -1,6 +1,5 @@
-import { getToken, getUser, isAuthenticated, clearAuth } from './authService.js';
-
-// main.js
+import { getUser, isAuthenticated } from './authService.js';
+import { logoutUser } from './api.js';
 
 // Anything typed by a user (event titles, names, comments) is dropped into
 // innerHTML templates, so it has to be escaped first or the browser will run it.
@@ -235,8 +234,7 @@ async function loadComponents() {
     if (headerContainer) {
         let headerHtml = null;
         try {
-            let res = await fetch(`${basePath}components/header.html`);
-            if (!res.ok) res = await fetch(`${basePath}header.html`);
+            const res = await fetch(`${basePath}components/header.html`);
             if (res.ok) headerHtml = await res.text();
         } catch (e) {
             // Local file protocol fallback
@@ -250,8 +248,7 @@ async function loadComponents() {
     if (footerContainer) {
         let footerHtml = null;
         try {
-            let res = await fetch(`${basePath}components/footer.html`);
-            if (!res.ok) res = await fetch(`${basePath}footer.html`);
+            const res = await fetch(`${basePath}components/footer.html`);
             if (res.ok) footerHtml = await res.text();
         } catch (e) {
             // Local file protocol fallback
@@ -276,12 +273,8 @@ function bindHeaderEvents() {
         navLogoutBtn.onclick = async (e) => {
             e.preventDefault();
             navLogoutBtn.disabled = true;
-            if (typeof logoutUser === 'function') {
-                await logoutUser();
-            } else {
-                clearAuth();
-                window.location.href = window.location.pathname.includes('/pages/') ? '../index.html' : 'index.html';
-            }
+            // Clears the server cookie as well as local storage, then goes home
+            await logoutUser();
         };
     }
 

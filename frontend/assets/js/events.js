@@ -6,7 +6,8 @@ import { getEvents, getEventCities } from './api.js';
 document.addEventListener('DOMContentLoaded', () => {
     const feedContainer  = document.getElementById('meetupEventsFeedSection');
     const countEl        = document.getElementById('feedResultsCount');
-    const searchInput    = document.getElementById('meetupSearchInput');
+    // searchInput lives inside the async-loaded header — use a lazy getter
+    const getSearchInput = () => document.getElementById('meetupSearchInput');
     const filterCity     = document.getElementById('filterCitySelect');
     const filterCategory = document.getElementById('filterCategorySelect');
     const filterType     = document.getElementById('filterTypeSelect');
@@ -14,16 +15,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let allEvents   = [];
     let debounceTimer = null;
+    let searchListenerAttached = false;
 
-    // Read URL params and pre-fill controls
+    // Read URL params
     const urlParams    = new URLSearchParams(window.location.search);
-    const initSearch   = urlParams.get('search')   || '';
+    let initSearch     = urlParams.get('search')   || '';
     const initCity     = urlParams.get('city')      || '';
     const initCategory = urlParams.get('category')  || '';
 
-    if (searchInput && initSearch)       searchInput.value = initSearch;
+    // Pre-fill dropdowns that exist at DOMContentLoaded
     if (filterCity  && initCity)         setSelectByValue(filterCity,     initCity);
     if (filterCategory && initCategory)  setSelectByValue(filterCategory, initCategory);
+
+    // Watch for header injection so we can pre-fill search input and attach listener
+    const headerContainer = document.getElementById('site-header') ||
+                            document.getElementById('header-placeholder');
+    if (headerContainer) {
+        const observer = new MutationObserver(() => {
+            const searchInput = getSearchInput();
+            if (searchInput && !searchListenerAttached) {
+                searchListenerAttached = true;
+                observer.disconnect();
+                if (initSearch) searchInput.value = initSearch;
+                searchInput.addEventListener('input', triggerServerSearch);
+            }
+        });
+        observer.observe(headerContainer, { childList: true, subtree: true });
+    }
 
     function setSelectByValue(select, value) {
         if (!value) return;
@@ -87,7 +105,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? '<span class="event-feed-capacity"><span class="material-symbols-outlined event-feed-meta-icon-muted">chair</span>Limit: ' + event.capacity + '</span>'
                     : '';
 
-                return '<div class="card event-feed-card" data-event-id="' + event.id + '">' +
+                // Only events with an uploaded banner get an image; the rest keep the plain card
+                const imageBit = event.image_url
+                    ? '<img class="event-feed-image" src="' + escapeHtml(event.image_url) + '" alt="" loading="lazy" onerror="this.remove()">'
+                    : '';
+
+                return '<div class="card event-feed-card' + (event.image_url ? ' has-image' : '') + '" data-event-id="' + event.id + '">' +
+                    imageBit +
+                    '<div class="event-feed-body">' +
                     '<div class="event-feed-top">' +
                         '<div class="flex-1">' +
                             '<div class="event-feed-category">' +
@@ -116,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             (event.is_online ? 'Online Event' : escapeHtml(event.venue || event.city || 'Location TBD')) +
                         '</span>' +
                         attendeesBit + capacityBit +
+                    '</div>' +
                     '</div>' +
                     '</div>';
             }).join('') +
@@ -166,8 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         var active = [];
-        var q = searchInput ? searchInput.value.trim() : '';
-        if (q) active.push({ label: '"' + q + '"', clear: function() { searchInput.value = ''; triggerServerSearch(); } });
+        var q = (getSearchInput() ? getSearchInput().value.trim() : '') || initSearch;
+        if (q) active.push({ label: '"' + q + '"', clear: function() { var si = getSearchInput(); if (si) si.value = ''; forgetUrlSearch(); triggerServerSearch(); } });
 
         if (filterCity && filterCity.value && filterCity.value !== 'all') {
             var cityLabel = filterCity.options[filterCity.selectedIndex] ? filterCity.options[filterCity.selectedIndex].text : filterCity.value;
@@ -207,8 +233,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllFilters);
     }
 
+    // The ?search= from the URL is only a starting value; once the user clears
+    // the search, stop falling back to it and drop it from the address bar
+    function forgetUrlSearch() {
+        initSearch = '';
+        window.history.replaceState(null, '', window.location.pathname);
+    }
+
     function clearAllFilters() {
+        const searchInput = getSearchInput();
         if (searchInput)    searchInput.value = '';
+        forgetUrlSearch();
         if (filterCity)     filterCity.value = 'all';
         if (filterCategory) filterCategory.value = 'all';
         if (filterType)     filterType.value = 'all';
@@ -217,7 +252,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Server-side fetch
     async function fetchAndRender() {
-        var query = searchInput ? searchInput.value.trim() : '';
+        const searchInput = getSearchInput();
+        // On first load the header may not be injected yet — fall back to URL param
+        var query = searchInput ? searchInput.value.trim() : initSearch;
         var city  = (filterCity && filterCity.value !== 'all') ? filterCity.value : null;
 
         if (countEl) countEl.textContent = '';
@@ -250,8 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         debounceTimer = setTimeout(fetchAndRender, 350);
     }
 
-    // Event listeners
-    if (searchInput)    searchInput.addEventListener('input',  triggerServerSearch);
+    // Event listeners (search listener is attached via MutationObserver above once header loads)
     if (filterCity)     filterCity.addEventListener('change',  fetchAndRender);
     if (filterCategory) filterCategory.addEventListener('change', applyLocalFilters);
     if (filterType)     filterType.addEventListener('change',     applyLocalFilters);
@@ -292,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initial load
-    populateCityFilter();
-    fetchAndRender();
+    // Initial load: fill the city list first, so a ?city= from the URL can be
+    // selected before the first fetch uses it
+    populateCityFilter().then(fetchAndRender);
 });

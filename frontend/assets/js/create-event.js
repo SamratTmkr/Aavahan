@@ -1,6 +1,7 @@
 import { isAuthenticated, clearAuth } from './authService.js';
 import { showToast } from './main.js';
 import { createEvent } from './api.js';
+import { phoneProblem } from './phone.js';
 
 // Event Creation Wizard State
 let currentStep = 1;
@@ -13,6 +14,7 @@ const progressFill = document.getElementById('wizardProgressFill');
 
 // Banner image selection state
 let selectedBannerFile = null;
+let selectedLogoFile = null;
 
 // Check authentication on page load
 function requireAuth() {
@@ -26,16 +28,30 @@ function requireAuth() {
 
 // Category tag pill selector
 const topicPills = document.querySelectorAll('.topic-tag-pill');
+const customCategoryWrapper = document.getElementById('customCategoryWrapper');
+const customCategoryInput = document.getElementById('customCategoryInput');
+
 topicPills.forEach(pill => {
     pill.addEventListener('click', () => {
         topicPills.forEach(p => p.classList.remove('selected'));
         pill.classList.add('selected');
+        // Show custom input only when "Other" is selected
+        const isOther = pill.textContent.trim().toLowerCase().includes('other');
+        if (customCategoryWrapper) {
+            customCategoryWrapper.classList.toggle('is-hidden', !isOther);
+            if (isOther && customCategoryInput) customCategoryInput.focus();
+        }
     });
 });
 
 function getSelectedCategory() {
     const selected = document.querySelector('.topic-tag-pill.selected');
-    return selected ? selected.textContent.replace(/^[\p{Emoji}\s]+/u, '').trim() : 'General';
+    if (!selected) return 'General';
+    const isOther = selected.textContent.trim().toLowerCase().includes('other');
+    if (isOther && customCategoryInput && customCategoryInput.value.trim()) {
+        return customCategoryInput.value.trim();
+    }
+    return selected.textContent.replace(/^[\p{Emoji}\s]+/u, '').trim() || 'General';
 }
 
 // Initialize past date prevention
@@ -51,11 +67,25 @@ const timeInput = document.getElementById('eventStartTime');
 
 if (tbaCheckbox && dateInput && timeInput) {
     tbaCheckbox.addEventListener('change', function () {
+        const endDateInput = document.getElementById('eventEndDate');
         dateInput.disabled = this.checked;
         timeInput.disabled = this.checked;
+        if (endDateInput) endDateInput.disabled = this.checked;
         if (this.checked) {
             dateInput.value = '';
             timeInput.value = '';
+            if (endDateInput) endDateInput.value = '';
+        }
+    });
+}
+
+// Ensure end date is never before start date
+if (dateInput) {
+    dateInput.addEventListener('change', function () {
+        const endDateInput = document.getElementById('eventEndDate');
+        if (endDateInput) endDateInput.min = this.value;
+        if (endDateInput && endDateInput.value && endDateInput.value < this.value) {
+            endDateInput.value = this.value;
         }
     });
 }
@@ -80,6 +110,34 @@ bannerInput?.addEventListener("change", (e) => {
 
     bannerPreview.src = URL.createObjectURL(file);
     bannerWrapper.classList.remove("is-hidden");
+});
+
+// The contact number is optional, but must be valid when given
+function contactPhoneProblem() {
+    const number = document.getElementById('contactPhoneNumber')?.value.trim();
+    if (!number) return '';
+    return phoneProblem(document.getElementById('contactPhoneCode').value, number);
+}
+
+// Optional host logo upload listener
+const logoInput = document.getElementById("hostLogo");
+const logoPreview = document.getElementById("hostLogoPreview");
+
+logoInput?.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+        showToast("Please select an image.", 'error');
+        e.target.value = "";
+        return;
+    }
+
+    selectedLogoFile = file;
+
+    logoPreview.src = URL.createObjectURL(file);
+    logoPreview.classList.remove("is-hidden");
 });
 
 // Update live summary preview for Step 3
@@ -170,6 +228,11 @@ function validateStep(step) {
             document.getElementById('eventDesc')?.focus();
             return false;
         }
+        if (contactPhoneProblem()) {
+            showToast(contactPhoneProblem(), 'error');
+            document.getElementById('contactPhoneNumber')?.focus();
+            return false;
+        }
         return true;
     }
 
@@ -249,6 +312,7 @@ btnNext.addEventListener('click', async () => {
     const venue = document.getElementById('eventVenue').value.trim();
     const isTba = document.getElementById('dateTBA')?.checked || false;
     const eventDate = document.getElementById('eventDate')?.value;
+    const eventEndDate = document.getElementById('eventEndDate')?.value || null;
     const startTime = document.getElementById('eventStartTime')?.value;
     const endTime = document.getElementById('eventEndTime')?.value || null;
     const deadline = document.getElementById('registrationDeadline')?.value || null;
@@ -302,6 +366,7 @@ btnNext.addEventListener('click', async () => {
     if (!isTba) {
         formData.append('event_date', eventDate);
         formData.append('start_time', startTime);
+        if (eventEndDate) formData.append('end_date', eventEndDate);
         if (endTime) formData.append('end_time', endTime);
         if (deadline) formData.append('registration_deadline', deadline);
     }
@@ -315,6 +380,17 @@ btnNext.addEventListener('click', async () => {
     if (selectedBannerFile) {
         formData.append('eventBanner', selectedBannerFile);
     }
+
+    const hostName = document.getElementById('hostName')?.value.trim();
+    if (hostName) formData.append('host_name', hostName);
+    if (selectedLogoFile) formData.append('hostLogo', selectedLogoFile);
+
+    const contactNumber = document.getElementById('contactPhoneNumber')?.value.trim();
+    if (contactNumber) {
+        formData.append('contact_phone_code', document.getElementById('contactPhoneCode').value);
+        formData.append('contact_phone_number', contactNumber);
+    }
+    formData.append('require_phone', document.getElementById('requirePhone')?.checked ? 'true' : 'false');
 
     try {
         const eventData = await createEvent(formData);
@@ -333,7 +409,8 @@ btnNext.addEventListener('click', async () => {
         }
 
         showToast('Event published successfully!', 'success');
-        setTimeout(() => { window.location.href = 'explore.html'; }, 1200);
+        // Send the organiser to their manage page to edit details or post announcements
+        setTimeout(() => { window.location.href = `manage-event.html?id=${eventData.data.id}&tab=tabDetails`; }, 1200);
 
     } catch (error) {
         console.error('Error creating event:', error);

@@ -1,7 +1,9 @@
 import { isAuthenticated } from './authService.js';
 import { 
     getEvent, 
-    getEventAttendees, 
+    getAttendeeDetails,
+    removeEventAttendee,
+    setAttendeePayment,
     checkinEventAttendee, 
     updateEvent, 
     deleteEvent,
@@ -14,6 +16,7 @@ import {
     addManualAttendee 
 } from './api.js';
 import { showToast, escapeHtml } from './main.js';
+import { phoneProblem, splitPhone } from './phone.js';
 
 // Manage event logic
 
@@ -48,6 +51,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    // Open a specific tab when the URL asks for one (e.g. ?tab=tabDetails right after creating an event)
+    const startTab = urlParams.get('tab');
+    const startTabItem = startTab ? document.querySelector(`.manage-tab-item[data-tab-target="${startTab}"]`) : null;
+    if (startTabItem) startTabItem.click();
+
     let currentEvent = null;
     let attendeesList = [];
 
@@ -70,6 +78,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.error('Error loading event:', err);
         return;
+    }
+
+    // Past events are view only (the API refuses changes to them as well)
+    const lastDay = currentEvent.end_date || currentEvent.event_date;
+    const isPast = lastDay ? lastDay.slice(0, 10) < new Date().toISOString().slice(0, 10) : false;
+
+    if (isPast) {
+        document.querySelector('main').classList.add('manage-readonly');
+        document.getElementById('pastEventNotice').classList.remove('is-hidden');
+        const statusBadge = document.getElementById('manageStatusBadge');
+        statusBadge.textContent = 'Past Event';
+        statusBadge.className = 'badge badge-status-past';
+        document.querySelectorAll('#formEditEvent input, #formEditEvent textarea, #formEditEvent select').forEach(el => { el.disabled = true; });
+        document.getElementById('detailsTabLabel').textContent = 'Details';
+        document.getElementById('detailsPanelTitle').textContent = 'Event Details';
     }
 
     // Hydrate Header
@@ -101,6 +124,122 @@ document.addEventListener('DOMContentLoaded', async () => {
         navBtnViewPublic.href = `event-details.html?id=${currentEvent.id}`;
     }
 
+    // Edit Details form
+    const editForm = document.getElementById('formEditEvent');
+    const editBanner = document.getElementById('editBanner');
+    const editBannerWrapper = document.getElementById('editBannerPreviewWrapper');
+    const editBannerPreview = document.getElementById('editBannerPreview');
+
+    function showBannerPreview(src) {
+        if (!editBannerWrapper || !editBannerPreview) return;
+        editBannerPreview.src = src;
+        editBannerWrapper.classList.remove('is-hidden');
+    }
+
+    if (editForm) {
+        // The API returns dates like "2026-10-04T00:00:00.000Z", the inputs want "2026-10-04"
+        document.getElementById('editTitle').value = currentEvent.title || '';
+        document.getElementById('editCategory').value = currentEvent.category || '';
+        document.getElementById('editDescription').value = currentEvent.description || '';
+        document.getElementById('editCity').value = currentEvent.city || '';
+        document.getElementById('editVenue').value = currentEvent.venue || '';
+        document.getElementById('editDate').value = currentEvent.event_date ? currentEvent.event_date.slice(0, 10) : '';
+        document.getElementById('editEndDate').value = currentEvent.end_date ? currentEvent.end_date.slice(0, 10) : '';
+        document.getElementById('editStartTime').value = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) : '';
+        document.getElementById('editEndTime').value = currentEvent.end_time ? currentEvent.end_time.slice(0, 5) : '';
+        document.getElementById('editDeadline').value = currentEvent.registration_deadline ? currentEvent.registration_deadline.slice(0, 16) : '';
+        document.getElementById('editCapacity').value = currentEvent.capacity || '';
+        document.getElementById('editIsOnline').checked = !!currentEvent.is_online;
+        document.getElementById('editRequirePhone').checked = !!currentEvent.require_phone;
+        const contact = splitPhone(currentEvent.contact_phone);
+        document.getElementById('editContactCode').value = contact.code;
+        document.getElementById('editContactNumber').value = contact.number;
+        if (currentEvent.image_url) showBannerPreview(currentEvent.image_url);
+
+        const editHostLogo = document.getElementById('editHostLogo');
+        const editHostLogoPreview = document.getElementById('editHostLogoPreview');
+        document.getElementById('editHostName').value = currentEvent.host_name || '';
+        editHostLogoPreview.addEventListener('error', () => editHostLogoPreview.classList.add('is-hidden'));
+        if (currentEvent.host_logo_url) {
+            editHostLogoPreview.src = currentEvent.host_logo_url;
+            editHostLogoPreview.classList.remove('is-hidden');
+        }
+        editHostLogo.addEventListener('change', () => {
+            const file = editHostLogo.files[0];
+            if (!file) return;
+            editHostLogoPreview.src = URL.createObjectURL(file);
+            editHostLogoPreview.classList.remove('is-hidden');
+        });
+        // Hide the preview rather than show a broken image if the file is missing
+        if (editBannerPreview) editBannerPreview.addEventListener('error', () => editBannerWrapper.classList.add('is-hidden'));
+
+        editBanner.addEventListener('change', () => {
+            const file = editBanner.files[0];
+            if (file) showBannerPreview(URL.createObjectURL(file));
+        });
+
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('editTitle').value.trim();
+            const eventDate = document.getElementById('editDate').value;
+            const endDate = document.getElementById('editEndDate').value;
+
+            if (!title) {
+                showToast('Event title is required.', 'error');
+                return;
+            }
+            if (endDate && eventDate && endDate < eventDate) {
+                showToast('End date cannot be before the start date.', 'error');
+                return;
+            }
+
+            const contactCode = document.getElementById('editContactCode').value;
+            const contactNumber = document.getElementById('editContactNumber').value.trim();
+            if (contactNumber && phoneProblem(contactCode, contactNumber)) {
+                showToast(phoneProblem(contactCode, contactNumber), 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('category', document.getElementById('editCategory').value.trim());
+            formData.append('description', document.getElementById('editDescription').value.trim());
+            formData.append('city', document.getElementById('editCity').value.trim());
+            formData.append('venue', document.getElementById('editVenue').value.trim());
+            formData.append('event_date', eventDate);
+            formData.append('end_date', endDate);
+            formData.append('start_time', document.getElementById('editStartTime').value);
+            formData.append('end_time', document.getElementById('editEndTime').value);
+            formData.append('registration_deadline', document.getElementById('editDeadline').value);
+            formData.append('capacity', document.getElementById('editCapacity').value);
+            formData.append('is_online', document.getElementById('editIsOnline').checked ? 'true' : 'false');
+            formData.append('require_phone', document.getElementById('editRequirePhone').checked ? 'true' : 'false');
+            formData.append('contact_phone_code', contactCode);
+            formData.append('contact_phone_number', contactNumber);
+            if (editBanner.files[0]) formData.append('eventBanner', editBanner.files[0]);
+            formData.append('host_name', document.getElementById('editHostName').value.trim());
+            const logoFile = document.getElementById('editHostLogo').files[0];
+            if (logoFile) formData.append('hostLogo', logoFile);
+
+            const btnSave = document.getElementById('btnSaveEvent');
+            btnSave.disabled = true;
+            btnSave.textContent = 'Saving...';
+
+            const res = await updateEvent(currentEvent.id, formData);
+
+            if (res && res.success) {
+                showToast('Event updated', 'success');
+                // Reload so the header and every tab show the new details
+                setTimeout(() => { window.location.href = `manage-event.html?id=${currentEvent.id}&tab=tabDetails`; }, 800);
+            } else {
+                showToast(res?.error || res?.message || 'Could not update the event.', 'error');
+                btnSave.disabled = false;
+                btnSave.textContent = 'Save Changes';
+            }
+        });
+    }
+
     // 4. Fetch Real Attendees, Announcements, and Team
     await loadAttendees();
     await loadManageAnnouncements();
@@ -108,7 +247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadAttendees() {
         try {
-            const attRes = await getEventAttendees(eventId);
+            const attRes = await getAttendeeDetails(eventId);
             if (attRes && attRes.success && Array.isArray(attRes.data)) {
                 attendeesList = attRes.data;
             } else {
@@ -155,7 +294,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const totalCountLabel = document.getElementById('attendeeTotalCount');
         if (totalCountLabel) {
-            totalCountLabel.textContent = `${totalRegistrations} attendee${totalRegistrations === 1 ? '' : 's'}`;
+            const isFreeEvent = currentEvent.is_free || !Number(currentEvent.min_price);
+            const paidCount = attendeesList.filter(a => a.is_paid).length;
+            totalCountLabel.textContent = `${totalRegistrations} attendee${totalRegistrations === 1 ? '' : 's'}`
+                + (isFreeEvent ? '' : ` · ${paidCount} paid`);
         }
     }
 
@@ -184,9 +326,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             const badgeClass = isCheckedIn ? 'badge-status-checked' : 'badge-status-confirmed';
             const statusLabel = isCheckedIn ? 'Checked In' : 'Going';
             const rsvpCode = `RSVP-${String(att.id).padStart(4, '0')}`;
-            const name = att.name || 'Member';
-            const email = att.email || '—';
-            const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+            const name = escapeHtml(att.name || 'Member');
+            const email = escapeHtml(att.email || '—');
+            const phone = att.phone ? escapeHtml(att.phone) : '—';
+
+            // Paid events: the organiser confirms each payment by hand
+            const paymentCell = isFree
+                ? '<span class="font-bold">Free</span>'
+                : `<div class="attendee-payment">
+                       <span class="font-bold">${priceLabel}</span>
+                       <span class="badge ${att.is_paid ? 'badge-status-confirmed' : 'badge-status-unpaid'}">${att.is_paid ? 'Paid' : 'Unpaid'}</span>
+                       <button type="button" class="btn btn-outline btn-sm admin-btn-xs" data-payment="${att.is_paid ? 'unpaid' : 'paid'}" data-id="${att.id}">
+                           ${att.is_paid ? 'Mark unpaid' : 'Mark paid'}
+                       </button>
+                   </div>`;
+            const initials = escapeHtml((att.name || 'Member').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase());
 
             const actionBtn = isCheckedIn
                 ? `<span class="attendee-status-checked">
@@ -210,19 +364,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </td>
                     <td>
+                        <span class="attendee-phone">${phone}</span>
+                    </td>
+                    <td>
                         <span class="dash-mono-id">${rsvpCode}</span>
                     </td>
                     <td>
-                        <span class="font-semibold">General Admission</span>
-                    </td>
-                    <td>
-                        <span class="font-bold">${priceLabel}</span>
+                        ${paymentCell}
                     </td>
                     <td>
                         <span class="badge ${badgeClass}">${statusLabel}</span>
                     </td>
                     <td>
-                        ${actionBtn}
+                        <div class="attendee-actions">
+                            ${actionBtn}
+                            <button type="button" class="btn btn-outline btn-outline-danger btn-sm admin-btn-xs" data-action="remove-attendee" data-id="${att.id}" data-name="${name}">
+                                Remove
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -236,7 +395,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const rsvpId = Number(btn.getAttribute('data-id'));
                     handleCheckin(rsvpId, btn);
                 }
+
+                const removeBtn = e.target.closest('[data-action="remove-attendee"]');
+                if (removeBtn) handleRemoveAttendee(Number(removeBtn.dataset.id), removeBtn.dataset.name, removeBtn);
+
+                const paymentBtn = e.target.closest('[data-payment]');
+                if (paymentBtn) handlePayment(Number(paymentBtn.dataset.id), paymentBtn.dataset.payment === 'paid', paymentBtn);
             });
+        }
+    }
+
+    // Mark an attendee as paid or unpaid
+    async function handlePayment(rsvpId, paid, btn) {
+        btn.disabled = true;
+        const res = await setAttendeePayment(currentEvent.id, rsvpId, paid);
+        if (res && res.success) {
+            showToast(res.message, 'success');
+            const att = attendeesList.find(a => a.id === rsvpId);
+            if (att) att.is_paid = paid ? 1 : 0;
+            renderMetrics();
+            applyAttendeeFilters();
+        } else {
+            showToast(res?.message || 'Could not update the payment.', 'error');
+            btn.disabled = false;
+        }
+    }
+
+    // Remove an attendee from the event
+    async function handleRemoveAttendee(rsvpId, name, btn) {
+        if (!confirm(`Remove ${name} from this event? They will no longer be registered.`)) return;
+        btn.disabled = true;
+        const res = await removeEventAttendee(currentEvent.id, rsvpId);
+        if (res && res.success) {
+            showToast('Attendee removed', 'success');
+            attendeesList = attendeesList.filter(a => a.id !== rsvpId);
+            renderMetrics();
+            applyAttendeeFilters();
+        } else {
+            showToast(res?.message || 'Could not remove the attendee.', 'error');
+            btn.disabled = false;
         }
     }
 
@@ -278,11 +475,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const nameMatch = escapeHtml(att.name || '').toLowerCase().includes(query);
             const emailMatch = escapeHtml(att.email || '').toLowerCase().includes(query);
             const idMatch = String(att.id).includes(query);
-            const matchesQuery = !query || nameMatch || emailMatch || idMatch;
+            const phoneMatch = (att.phone || '').replace(/\s/g, '').includes(query.replace(/\s/g, ''));
+            const matchesQuery = !query || nameMatch || emailMatch || idMatch || phoneMatch;
 
             let matchesStatus = true;
             if (filter === 'confirmed') matchesStatus = att.status === 'confirmed';
             else if (filter === 'checked in' || filter === 'checked_in') matchesStatus = att.status === 'checked_in';
+            else if (filter === 'paid') matchesStatus = !!att.is_paid;
+            else if (filter === 'unpaid') matchesStatus = !att.is_paid;
 
             return matchesQuery && matchesStatus;
         });
@@ -325,8 +525,61 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="progress-track">
                     <div class="progress-fill ${fillClass} ${widthClass}"></div>
                 </div>
+
+                <div class="capacity-editor edit-only">
+                    <label class="form-label" for="capacityInput">Capacity</label>
+                    <div class="capacity-controls">
+                        <button type="button" class="btn btn-outline btn-sm" data-capacity="down" aria-label="Decrease capacity">−</button>
+                        <input type="number" id="capacityInput" class="form-input" min="${Math.max(sold, 1)}" placeholder="Unlimited" value="${capacity || ''}">
+                        <button type="button" class="btn btn-outline btn-sm" data-capacity="up" aria-label="Increase capacity">+</button>
+                        <button type="button" class="btn btn-primary btn-sm" data-capacity="save">Save</button>
+                    </div>
+                    <small class="form-hint">Leave empty for unlimited. It can't go below the ${sold} ${sold === 1 ? 'person' : 'people'} already registered.</small>
+                </div>
             </div>
         `;
+    }
+
+    // Capacity editor: the card is re-rendered often, so listen on the grid once
+    const tiersGrid = document.getElementById('manageTicketTiersGrid');
+    if (tiersGrid) {
+        tiersGrid.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-capacity]');
+            if (!btn) return;
+
+            const input = document.getElementById('capacityInput');
+            const registered = attendeesList.length;
+            const current = parseInt(input.value, 10);
+
+            if (btn.dataset.capacity === 'up') {
+                input.value = isNaN(current) ? Math.max(registered, 1) : current + 1;
+                return;
+            }
+            if (btn.dataset.capacity === 'down') {
+                if (!isNaN(current)) input.value = Math.max(registered, 1, current - 1);
+                return;
+            }
+
+            // Save
+            if (!isNaN(current) && current < Math.max(registered, 1)) {
+                showToast(`Capacity cannot be lower than the ${registered} people already registered.`, 'error');
+                return;
+            }
+            btn.disabled = true;
+            const newCapacity = isNaN(current) ? '' : current;
+            const res = await updateEvent(currentEvent.id, { capacity: newCapacity });
+            if (res && res.success) {
+                currentEvent.capacity = newCapacity === '' ? null : newCapacity;
+                const editCapacity = document.getElementById('editCapacity');
+                if (editCapacity) editCapacity.value = newCapacity;
+                showToast(newCapacity === '' ? 'Capacity set to unlimited' : `Capacity set to ${newCapacity}`, 'success');
+                renderMetrics();
+                renderTicketTiers();
+            } else {
+                showToast(res?.message || 'Could not update the capacity.', 'error');
+                btn.disabled = false;
+            }
+        });
     }
 
     // 11. Real Cancel Event Handler
@@ -361,12 +614,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const headers = ['RSVP Code', 'Name', 'Email', 'Tier', 'Status', 'Registered At'];
+        const headers = ['RSVP Code', 'Name', 'Email', 'Phone', 'Paid', 'Status', 'Registered At'];
         const rows = attendeesList.map(a => [
             `RSVP-${String(a.id).padStart(4, '0')}`,
-            `"${escapeHtml(a.name || 'Member').replace(/"/g, '""')}"`,
-            `"${escapeHtml(a.email || '').replace(/"/g, '""')}"`,
-            'General Admission',
+            `"${(a.name || 'Member').replace(/"/g, '""')}"`,
+            `"${(a.email || '').replace(/"/g, '""')}"`,
+            `"${a.phone || ''}"`,
+            (currentEvent.is_free || !Number(currentEvent.min_price)) ? 'Free' : (a.is_paid ? 'Yes' : 'No'),
             a.status === 'checked_in' ? 'Checked In' : 'Confirmed',
             `"${a.created_at || ''}"`
         ]);
@@ -397,13 +651,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const addAgendaBtn = document.getElementById('btnAddAgendaItem');
-    if (addAgendaBtn) {
-        addAgendaBtn.addEventListener('click', () => {
-            showToast('Session agenda updated', 'info');
-        });
-    }
-
     // 13. Announcements Management
     async function loadManageAnnouncements() {
         const container = document.getElementById('manageAnnouncementsList');
@@ -421,7 +668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="d-flex justify-between items-start">
                                 <div>
                                     <h4 class="announcement-item-title">${escapeHtml(item.title)}</h4>
-                                    <span class="announcement-meta-time">Posted by ${item.author_name || 'Host'} • ${timeFormatted}</span>
+                                    <span class="announcement-meta-time">Posted by ${escapeHtml(item.author_name || 'Host')} • ${timeFormatted}</span>
                                 </div>
                                 <button type="button" class="btn btn-outline btn-outline-danger btn-sm" data-action="delete-announcement" data-id="${item.id}">
                                     <span class="material-symbols-outlined">delete</span>
@@ -559,7 +806,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const email = emailInput ? emailInput.value.trim() : '';
 
             if (!email) {
-                showToast('Please enter a team member email', 'info');
+                showToast('Please enter a team member email or name', 'info');
                 return;
             }
 

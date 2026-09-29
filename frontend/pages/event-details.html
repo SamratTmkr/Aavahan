@@ -50,7 +50,7 @@
     <!-- Main Content 2-Column Layout -->
     <main class="container">
         <div class="meetup-details-layout">
-            <!-- Left Column: Media, Details, Attendees & Comments -->
+            <!-- Left Column: Media, Details & Attendees -->
             <div>
                 <!-- Cover Image -->
                 <img id="eventCoverImg" src="../assets/images/community-banner.jpg" alt="Event Cover" class="meetup-details-cover">
@@ -88,26 +88,6 @@
                         <!-- Injected -->
                     </div>
                 </div>
-
-                <!-- Discussion & Comments Board -->
-                <div class="meetup-comments-section">
-                    <h3 class="discussion-header-title">Discussion</h3>
-
-                    <!-- Post Comment Box -->
-                    <div class="comment-input-wrap">
-                        <!-- Current user initials avatar -->
-                        <div id="commentUserAvatar" class="comment-user-avatar">Y</div>
-                        <div class="flex-1">
-                            <textarea id="commentInput" class="form-textarea" rows="3" placeholder="Leave a comment or question for the host..."></textarea>
-                            <button type="button" id="btnPostComment" class="btn btn-teal btn-pill btn-sm mt-0-5">Post comment</button>
-                        </div>
-                    </div>
-
-                    <!-- Comments List -->
-                    <div id="meetupCommentsList">
-                        <!-- Injected -->
-                    </div>
-                </div>
             </div>
 
             <!-- Right Column: Sticky Sidebar Widgets -->
@@ -118,7 +98,7 @@
                         <div id="sidebarGroupAvatar" class="sidebar-group-avatar">👥</div>
                         <div>
                             <h4 id="sidebarGroupName" class="sidebar-group-name">Community Group</h4>
-                            <div id="sidebarGroupSub" class="sidebar-group-sub">Public group</div>
+                            <div id="sidebarGroupSub" class="sidebar-group-sub">Hosting group</div>
                         </div>
                     </div>
                 </div>
@@ -148,6 +128,13 @@
                         <div>
                             <div id="sidebarVenueName" class="sidebar-info-title">Location</div>
                             <div id="sidebarAddressText" class="sidebar-info-sub">—</div>
+                        </div>
+                    </div>
+                    <div id="sidebarContactContainer" class="sidebar-info-row mt-1 is-hidden">
+                        <span class="material-symbols-outlined sidebar-icon-teal">call</span>
+                        <div>
+                            <div class="sidebar-info-title">Contact the Organiser</div>
+                            <a id="sidebarContactText" class="sidebar-info-sub" href="#">—</a>
                         </div>
                     </div>
                 </div>
@@ -197,6 +184,16 @@
                         <label class="form-label" for="rsvpEmail">Email Address *</label>
                         <input type="email" id="rsvpEmail" class="form-input" placeholder="you@example.com" required>
                         <div class="form-help-text">Your RSVP confirmation will be sent to this email.</div>
+                    </div>
+
+                    <!-- Shown only when the organiser asks attendees for a phone number -->
+                    <div id="rsvpPhoneGroup" class="form-group is-hidden">
+                        <label class="form-label" for="rsvpPhoneNumber">Phone Number *</label>
+                        <div class="phone-input-row">
+                        <input type="text" id="rsvpPhoneCode" class="form-input phone-code-input" maxlength="4" placeholder="+977" aria-label="Country code">
+                        <input type="tel" id="rsvpPhoneNumber" class="form-input" inputmode="numeric" placeholder="e.g. 9812345678">
+                    </div>
+                        <div class="form-help-text">The organiser asks every attendee for a phone number.</div>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-pill btn-block btn-lg mt-1-5">

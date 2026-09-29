@@ -46,6 +46,12 @@
         <!-- 3. Category Exploration Badges -->
         <section class="section section-compact">
             <div class="container">
+                <div class="section-header-row">
+                    <div>
+                        <h2 class="section-header-title">Browse by Category</h2>
+                    </div>
+                    <a href="pages/explore.html" class="section-header-link">All categories</a>
+                </div>
                 <div class="category-badges-scroll" id="categoryPillsScroll">
                     <a href="pages/explore.html?category=technology" class="category-pill-item">
                         <span>💻</span>
@@ -75,7 +81,7 @@
                         <span>🧘</span>
                         <span>Fitness & Wellness</span>
                     </a>
-                    <a href="pages/explore.html?category=games" class="category-pill-item">
+                    <a href="pages/explore.html?category=gaming" class="category-pill-item">
                         <span>🎲</span>
                         <span>Games & Hobbies</span>
                     </a>
@@ -193,7 +199,7 @@
             function getCoverImage(cat) {
                 if (!cat) return 'assets/images/tech-summit.jpg';
                 const lower = cat.toLowerCase();
-                if (lower.includes('tech') || lower.includes('software') || lower.includes('ai') || lower.includes('code')) {
+                if (lower.includes('tech') || lower.includes('software') || /\bai\b/.test(lower) || lower.includes('code')) {
                     return 'assets/images/tech-summit.jpg';
                 }
                 if (lower.includes('music') || lower.includes('concert') || lower.includes('live')) {
@@ -229,12 +235,17 @@
                 try {
                     if (typeof getEvents === 'function') {
                         const res = await getEvents();
-                        if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-                            events = res.data;
+                        if (res && res.success && Array.isArray(res.data)) {
+                            // This section is "Upcoming", so leave out events whose last day has passed
+                            const todayStr = new Date().toISOString().slice(0, 10);
+                            events = res.data.filter(evt => {
+                                const lastDay = evt.end_date || evt.event_date;
+                                return !lastDay || lastDay.slice(0, 10) >= todayStr;
+                            });
                         }
                     }
                 } catch (err) {
-                    console.log('[Home] Could not load events from API, falling back to curated highlights:', err);
+                    console.log('[Home] Could not load events from API:', err);
                 }
 
                 // If no events in database, show clean empty state
@@ -251,8 +262,8 @@
                 }
 
                 eventsGrid.innerHTML = events.slice(0, 4).map(evt => {
-                    const group = escapeHtml(evt.group_name || (evt.category ? `${evt.category} Community` : (evt.city ? `${evt.city} Community Group` : 'Community Group')));
-                    const count = evt.attendee_count || 1;
+                    const group = escapeHtml(evt.group_name || evt.host_name || evt.city || '');
+                    const count = evt.attendee_count || 0;
                     const isFree = evt.is_free || !evt.min_price || Number(evt.min_price) === 0;
                     const priceStr = isFree ? 'Free' : `NPR ${Number(evt.min_price).toLocaleString()}`;
                     const imgUrl = getCoverImage(evt.category);

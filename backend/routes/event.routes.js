@@ -12,22 +12,23 @@ import {
     getMyOrganizerEvents, 
     getMyOrganizerRSVPs, 
     checkinAttendee, 
-    checkinByCode, 
     getMyActivities, 
     cancelRsvp,
     listEventManagers,
     addEventManager,
     removeEventManager,
-    addManualAttendee
+    addManualAttendee,
+    getAttendeeDetails,
+    removeAttendee,
+    setPaymentStatus
 } from '../controllers/event.controller.js';
-import { getComments, postComment, removeComment } from '../controllers/comment.controller.js';
 import { 
     getAnnouncements, 
     postAnnouncement, 
     removeAnnouncement 
 } from '../controllers/announcement.controller.js';
 import { userAuth } from '../middleware/auth.middleware.js';
-import { uploadEventBanner } from '../middleware/upload.middleware.js';
+import { uploadEventImages } from '../middleware/upload.middleware.js';
 
 const eventRouter = express.Router();
 
@@ -38,22 +39,19 @@ eventRouter.get('/organizer/mine',   userAuth, getMyOrganizerEvents); // protect
 eventRouter.get('/organizer/rsvps',  userAuth, getMyOrganizerRSVPs);  // protected — recent RSVPs for organizer's events
 eventRouter.get('/:id',             getEvent);              // public — single event
 eventRouter.get('/:id/rsvps',    getEventAttendees);  // public — event attendees
+eventRouter.get('/:id/attendees', userAuth, getAttendeeDetails); // protected — attendee contact details for the event's managers
+eventRouter.delete('/:id/rsvps/:rsvpId', userAuth, removeAttendee); // protected — remove an attendee
+eventRouter.patch('/:id/rsvps/:rsvpId/payment', userAuth, setPaymentStatus); // protected — mark an attendee paid or unpaid
 eventRouter.post('/:id/rsvp',    userAuth, rsvpEvent); // protected — RSVP to event
 eventRouter.delete('/:id/rsvp',  userAuth, cancelRsvp); // protected — cancel RSVP to event
-eventRouter.post('/checkin',    userAuth, checkinByCode); // protected — check in from a ticket code (QR or typed)
 eventRouter.patch('/:id/rsvps/:rsvpId/checkin', userAuth, checkinAttendee); // protected — check in attendee
 eventRouter.get('/group/:groupId', getGroupEvents);   // public — events by group
-eventRouter.post('/',            userAuth, uploadEventBanner, createNewEvent); // protected with banner upload
+eventRouter.post('/',            userAuth, uploadEventImages, createNewEvent); // protected with banner and logo upload
 
 // Announcements routes
 eventRouter.get('/:id/announcements', getAnnouncements); // public / attendees
 eventRouter.post('/:id/announcements', userAuth, postAnnouncement); // protected (organizer/co-manager)
 eventRouter.delete('/:id/announcements/:announcementId', userAuth, removeAnnouncement); // protected
-
-// Discussion routes
-eventRouter.get('/:id/comments', getComments); // public
-eventRouter.post('/:id/comments', userAuth, postComment); // protected (any logged-in user)
-eventRouter.delete('/:id/comments/:commentId', userAuth, removeComment); // protected (author or organiser)
 
 // Co-managers routes
 eventRouter.get('/:id/managers', userAuth, listEventManagers); // protected (organizer/co-manager)
@@ -63,7 +61,7 @@ eventRouter.delete('/:id/managers/:userId', userAuth, removeEventManager); // pr
 // Manual attendee RSVP by email
 eventRouter.post('/:id/manual-rsvp', userAuth, addManualAttendee); // protected (organizer/co-manager)
 
-eventRouter.put('/:id',          userAuth, updateExistingEvent);     // protected
+eventRouter.put('/:id',          userAuth, uploadEventImages, updateExistingEvent); // protected with optional new banner or logo
 eventRouter.delete('/:id',       userAuth, deleteExistingEvent);     // protected
 
 export default eventRouter;
