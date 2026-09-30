@@ -46,9 +46,12 @@ const upload = multer({
     fileFilter
 });
 
-// Middleware for single event banner with formatted error handling
-export const uploadEventBanner = (req, res, next) => {
-    upload.single('eventBanner')(req, res, (err) => {
+// Middleware for the event banner and the optional host logo, with formatted error handling
+export const uploadEventImages = (req, res, next) => {
+    upload.fields([
+        { name: 'eventBanner', maxCount: 1 },
+        { name: 'hostLogo', maxCount: 1 }
+    ])(req, res, (err) => {
         if (err) {
             if (err instanceof multer.MulterError) {
                 if (err.code === 'LIMIT_FILE_SIZE') {
@@ -58,6 +61,8 @@ export const uploadEventBanner = (req, res, next) => {
             }
             return res.status(400).json({ success: false, message: err.message || 'Invalid file uploaded.' });
         }
+        req.bannerFile = req.files?.eventBanner?.[0];
+        req.logoFile = req.files?.hostLogo?.[0];
         next();
     });
 };

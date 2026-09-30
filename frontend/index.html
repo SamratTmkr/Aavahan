@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Aavahan - The people platform. Where interests become friendships. Discover events and groups near you.">
+    <meta name="description" content="Aavahan - The people platform. Where interests become friendships. Discover events near you.">
     <title>Aavahan — The People Platform | Where Interests Become Friendships</title>
 
     <!-- Google Fonts -->
@@ -21,13 +21,12 @@
     <div id="site-header"></div>
 
     <main>
-        <!-- 2. Meetup Hero Section -->
         <section class="meetup-hero">
             <div class="container">
                 <div class="meetup-hero-grid">
                     <div>
                         <h1 class="meetup-hero-title">
-                            The people platform—Where interests become friendships
+                            The people platform Where interests become friendships
                         </h1>
                         <p class="meetup-hero-desc">
                             Whatever your interest, from hiking and coding to networking and skill sharing, there are thousands of people who share it on Aavahan. Events are happening every day—sign up to join the fun.
@@ -43,47 +42,51 @@
             </div>
         </section>
 
-        <!-- 3. Category Exploration Badges -->
         <section class="section section-compact">
             <div class="container">
+                <div class="section-header-row">
+                    <div>
+                        <h2 class="section-header-title">Browse by Category</h2>
+                    </div>
+                    <a href="pages/explore.html" class="section-header-link">All categories</a>
+                </div>
                 <div class="category-badges-scroll" id="categoryPillsScroll">
                     <a href="pages/explore.html?category=technology" class="category-pill-item">
-                        <span>💻</span>
+                        <span class="material-symbols-outlined category-pill-icon">computer</span>
                         <span>Technology & AI</span>
                     </a>
                     <a href="pages/explore.html?category=music" class="category-pill-item">
-                        <span>🎸</span>
+                        <span class="material-symbols-outlined category-pill-icon">music_note</span>
                         <span>Live Music & Concerts</span>
                     </a>
                     <a href="pages/explore.html?category=business" class="category-pill-item">
-                        <span>💼</span>
+                        <span class="material-symbols-outlined category-pill-icon">business_center</span>
                         <span>Career & Business</span>
                     </a>
                     <a href="pages/explore.html?category=outdoor" class="category-pill-item">
-                        <span>🏔️</span>
+                        <span class="material-symbols-outlined category-pill-icon">landscape</span>
                         <span>Nature & Outdoors</span>
                     </a>
                     <a href="pages/explore.html?category=social" class="category-pill-item">
-                        <span>🍕</span>
+                        <span class="material-symbols-outlined category-pill-icon">restaurant</span>
                         <span>Social & Dining</span>
                     </a>
                     <a href="pages/explore.html?category=culture" class="category-pill-item">
-                        <span>🎨</span>
+                        <span class="material-symbols-outlined category-pill-icon">palette</span>
                         <span>Arts & Culture</span>
                     </a>
                     <a href="pages/explore.html?category=fitness" class="category-pill-item">
-                        <span>🧘</span>
+                        <span class="material-symbols-outlined category-pill-icon">self_improvement</span>
                         <span>Fitness & Wellness</span>
                     </a>
-                    <a href="pages/explore.html?category=games" class="category-pill-item">
-                        <span>🎲</span>
+                    <a href="pages/explore.html?category=gaming" class="category-pill-item">
+                        <span class="material-symbols-outlined category-pill-icon">casino</span>
                         <span>Games & Hobbies</span>
                     </a>
                 </div>
             </div>
         </section>
 
-        <!-- 4. Events in Nepal -->
         <section class="section section-pt-1">
             <div class="container">
                 <div class="section-header-row">
@@ -93,14 +96,11 @@
                     <a href="pages/explore.html" class="section-header-link">See all events</a>
                 </div>
 
-                <!-- Event Cards Grid -->
                 <div class="meetup-event-grid" id="homepageEventsGrid">
-                    <!-- Populated dynamically from API -->
                 </div>
             </div>
         </section>
 
-        <!-- 5. How Aavahan Works (Meetup 3 Core Cards) -->
         <section class="section">
             <div class="container">
                 <h2 class="section-header-title how-it-works-title">How Aavahan works</h2>
@@ -139,32 +139,22 @@
             </div>
         </section>
 
-        <!-- 6. Friendships are made on Aavahan (Community Stories) -->
-        <section class="section section-subtle">
+        <section class="section">
             <div class="container">
                 <div class="section-header-row">
                     <div>
-                        <h2 class="section-header-title">Friendships are made on Aavahan</h2>
+                        <h2 class="section-header-title">Popular cities on Aavahan</h2>
                     </div>
+                    <a href="pages/explore.html" class="btn btn-outline-teal btn-pill btn-sm">
+                        <span>Explore more</span>
+                        <span class="material-symbols-outlined category-pill-icon-sm">arrow_forward</span>
+                    </a>
                 </div>
-
-                <div class="stories-grid" id="homepageStoriesGrid">
-                    <!-- Populated from API -->
-                </div>
-            </div>
-        </section>
-
-        <!-- 7. Popular Cities on Aavahan -->
-        <section class="section">
-            <div class="container">
-                <h2 class="section-header-title popular-cities-title">Popular cities on Aavahan</h2>
                 <div class="cities-grid" id="homepageCitiesGrid">
-                    <!-- Populated from API -->
                 </div>
             </div>
         </section>
 
-        <!-- 8. Start an Event Organizer CTA Banner -->
         <section class="section section-pt-0">
             <div class="container">
                 <div class="cta-banner">
@@ -184,7 +174,6 @@
         </section>
     </main>
 
-    <!-- Footer Component -->
     <div id="site-footer"></div>
 
     <!-- Scripts -->
@@ -192,13 +181,14 @@
     <script type="module" src="assets/js/main.js"></script>
     <script type="module">
         import { getEvents, getEventCities } from './assets/js/api.js';
+        import { escapeHtml } from './assets/js/main.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Category cover mapper using local high-res assets with clean fallbacks
+            //category cover mapper using local high-res assets with clean fallbacks
             function getCoverImage(cat) {
                 if (!cat) return 'assets/images/tech-summit.jpg';
                 const lower = cat.toLowerCase();
-                if (lower.includes('tech') || lower.includes('software') || lower.includes('ai') || lower.includes('code')) {
+                if (lower.includes('tech') || lower.includes('software') || /\bai\b/.test(lower) || lower.includes('code')) {
                     return 'assets/images/tech-summit.jpg';
                 }
                 if (lower.includes('music') || lower.includes('concert') || lower.includes('live')) {
@@ -227,22 +217,27 @@
                 }
             }
 
-            // 1. Render Meetup Events Grid
+            //1. render meetup events grid
             const eventsGrid = document.getElementById('homepageEventsGrid');
             if (eventsGrid) {
                 let events = [];
                 try {
                     if (typeof getEvents === 'function') {
                         const res = await getEvents();
-                        if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-                            events = res.data;
+                        if (res && res.success && Array.isArray(res.data)) {
+                            //this section is "upcoming", so leave out events whose last day has passed
+                            const todayStr = new Date().toISOString().slice(0, 10);
+                            events = res.data.filter(evt => {
+                                const lastDay = evt.end_date || evt.event_date;
+                                return !lastDay || lastDay.slice(0, 10) >= todayStr;
+                            });
                         }
                     }
                 } catch (err) {
-                    console.log('[Home] Could not load events from API, falling back to curated highlights:', err);
+                    console.log('[Home] Could not load events from API:', err);
                 }
 
-                // If no events in database, show clean empty state
+                //if no events in database, show clean empty state
                 if (events.length === 0) {
                     eventsGrid.innerHTML = `
                         <div class="events-feed-empty">
@@ -256,8 +251,8 @@
                 }
 
                 eventsGrid.innerHTML = events.slice(0, 4).map(evt => {
-                    const group = evt.group_name || (evt.category ? `${evt.category} Community` : (evt.city ? `${evt.city} Community Group` : 'Community Group'));
-                    const count = evt.attendee_count || 1;
+                    const group = escapeHtml(evt.host_name || evt.city || '');
+                    const count = evt.attendee_count || 0;
                     const isFree = evt.is_free || !evt.min_price || Number(evt.min_price) === 0;
                     const priceStr = isFree ? 'Free' : `NPR ${Number(evt.min_price).toLocaleString()}`;
                     const imgUrl = getCoverImage(evt.category);
@@ -267,17 +262,17 @@
                     return `
                     <div class="meetup-event-card">
                         <a href="${linkUrl}" class="meetup-card-media">
-                            <img src="${imgUrl}" alt="${evt.title}" class="meetup-card-img" loading="lazy">
+                            <img src="${imgUrl}" alt="${escapeHtml(evt.title)}" class="meetup-card-img" loading="lazy">
                             ${evt.is_online ? '<span class="meetup-card-badge">ONLINE EVENT</span>' : ''}
                         </a>
                         <div class="meetup-card-content">
                             <div class="meetup-card-date">${dateDisplay}</div>
                             <h3 class="meetup-card-title">
-                                <a href="${linkUrl}">${evt.title}</a>
+                                <a href="${linkUrl}">${escapeHtml(evt.title)}</a>
                             </h3>
                             <div class="meetup-card-group">${group}</div>
                             <div class="meetup-card-meta-row">
-                                <span>👥 ${count} attendee${count === 1 ? '' : 's'}</span>
+                                <span class="attendees-meta-item"><span class="material-symbols-outlined meta-attendees-icon">group</span>${count} attendee${count === 1 ? '' : 's'}</span>
                                 <span class="meetup-card-price ${isFree ? 'free' : ''}">
                                      ${priceStr}
                                 </span>
@@ -288,43 +283,7 @@
                 }).join('');
             }
 
-            // 2. Render Community Stories ("Friendships are made on Aavahan")
-            const storiesGrid = document.getElementById('homepageStoriesGrid');
-            if (storiesGrid) {
-                const stories = [
-                    {
-                        title: "From 5 coders in a cafe to a 2,500-strong tech collective",
-                        desc: "We started gathering on weekends to learn distributed systems and AI. Through Aavahan, we scaled into a vibrant network hosting monthly hackathons across the valley.",
-                        author: "Dr. Pratigya Sharma · Lead, Kathmandu Tech Innovators",
-                        img: "assets/images/tech-summit.jpg"
-                    },
-                    {
-                        title: "Founding the Himalayan trail running circle in Pokhara",
-                        desc: "Aavahan helped us connect 400+ trail runners, from beginners to ultra-marathoners. Every Saturday we hit the Sarangkot ridges and bond over dal bhat.",
-                        author: "Kripa Gurung · Organizer, Pokhara Trail Runners",
-                        img: "assets/images/outdoor-hiking.jpg"
-                    },
-                    {
-                        title: "Reviving local acoustics & indie music in Patan",
-                        desc: "Finding jamming partners in the city used to be tough. Through our weekly open-mic events, 12 new indie bands have formed and recorded their first tracks.",
-                        author: "Rohan Shrestha · Founder, Patan Music Circle",
-                        img: "assets/images/music-jam.jpg"
-                    }
-                ];
-
-                storiesGrid.innerHTML = stories.map(st => `
-                    <div class="story-card">
-                        <img src="${st.img}" alt="${st.title}" class="story-card-img" loading="lazy">
-                        <div class="story-card-body">
-                            <h3 class="story-card-title">${st.title}</h3>
-                            <p class="story-card-desc">${st.desc}</p>
-                            <div class="story-card-author">${st.author}</div>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            // 3. Render Popular Cities on Aavahan
+            //3. render popular cities on aavahan
             const citiesGrid = document.getElementById('homepageCitiesGrid');
             if (citiesGrid) {
                 const knownCityImages = {
@@ -351,20 +310,19 @@
                     console.log('[Home] Could not fetch city statistics:', e);
                 }
 
+                //nothing to show until events exist, so hide the whole section.
                 if (popularCities.length === 0) {
-                    popularCities = [
-                        { name: 'Kathmandu', count: 0, img: 'assets/images/city-kathmandu.jpg' },
-                        { name: 'Pokhara', count: 0, img: 'assets/images/city-pokhara.jpg' },
-                        { name: 'Lalitpur', count: 0, img: 'assets/images/city-lalitpur.jpg' }
-                    ];
+                    const section = citiesGrid.closest('section');
+                    if (section) section.hidden = true;
+                    return;
                 }
 
                 citiesGrid.innerHTML = popularCities.map(c => {
                     const countLabel = `${c.count} event${c.count === 1 ? '' : 's'}`;
                     return `
                     <a href="pages/explore.html?city=${encodeURIComponent(c.name)}" class="city-card">
-                        <img src="${c.img}" alt="${c.name}" class="city-card-avatar" loading="lazy">
-                        <div class="city-card-name">${c.name}</div>
+                        <img src="${c.img}" alt="${escapeHtml(c.name)}" class="city-card-avatar" loading="lazy">
+                        <div class="city-card-name">${escapeHtml(c.name)}</div>
                         <div class="city-card-count">${countLabel}</div>
                     </a>
                     `;

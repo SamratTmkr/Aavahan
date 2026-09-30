@@ -1,16 +1,14 @@
 import { isAuthenticated } from './authService.js';
 import { getMyActivities, getMyOrganizerEvents, cancelEventRsvp } from './api.js';
-import { showToast } from './main.js';
+import { showToast, escapeHtml } from './main.js';
 
-// My Activities & Created Events page logic
 
 let joinedData = { upcoming: [], past: [], all: [] };
 let createdData = { upcoming: [], past: [], all: [], stats: {} };
-let currentTab = 'joined'; // 'joined' | 'created'
-let currentSubFilter = 'upcoming'; // 'upcoming' | 'past' | 'all'
+let currentTab = 'joined'; //'joined' | 'created'
+let currentSubFilter = 'upcoming'; //'upcoming' | 'past' | 'all'
 let searchQuery = '';
 
-// Helper: Check authentication
 function requireAuth() {
     if (!isAuthenticated()) {
         window.location.href = 'login.html?redirect=my-activities.html';
@@ -19,9 +17,10 @@ function requireAuth() {
     return true;
 }
 
-// Check if an event date is today or in the future
-function isUpcomingDate(dateStr) {
-    if (!dateStr) return false;
+//an event is upcoming until its last day is over. events with no date yet (tba) are upcoming.
+function isUpcomingEvent(ev) {
+    const dateStr = ev.end_date || ev.event_date;
+    if (!dateStr) return true;
     const evDate = new Date(dateStr);
     evDate.setHours(0, 0, 0, 0);
     const now = new Date();
@@ -29,7 +28,6 @@ function isUpcomingDate(dateStr) {
     return evDate >= now;
 }
 
-// Fetch both joined activities and created events
 async function loadActivities() {
     if (!requireAuth()) return;
 
@@ -50,7 +48,6 @@ async function loadActivities() {
             getMyOrganizerEvents()
         ]);
 
-        // 1. Process Joined Events
         if (joinedRes && joinedRes.success && joinedRes.data) {
             const up = joinedRes.data.upcoming || [];
             const pst = joinedRes.data.past || [];
@@ -63,14 +60,13 @@ async function loadActivities() {
             joinedData = { upcoming: [], past: [], all: [] };
         }
 
-        // 2. Process Created Events
         if (createdRes && createdRes.success && Array.isArray(createdRes.data)) {
             const raw = createdRes.data;
             const up = [];
             const pst = [];
 
             raw.forEach(ev => {
-                if (isUpcomingDate(ev.event_date)) {
+                if (isUpcomingEvent(ev)) {
                     up.push(ev);
                 } else {
                     pst.push(ev);
@@ -84,10 +80,10 @@ async function loadActivities() {
                 upcoming: up,
                 past: pst,
                 all: raw,
-                stats: createdRes.stats || { totalEvents: raw.length, totalRSVPs: 0, grossVolume: 0 }
+                stats: createdRes.stats || { totalEvents: raw.length, totalRSVPs: 0 }
             };
         } else {
-            createdData = { upcoming: [], past: [], all: [], stats: { totalEvents: 0, totalRSVPs: 0, grossVolume: 0 } };
+            createdData = { upcoming: [], past: [], all: [], stats: { totalEvents: 0, totalRSVPs: 0 } };
         }
 
         updateStatsAndBadges();
@@ -95,15 +91,11 @@ async function loadActivities() {
         renderList();
     } catch (err) {
         console.error('Error loading activities:', err);
-        if (typeof showToast === 'function') {
-            showToast('Failed to load your activities.', 'error');
-        }
+        showToast('Failed to load your activities.', 'error');
     }
 }
 
-// Update KPI summary cards and tab badges
 function updateStatsAndBadges() {
-    // Joined stats
     const joinedTotal = joinedData.all.length;
     const joinedUp = joinedData.upcoming.length;
     const joinedPst = joinedData.past.length;
@@ -118,7 +110,6 @@ function updateStatsAndBadges() {
     if (statJoinedPast) statJoinedPast.textContent = joinedPst;
     if (badgeJoinedTotal) badgeJoinedTotal.textContent = joinedTotal;
 
-    // Created stats
     const createdTotal = createdData.all.length;
     const createdUp = createdData.upcoming.length;
     const createdPst = createdData.past.length;
@@ -137,7 +128,6 @@ function updateStatsAndBadges() {
     if (statTotalAttendees) statTotalAttendees.textContent = totalRSVPs.toLocaleString();
 }
 
-// Render dynamic subfilter pill buttons
 function renderSubfilters() {
     const container = document.getElementById('subfilterContainer');
     if (!container) return;
@@ -184,7 +174,6 @@ function renderSubfilters() {
     });
 }
 
-// Render the active items list
 function renderList() {
     const listEl = document.getElementById('activitiesList');
     if (!listEl) return;
@@ -196,29 +185,26 @@ function renderList() {
     }
 }
 
-// Render "Events I've Joined"
 function renderJoinedList(listEl) {
     let items = [];
     if (currentSubFilter === 'upcoming') items = joinedData.upcoming;
     else if (currentSubFilter === 'past') items = joinedData.past;
     else items = joinedData.all;
 
-    // Apply search query filter if typed
     if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         items = items.filter(e => 
             (e.title && e.title.toLowerCase().includes(q)) ||
             (e.venue && e.venue.toLowerCase().includes(q)) ||
             (e.city && e.city.toLowerCase().includes(q)) ||
-            (e.category && e.category.toLowerCase().includes(q)) ||
-            (e.group_name && e.group_name.toLowerCase().includes(q))
+            (e.category && e.category.toLowerCase().includes(q))
         );
     }
 
     if (!items || items.length === 0) {
         let emptyDesc = "You haven't joined any events in this section yet. Discover meetups, workshops, and gatherings happening across Nepal!";
         if (searchQuery.trim()) {
-            emptyDesc = `No joined events matching "${searchQuery}". Try a different keyword.`;
+            emptyDesc = `No joined events matching "${escapeHtml(searchQuery)}". Try a different keyword.`;
         }
         listEl.innerHTML = `
             <div class="activities-empty">
@@ -240,15 +226,13 @@ function renderJoinedList(listEl) {
 
         const isFree = ev.is_free || !ev.min_price || Number(ev.min_price) === 0;
         const priceLabel = isFree ? 'Free' : `NPR ${Number(ev.min_price).toLocaleString()}`;
-        const rsvpCode = `RSVP-${String(ev.rsvp_id).padStart(4, '0')}`;
 
-        // Exact location representation
         let locationMarkup = '';
         if (ev.is_online) {
             locationMarkup = `
                 <div class="activity-location-highlight">
                     <span class="material-symbols-outlined activity-location-icon online">videocam</span>
-                    <span><strong>Online Event:</strong> Zoom / Google Meet · Join link provided to attendees</span>
+                    <span><strong>Online event</strong></span>
                 </div>
             `;
         } else {
@@ -257,7 +241,7 @@ function renderJoinedList(listEl) {
             locationMarkup = `
                 <div class="activity-location-highlight">
                     <span class="material-symbols-outlined activity-location-icon">location_on</span>
-                    <span><strong>Where:</strong> ${fullLoc}</span>
+                    <span><strong>Where:</strong> ${escapeHtml(fullLoc)}</span>
                 </div>
             `;
         }
@@ -266,16 +250,14 @@ function renderJoinedList(listEl) {
         const badgeClass = isCheckedIn ? 'badge-status-checked' : 'badge-status-confirmed';
         const statusLabel = isCheckedIn ? 'Checked In' : 'Confirmed RSVP';
 
-        const isUpcoming = isUpcomingDate(ev.event_date);
-        const escapedTitle = (ev.title || '').replace(/'/g, "\\'");
+        const isUpcoming = isUpcomingEvent(ev);
+        const escapedTitle = escapeHtml(ev.title || '').replace(/'/g, "\\'");
 
         const cancelButton = isUpcoming ? `
             <button type="button" class="btn btn-sm btn-pill btn-cancel-rsvp" data-action="cancel-rsvp" data-id="${ev.event_id}" data-title="${escapedTitle}">
                 Cancel RSVP
             </button>
         ` : '';
-
-        const groupTag = ev.group_name ? `<span>•</span><span>by <strong>${ev.group_name}</strong></span>` : '';
 
         return `
             <div class="activity-card">
@@ -286,19 +268,16 @@ function renderJoinedList(listEl) {
                     </div>
                     <div class="activity-details">
                         <div class="activity-meta">
-                            <span>📅 ${dateFormatted} · ${timeFormatted}</span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">calendar_today</span>${dateFormatted} · ${timeFormatted}</span>
                             <span>•</span>
-                            <span class="activity-category-pill">${ev.category || 'Event'}</span>
-                            ${groupTag}
+                            <span class="activity-category-pill">${escapeHtml(ev.category || 'Event')}</span>
                         </div>
                         <a href="event-details.html?id=${ev.event_id}" class="activity-title">
-                            ${ev.title}
+                            ${escapeHtml(ev.title)}
                         </a>
                         ${locationMarkup}
                         <div class="activity-sub">
-                            <span>🎟️ ${priceLabel}</span>
-                            <span>•</span>
-                            <span>🔖 Ticket Code: <strong class="dash-mono-id">${rsvpCode}</strong></span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">confirmation_number</span>${priceLabel}</span>
                         </div>
                     </div>
                 </div>
@@ -314,29 +293,26 @@ function renderJoinedList(listEl) {
     }).join('');
 }
 
-// Render "Events I've Created"
 function renderCreatedList(listEl) {
     let items = [];
     if (currentSubFilter === 'upcoming') items = createdData.upcoming;
     else if (currentSubFilter === 'past') items = createdData.past;
     else items = createdData.all;
 
-    // Apply search query filter if typed
     if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         items = items.filter(e => 
             (e.title && e.title.toLowerCase().includes(q)) ||
             (e.venue && e.venue.toLowerCase().includes(q)) ||
             (e.city && e.city.toLowerCase().includes(q)) ||
-            (e.category && e.category.toLowerCase().includes(q)) ||
-            (e.group_name && e.group_name.toLowerCase().includes(q))
+            (e.category && e.category.toLowerCase().includes(q))
         );
     }
 
     if (!items || items.length === 0) {
         let emptyDesc = "You haven't hosted any events matching this section yet. Gather like-minded people by organizing a meetup or workshop!";
         if (searchQuery.trim()) {
-            emptyDesc = `No created events matching "${searchQuery}". Try a different keyword.`;
+            emptyDesc = `No created events matching "${escapeHtml(searchQuery)}". Try a different keyword.`;
         }
         listEl.innerHTML = `
             <div class="activities-empty">
@@ -356,7 +332,7 @@ function renderCreatedList(listEl) {
         const dateFormatted = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
         const timeFormatted = ev.start_time ? ev.start_time.slice(0, 5) + ' NPT' : 'Time TBD';
 
-        const isUpcoming = isUpcomingDate(ev.event_date);
+        const isUpcoming = isUpcomingEvent(ev);
         const statusBadge = isUpcoming 
             ? `<span class="badge badge-status-active"><span class="material-symbols-outlined icon-badge-inline">check_circle</span> Active & Upcoming</span>`
             : `<span class="badge badge-status-past"><span class="material-symbols-outlined icon-badge-inline">history</span> Past Hosted</span>`;
@@ -366,13 +342,12 @@ function renderCreatedList(listEl) {
         const attendeesCount = ev.attendee_count || 0;
         const capacityText = ev.capacity ? `${attendeesCount} / ${ev.capacity} Seats Filled` : `${attendeesCount} Registered Attendees`;
 
-        // Exact location representation
         let locationMarkup = '';
         if (ev.is_online) {
             locationMarkup = `
                 <div class="activity-location-highlight">
                     <span class="material-symbols-outlined activity-location-icon online">videocam</span>
-                    <span><strong>Online Event:</strong> Virtual Meeting Platform (Zoom / Meet)</span>
+                    <span><strong>Online event</strong></span>
                 </div>
             `;
         } else {
@@ -381,12 +356,10 @@ function renderCreatedList(listEl) {
             locationMarkup = `
                 <div class="activity-location-highlight">
                     <span class="material-symbols-outlined activity-location-icon">location_on</span>
-                    <span><strong>Where:</strong> ${fullLoc}</span>
+                    <span><strong>Where:</strong> ${escapeHtml(fullLoc)}</span>
                 </div>
             `;
         }
-
-        const groupTag = ev.group_name ? `<span>•</span><span>Community: <strong>${ev.group_name}</strong></span>` : '';
 
         return `
             <div class="activity-card activity-card-created">
@@ -397,19 +370,18 @@ function renderCreatedList(listEl) {
                     </div>
                     <div class="activity-details">
                         <div class="activity-meta">
-                            <span>📅 ${dateFormatted} · ${timeFormatted}</span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">calendar_today</span>${dateFormatted} · ${timeFormatted}</span>
                             <span>•</span>
-                            <span class="activity-category-pill">${ev.category || 'Event'}</span>
-                            ${groupTag}
+                            <span class="activity-category-pill">${escapeHtml(ev.category || 'Event')}</span>
                         </div>
                         <a href="event-details.html?id=${ev.id}" class="activity-title">
-                            ${ev.title}
+                            ${escapeHtml(ev.title)}
                         </a>
                         ${locationMarkup}
                         <div class="activity-sub">
-                            <span>👥 <strong>${capacityText}</strong></span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">group</span><strong>${capacityText}</strong></span>
                             <span>•</span>
-                            <span>🎟️ ${priceLabel}</span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">confirmation_number</span>${priceLabel}</span>
                         </div>
                     </div>
                 </div>
@@ -428,7 +400,6 @@ function renderCreatedList(listEl) {
     }).join('');
 }
 
-// Cancel RSVP handler
 async function handleCancelActivityRsvp(eventId, eventTitle) {
     const title = eventTitle || 'this event';
     if (!confirm(`Are you sure you want to cancel your registration for "${title}"?`)) {
@@ -450,7 +421,6 @@ async function handleCancelActivityRsvp(eventId, eventTitle) {
     }
 }
 
-// Wire up events
 document.addEventListener('DOMContentLoaded', () => {
     const tabJoined = document.getElementById('tabJoined');
     const tabCreated = document.getElementById('tabCreated');

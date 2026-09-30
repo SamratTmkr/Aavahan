@@ -1,36 +1,5 @@
 import pool from '../src/db.js';
 
-// Event schema descriptor — mirrors the 'events' table
-export const eventSchema = {
-    tableName: 'events',
-    fields: {
-        id:             { type: 'INT', primaryKey: true, autoIncrement: true },
-        title:          { type: 'VARCHAR(300)', required: true },
-        description:    { type: 'TEXT', required: false },
-        category:       { type: 'VARCHAR(80)', required: false },
-        venue:          { type: 'VARCHAR(200)', required: false },
-        address:        { type: 'TEXT', required: false },
-        city:           { type: 'VARCHAR(100)', required: false },
-        country:        { type: 'VARCHAR(80)', default: 'Nepal' },
-        event_date:     { type: 'DATE', required: false },
-        start_time:     { type: 'TIME', required: false },
-        end_time:       { type: 'TIME', required: false },
-        is_date_tba:    { type: 'BOOLEAN', default: false },
-        registration_deadline: { type: 'DATETIME', required: false },
-        image_url:      { type: 'VARCHAR(500)', required: false },
-        is_free:        { type: 'BOOLEAN', default: true },
-        min_price:      { type: 'DECIMAL(10,2)', default: 0 },
-        currency:       { type: 'VARCHAR(10)', default: 'NPR' },
-        is_online:      { type: 'BOOLEAN', default: false },
-        capacity:       { type: 'INTEGER', required: false },
-        attendee_count: { type: 'INTEGER', default: 0 },
-        group_id:       { type: 'INT', required: false },
-        organizer_id:   { type: 'INT', required: false },
-        created_at:     { type: 'TIMESTAMP', readOnly: true, default: 'CURRENT_TIMESTAMP' },
-        updated_at:     { type: 'TIMESTAMP', readOnly: true, default: 'CURRENT_TIMESTAMP' },
-    },
-};
-
 // Insert a new event
 export async function createEvent({
     title,
@@ -41,6 +10,7 @@ export async function createEvent({
     city = null,
     country = 'Nepal',
     event_date = null,
+    end_date = null,
     start_time = null,
     end_time = null,
     is_date_tba = false,
@@ -51,13 +21,16 @@ export async function createEvent({
     currency = 'NPR',
     is_online = false,
     capacity = null,
-    group_id = null,
-    organizer_id = null
+    organizer_id = null,
+    host_name = null,
+    host_logo_url = null,
+    contact_phone = null,
+    require_phone = false
 }) {
     const [result] = await pool.execute(
         `INSERT INTO events
-         (title, description, category, venue, address, city, country, event_date, start_time, end_time, is_date_tba, registration_deadline, image_url, is_free, min_price, currency, is_online, capacity, group_id, organizer_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (title, description, category, venue, address, city, country, event_date, end_date, start_time, end_time, is_date_tba, registration_deadline, image_url, is_free, min_price, currency, is_online, capacity, organizer_id, host_name, host_logo_url, contact_phone, require_phone)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             title,
             description ?? null,
@@ -67,6 +40,7 @@ export async function createEvent({
             city ?? null,
             country ?? 'Nepal',
             event_date ?? null,
+            end_date ?? null,
             start_time ?? null,
             end_time ?? null,
             is_date_tba ? 1 : 0,
@@ -77,8 +51,11 @@ export async function createEvent({
             currency ?? 'NPR',
             is_online ?? false,
             capacity ?? null,
-            group_id ?? null,
-            organizer_id ?? null
+            organizer_id ?? null,
+            host_name ?? null,
+            host_logo_url ?? null,
+            contact_phone ?? null,
+            require_phone ? 1 : 0
         ]
     );
     return result.insertId;
@@ -108,23 +85,16 @@ export async function getAllEvents(city = null, search = null) {
     return rows;
 }
 
-// Get a single event by ID (with organizer & group information)
+// Get a single event by ID (with organizer information)
 export async function getEventById(id) {
     const [rows] = await pool.execute(
-        `SELECT e.*, u.name AS organizer_name, u.email AS organizer_email, g.name AS group_name 
+        `SELECT e.*, u.name AS organizer_name, u.email AS organizer_email
          FROM events e 
          LEFT JOIN users u ON e.organizer_id = u.id 
-         LEFT JOIN \`groups\` g ON e.group_id = g.id 
          WHERE e.id = ?`,
         [id]
     );
     return rows[0] || null;
-}
-
-// Get all events belonging to a specific group
-export async function getEventsByGroup(group_id) {
-    const [rows] = await pool.execute('SELECT * FROM events WHERE group_id = ? ORDER BY event_date ASC', [group_id]);
-    return rows;
 }
 
 // Update any fields on an event by ID, also bumps updated_at
@@ -140,4 +110,3 @@ export async function deleteEvent(id) {
     await pool.execute('DELETE FROM events WHERE id = ?', [id]);
 }
 
-export default eventSchema;

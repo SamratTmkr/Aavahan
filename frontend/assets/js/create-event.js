@@ -1,7 +1,8 @@
 import { isAuthenticated, clearAuth } from './authService.js';
+import { showToast } from './main.js';
 import { createEvent } from './api.js';
+import { phoneProblem } from './phone.js';
 
-// Event Creation Wizard State
 let currentStep = 1;
 const totalSteps = 3;
 
@@ -10,10 +11,9 @@ const btnBack = document.getElementById('btnWizardBack');
 const stepIndicator = document.getElementById('wizardStepIndicator');
 const progressFill = document.getElementById('wizardProgressFill');
 
-// Banner image selection state
 let selectedBannerFile = null;
+let selectedLogoFile = null;
 
-// Check authentication on page load
 function requireAuth() {
     if (!isAuthenticated()) {
         const isSubfolder = window.location.pathname.includes('/pages/');
@@ -23,43 +23,66 @@ function requireAuth() {
     return true;
 }
 
-// Category tag pill selector
 const topicPills = document.querySelectorAll('.topic-tag-pill');
+const customCategoryWrapper = document.getElementById('customCategoryWrapper');
+const customCategoryInput = document.getElementById('customCategoryInput');
+
 topicPills.forEach(pill => {
     pill.addEventListener('click', () => {
         topicPills.forEach(p => p.classList.remove('selected'));
         pill.classList.add('selected');
+        //show custom input only when "other" is selected
+        const isOther = pill.textContent.trim().toLowerCase().includes('other');
+        if (customCategoryWrapper) {
+            customCategoryWrapper.classList.toggle('is-hidden', !isOther);
+            if (isOther && customCategoryInput) customCategoryInput.focus();
+        }
     });
 });
 
 function getSelectedCategory() {
     const selected = document.querySelector('.topic-tag-pill.selected');
-    return selected ? selected.textContent.replace(/^[\p{Emoji}\s]+/u, '').trim() : 'General';
+    if (!selected) return 'General';
+    const isOther = selected.textContent.trim().toLowerCase().includes('other');
+    if (isOther && customCategoryInput && customCategoryInput.value.trim()) {
+        return customCategoryInput.value.trim();
+    }
+    return selected.textContent.replace(/^[\p{Emoji}\s]+/u, '').trim() || 'General';
 }
 
-// Initialize past date prevention
 const dateInput = document.getElementById('eventDate');
 const today = new Date().toISOString().split('T')[0];
 if (dateInput) {
     dateInput.min = today;
 }
 
-// Date to be Announced (TBA) toggle
 const tbaCheckbox = document.getElementById('dateTBA');
 const timeInput = document.getElementById('eventStartTime');
 
 if (tbaCheckbox && dateInput && timeInput) {
     tbaCheckbox.addEventListener('change', function () {
+        const endDateInput = document.getElementById('eventEndDate');
         dateInput.disabled = this.checked;
         timeInput.disabled = this.checked;
+        if (endDateInput) endDateInput.disabled = this.checked;
         if (this.checked) {
             dateInput.value = '';
             timeInput.value = '';
+            if (endDateInput) endDateInput.value = '';
         }
     });
 }
 
-// Custom event banner upload listener
+if (dateInput) {
+    dateInput.addEventListener('change', function () {
+        const endDateInput = document.getElementById('eventEndDate');
+        if (endDateInput) endDateInput.min = this.value;
+        if (endDateInput && endDateInput.value && endDateInput.value < this.value) {
+            endDateInput.value = this.value;
+        }
+    });
+}
+
 const bannerInput = document.getElementById("eventBanner");
 const bannerPreview = document.getElementById("bannerPreview");
 const bannerWrapper = document.getElementById("bannerPreviewWrapper");
@@ -70,7 +93,7 @@ bannerInput?.addEventListener("change", (e) => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-        alert("Please select an image.");
+        showToast("Please select an image.", 'error');
         e.target.value = "";
         return;
     }
@@ -81,7 +104,33 @@ bannerInput?.addEventListener("change", (e) => {
     bannerWrapper.classList.remove("is-hidden");
 });
 
-// Update live summary preview for Step 3
+//the contact number is optional, but must be valid when given
+function contactPhoneProblem() {
+    const number = document.getElementById('contactPhoneNumber')?.value.trim();
+    if (!number) return '';
+    return phoneProblem(document.getElementById('contactPhoneCode').value, number);
+}
+
+const logoInput = document.getElementById("hostLogo");
+const logoPreview = document.getElementById("hostLogoPreview");
+
+logoInput?.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+        showToast("Please select an image.", 'error');
+        e.target.value = "";
+        return;
+    }
+
+    selectedLogoFile = file;
+
+    logoPreview.src = URL.createObjectURL(file);
+    logoPreview.classList.remove("is-hidden");
+});
+
 function updateSummaryPreview() {
     const title = document.getElementById('eventTitle')?.value.trim() || 'Untitled Event';
     const category = getSelectedCategory();
@@ -101,14 +150,14 @@ function updateSummaryPreview() {
     const summaryPrice = document.getElementById('summaryPrice');
 
     if (summaryTitle) summaryTitle.textContent = title;
-    if (summaryCategory) summaryCategory.textContent = `📂 ${category}`;
-    if (summaryLocation) summaryLocation.textContent = `📍 ${venue}, ${city}`;
+    if (summaryCategory) summaryCategory.textContent = category;
+    if (summaryLocation) summaryLocation.textContent = `${venue}, ${city}`;
 
     if (summaryDateTime) {
         if (isTba) {
-            summaryDateTime.textContent = '📅 Date to be Announced (TBA)';
+            summaryDateTime.textContent = 'Date to be Announced (TBA)';
         } else {
-            summaryDateTime.textContent = date ? `📅 ${date} ${time ? '@ ' + time : ''}` : '📅 Date not set';
+            summaryDateTime.textContent = date ? `${date} ${time ? '@ ' + time : ''}` : 'Date not set';
         }
     }
 
@@ -116,18 +165,17 @@ function updateSummaryPreview() {
         if (deadline) {
             summaryDeadline.classList.remove('is-hidden');
             const d = new Date(deadline);
-            summaryDeadline.textContent = `⏰ Deadline: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+            summaryDeadline.textContent = `Deadline: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
         } else {
             summaryDeadline.classList.add('is-hidden');
         }
     }
 
     if (summaryPrice) {
-        summaryPrice.textContent = price === 0 ? '🎟️ Free' : `🎟️ NPR ${price.toLocaleString()}`;
+        summaryPrice.textContent = price === 0 ? 'Free' : `NPR ${price.toLocaleString()}`;
     }
 }
 
-// Show the correct step pane and update controls
 function goToStep(step) {
     for (let i = 1; i <= totalSteps; i++) {
         const pane = document.getElementById(`stepPane${i}`);
@@ -154,19 +202,23 @@ function goToStep(step) {
     }
 }
 
-// Step validation
 function validateStep(step) {
     if (step === 1) {
         const title = document.getElementById('eventTitle')?.value.trim();
         const desc = document.getElementById('eventDesc')?.value.trim();
         if (!title) {
-            alert('Please enter an event title.');
+            showToast('Please enter an event title.', 'error');
             document.getElementById('eventTitle')?.focus();
             return false;
         }
         if (!desc) {
-            alert('Please describe your event.');
+            showToast('Please describe your event.', 'error');
             document.getElementById('eventDesc')?.focus();
+            return false;
+        }
+        if (contactPhoneProblem()) {
+            showToast(contactPhoneProblem(), 'error');
+            document.getElementById('contactPhoneNumber')?.focus();
             return false;
         }
         return true;
@@ -182,29 +234,29 @@ function validateStep(step) {
         const todayStr = new Date().toISOString().split('T')[0];
 
         if (!city) {
-            alert('Please enter a city or region.');
+            showToast('Please enter a city or region.', 'error');
             document.getElementById('eventCity')?.focus();
             return false;
         }
         if (!venue) {
-            alert('Please enter the venue / address.');
+            showToast('Please enter the venue / address.', 'error');
             document.getElementById('eventVenue')?.focus();
             return false;
         }
 
         if (!isTba) {
             if (!date) {
-                alert('Please select an event date.');
+                showToast('Please select an event date.', 'error');
                 document.getElementById('eventDate')?.focus();
                 return false;
             }
             if (date < todayStr) {
-                alert('Event date cannot be in the past.');
+                showToast('Event date cannot be in the past.', 'error');
                 document.getElementById('eventDate')?.focus();
                 return false;
             }
             if (!time) {
-                alert('Please specify the start time.');
+                showToast('Please specify the start time.', 'error');
                 document.getElementById('eventStartTime')?.focus();
                 return false;
             }
@@ -212,7 +264,7 @@ function validateStep(step) {
                 const eventDateTime = new Date(`${date}T${time}`);
                 const deadlineTime = new Date(deadline);
                 if (deadlineTime >= eventDateTime) {
-                    alert('Registration deadline must be before the event date.');
+                    showToast('Registration deadline must be before the event date.', 'error');
                     document.getElementById('registrationDeadline')?.focus();
                     return false;
                 }
@@ -224,12 +276,10 @@ function validateStep(step) {
     return true;
 }
 
-// Back button handler
 btnBack.addEventListener('click', () => {
     if (currentStep > 1) goToStep(currentStep - 1);
 });
 
-// Next / Submit button handler
 btnNext.addEventListener('click', async () => {
     if (currentStep < totalSteps) {
         if (validateStep(currentStep)) {
@@ -238,7 +288,6 @@ btnNext.addEventListener('click', async () => {
         return;
     }
 
-    // Step 3 — Final submit
     if (!requireAuth()) return;
 
     const title = document.getElementById('eventTitle').value.trim();
@@ -248,6 +297,7 @@ btnNext.addEventListener('click', async () => {
     const venue = document.getElementById('eventVenue').value.trim();
     const isTba = document.getElementById('dateTBA')?.checked || false;
     const eventDate = document.getElementById('eventDate')?.value;
+    const eventEndDate = document.getElementById('eventEndDate')?.value || null;
     const startTime = document.getElementById('eventStartTime')?.value;
     const endTime = document.getElementById('eventEndTime')?.value || null;
     const deadline = document.getElementById('registrationDeadline')?.value || null;
@@ -257,39 +307,37 @@ btnNext.addEventListener('click', async () => {
     const capacity = capacityVal ? parseInt(capacityVal, 10) : null;
     const todayStr = new Date().toISOString().split('T')[0];
 
-    // Final validation
     if (!title || !description || !city || !venue) {
-        alert('Please ensure all required fields are filled out.');
+        showToast('Please ensure all required fields are filled out.', 'error');
         return;
     }
 
     if (!isTba) {
         if (!eventDate) {
-            alert('Please select an event date.');
+            showToast('Please select an event date.', 'error');
             return;
         }
         if (eventDate < todayStr) {
-            alert('Event date cannot be in the past.');
+            showToast('Event date cannot be in the past.', 'error');
             return;
         }
         if (!startTime) {
-            alert('Please specify the start time.');
+            showToast('Please specify the start time.', 'error');
             return;
         }
         if (deadline) {
             const eventDateTime = new Date(`${eventDate}T${startTime}`);
             const deadlineTime = new Date(deadline);
             if (deadlineTime >= eventDateTime) {
-                alert('Registration deadline must be before the event date.');
+                showToast('Registration deadline must be before the event date.', 'error');
                 return;
             }
         }
     }
 
     btnNext.disabled = true;
-    btnNext.textContent = 'Publishing...';
 
-    // Construct FormData
+
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
@@ -301,6 +349,7 @@ btnNext.addEventListener('click', async () => {
     if (!isTba) {
         formData.append('event_date', eventDate);
         formData.append('start_time', startTime);
+        if (eventEndDate) formData.append('end_date', eventEndDate);
         if (endTime) formData.append('end_time', endTime);
         if (deadline) formData.append('registration_deadline', deadline);
     }
@@ -315,34 +364,45 @@ btnNext.addEventListener('click', async () => {
         formData.append('eventBanner', selectedBannerFile);
     }
 
+    const hostName = document.getElementById('hostName')?.value.trim();
+    if (hostName) formData.append('host_name', hostName);
+    if (selectedLogoFile) formData.append('hostLogo', selectedLogoFile);
+
+    const contactNumber = document.getElementById('contactPhoneNumber')?.value.trim();
+    if (contactNumber) {
+        formData.append('contact_phone_code', document.getElementById('contactPhoneCode').value);
+        formData.append('contact_phone_number', contactNumber);
+    }
+    formData.append('require_phone', document.getElementById('requirePhone')?.checked ? 'true' : 'false');
+
     try {
         const eventData = await createEvent(formData);
 
         if (!eventData.success) {
             if (eventData.message && eventData.message.toLowerCase().includes('authenticat')) {
-                alert('Your session has expired. Please log in to publish your event.');
+                showToast('Your session has expired. Please log in to publish your event.', 'error');
                 clearAuth();
-                window.location.href = 'login.html?redirect=create-event.html';
+                setTimeout(() => { window.location.href = 'login.html?redirect=create-event.html'; }, 1500);
                 return;
             }
-            alert(eventData.message || 'Failed to create event.');
+            showToast(eventData.message || 'Failed to create event.', 'error');
             btnNext.disabled = false;
             btnNext.textContent = 'Publish Event';
             return;
         }
 
-        alert('Event published successfully!');
-        window.location.href = 'explore.html';
+        showToast('Event published successfully!', 'success');
+        //send the organiser to their manage page to edit details or post announcements
+        setTimeout(() => { window.location.href = `manage-event.html?id=${eventData.data.id}&tab=tabDetails`; }, 1200);
 
     } catch (error) {
         console.error('Error creating event:', error);
-        alert('Something went wrong. Please check your connection.');
+        showToast('Something went wrong. Please check your connection.', 'error');
         btnNext.disabled = false;
         btnNext.textContent = 'Publish Event';
     }
 });
 
-// Initialize on page load
 if (requireAuth()) {
     goToStep(1);
 }

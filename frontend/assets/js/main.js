@@ -1,8 +1,19 @@
-import { getToken, getUser, isAuthenticated, clearAuth } from './authService.js';
+import { getUser, isAuthenticated } from './authService.js';
+import { logoutUser } from './api.js';
 
-// main.js
+//anything typed by a user (event titles, names, comments) is dropped into
+//innerhtml templates, so it has to be escaped first or the browser will run it.
+export function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
-// Toast notification
+//toast notification
 export function showToast(message, type = 'info') {
     if (!message || /loading|cancelling|removing|processing|redirecting/i.test(message)) {
         return;
@@ -24,13 +35,16 @@ export function showToast(message, type = 'info') {
     else if (type === 'error') icon = 'error';
     else if (type === 'warning') icon = 'warning';
 
+    //the message can carry text that came back from the server, so it goes in
+    //as text rather than markup.
     toast.innerHTML = `
         <span class="material-symbols-outlined toast-icon">${icon}</span>
-        <span class="toast-message">${message}</span>
+        <span class="toast-message"></span>
         <button type="button" aria-label="Dismiss" class="toast-close-btn">
             <span class="material-symbols-outlined toast-close-icon">close</span>
         </button>
     `;
+    toast.querySelector('.toast-message').textContent = message;
 
     const closeBtn = toast.querySelector('button');
     closeBtn.addEventListener('click', () => {
@@ -45,9 +59,9 @@ export function showToast(message, type = 'info') {
 
 if (typeof window !== 'undefined') {
     window.showToast = showToast;
+    window.escapeHtml = escapeHtml;
 }
 
-// Navbar auth state
 function updateNavbar() {
     const isLoggedIn = isAuthenticated();
     const user = getUser() || {};
@@ -66,7 +80,6 @@ function updateNavbar() {
         navSignup.classList.add('is-hidden');
         navLogout.classList.remove('is-hidden');
 
-        // My Activities link
         let navMyActivities = document.getElementById('navMyActivities');
         if (!navMyActivities) {
             navMyActivities = document.createElement('a');
@@ -79,7 +92,6 @@ function updateNavbar() {
             navMyActivities.classList.remove('is-hidden');
         }
 
-        // Mobile drawer My Activities link
         let mobileMyActivities = document.getElementById('mobileMyActivities');
         const mobileLinks = document.querySelector('.mobile-nav-links');
         if (mobileLinks) {
@@ -95,7 +107,6 @@ function updateNavbar() {
             }
         }
 
-        // Admin badge link
         let navAdmin = document.getElementById('navAdmin');
         if (user.role === 'admin') {
             if (!navAdmin) {
@@ -127,7 +138,6 @@ function updateNavbar() {
     }
 }
 
-// Fallback component templates
 const DEFAULT_HEADER_HTML = `
 <header class="navbar">
     <div class="container nav-container">
@@ -167,7 +177,7 @@ const DEFAULT_HEADER_HTML = `
         <a href="{{ROOT}}index.html" class="mobile-nav-link">Home</a>
         <a href="{{PAGES}}explore.html" class="mobile-nav-link">Find Events</a>
         <a href="{{PAGES}}create-event.html" class="mobile-nav-link">Start an Event</a>
-        <a href="{{PAGES}}dashboard.html" class="mobile-nav-link">Organizer Hub</a>
+        <a href="{{PAGES}}my-activities.html" class="mobile-nav-link">My Activities</a>
     </div>
     <div class="mobile-drawer-auth">
         <a href="{{PAGES}}login.html" class="btn btn-outline btn-block">Log in</a>
@@ -189,15 +199,12 @@ const DEFAULT_FOOTER_HTML = `
             </div>
             <div class="footer-legal-links">
                 <a href="{{PAGES}}explore.html" class="footer-link">Explore</a>
-                <a href="#" class="footer-link">Terms of Service</a>
-                <a href="#" class="footer-link">Privacy Policy</a>
             </div>
         </div>
     </div>
 </footer>
 `;
 
-// Dynamic component loader
 async function loadComponents() {
     const isSubfolder = window.location.pathname.includes('/pages/');
     const basePath = isSubfolder ? '../' : './';
@@ -221,11 +228,10 @@ async function loadComponents() {
     if (headerContainer) {
         let headerHtml = null;
         try {
-            let res = await fetch(`${basePath}components/header.html`);
-            if (!res.ok) res = await fetch(`${basePath}header.html`);
+            const res = await fetch(`${basePath}components/header.html`);
             if (res.ok) headerHtml = await res.text();
         } catch (e) {
-            // Local file protocol fallback
+            //local file protocol fallback
         }
 
         headerContainer.innerHTML = replacePaths(headerHtml || DEFAULT_HEADER_HTML);
@@ -236,18 +242,16 @@ async function loadComponents() {
     if (footerContainer) {
         let footerHtml = null;
         try {
-            let res = await fetch(`${basePath}components/footer.html`);
-            if (!res.ok) res = await fetch(`${basePath}footer.html`);
+            const res = await fetch(`${basePath}components/footer.html`);
             if (res.ok) footerHtml = await res.text();
         } catch (e) {
-            // Local file protocol fallback
+            //local file protocol fallback
         }
 
         footerContainer.innerHTML = replacePaths(footerHtml || DEFAULT_FOOTER_HTML);
     }
 }
 
-// Bind header events
 function bindHeaderEvents() {
     const navToggleBtn = document.querySelector('.nav-toggle-btn');
     const mobileDrawer = document.querySelector('.mobile-nav-drawer');
@@ -262,12 +266,8 @@ function bindHeaderEvents() {
         navLogoutBtn.onclick = async (e) => {
             e.preventDefault();
             navLogoutBtn.disabled = true;
-            if (typeof logoutUser === 'function') {
-                await logoutUser();
-            } else {
-                clearAuth();
-                window.location.href = window.location.pathname.includes('/pages/') ? '../index.html' : 'index.html';
-            }
+            //clears the server cookie as well as local storage, then goes home
+            await logoutUser();
         };
     }
 
@@ -282,9 +282,9 @@ function bindHeaderEvents() {
     });
 }
 
+
 export { loadComponents, bindHeaderEvents, updateNavbar };
 
-// Initialize
 async function initApp() {
     await loadComponents();
     bindHeaderEvents();

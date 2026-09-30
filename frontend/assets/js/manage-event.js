@@ -1,7 +1,9 @@
 import { isAuthenticated } from './authService.js';
 import { 
     getEvent, 
-    getEventAttendees, 
+    getAttendeeDetails,
+    removeEventAttendee,
+    setAttendeePayment,
     checkinEventAttendee, 
     updateEvent, 
     deleteEvent,
@@ -13,28 +15,27 @@ import {
     removeEventManager, 
     addManualAttendee 
 } from './api.js';
-import { showToast } from './main.js';
+import { showToast, escapeHtml } from './main.js';
+import { phoneProblem, splitPhone } from './phone.js';
 
-// Manage event logic
+//manage event logic
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Auth Guard
     if (!isAuthenticated()) {
         window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         return;
     }
 
-    // 2. Parse Event ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('id');
 
     if (!eventId) {
-        if (typeof showToast === 'function') showToast('No event ID provided.', 'error');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+        showToast('No event ID provided.', 'error');
+        setTimeout(() => { window.location.href = 'my-activities.html'; }, 1000);
         return;
     }
 
-    // Tab switching
+    //tab switching
     const tabItems = document.querySelectorAll('.manage-tab-item');
     const tabPanes = document.querySelectorAll('.manage-tab-pane');
     tabItems.forEach(item => {
@@ -48,10 +49,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    const startTab = urlParams.get('tab');
+    const startTabItem = startTab ? document.querySelector(`.manage-tab-item[data-tab-target="${startTab}"]`) : null;
+    if (startTabItem) startTabItem.click();
+
     let currentEvent = null;
     let attendeesList = [];
 
-    // 3. Fetch Event Details
     try {
         const evRes = await getEvent(eventId);
         if (evRes && evRes.success && evRes.data) {
@@ -62,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span class="material-symbols-outlined dash-empty-icon">event_busy</span>
                     <h2 class="dash-empty-title">Event Not Found</h2>
                     <p class="dash-empty-desc">This event may have been deleted or does not exist.</p>
-                    <a href="dashboard.html" class="btn btn-primary btn-pill">Return to Organizer Hub</a>
+                    <a href="my-activities.html" class="btn btn-primary btn-pill">Return to My Activities</a>
                 </div>
             `;
             return;
@@ -72,13 +76,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Hydrate Header
+    //past events are view only (the api refuses changes to them as well)
+    const lastDay = currentEvent.end_date || currentEvent.event_date;
+    const isPast = lastDay ? lastDay.slice(0, 10) < new Date().toISOString().slice(0, 10) : false;
+
+    if (isPast) {
+        document.querySelector('main').classList.add('manage-readonly');
+        document.getElementById('pastEventNotice').classList.remove('is-hidden');
+        const statusBadge = document.getElementById('manageStatusBadge');
+        statusBadge.textContent = 'Past Event';
+        statusBadge.className = 'badge badge-status-past';
+        document.querySelectorAll('#formEditEvent input, #formEditEvent textarea, #formEditEvent select').forEach(el => { el.disabled = true; });
+        document.getElementById('detailsTabLabel').textContent = 'Details';
+        document.getElementById('detailsPanelTitle').textContent = 'Event Details';
+    }
+
+    //hydrate header
     document.title = `Manage — ${currentEvent.title} | Aavahan`;
     const headerTitleEl = document.getElementById('manageEventTitle');
     const headerDateEl = document.getElementById('manageEventDate');
     const headerIdBadgeEl = document.getElementById('manageEventIdBadge');
     const viewPublicBtn = document.getElementById('btnViewPublicPage');
-    const editEventBtn = document.getElementById('btnEditEvent');
 
     if (headerTitleEl) headerTitleEl.textContent = currentEvent.title;
     if (headerIdBadgeEl) headerIdBadgeEl.textContent = `Event #${currentEvent.id}`;
@@ -87,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dateFormatted = eventDate.toLocaleDateString('en-US', {
         weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
     });
-    const timeFormatted = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : '10:00 NPT';
+    const timeFormatted = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : 'Time to be announced';
     const venueText = currentEvent.is_online ? 'Online Event' : (currentEvent.venue || currentEvent.city || 'Location TBD');
 
     if (headerDateEl) {
@@ -102,14 +120,128 @@ document.addEventListener('DOMContentLoaded', async () => {
         navBtnViewPublic.href = `event-details.html?id=${currentEvent.id}`;
     }
 
-    // 4. Fetch Real Attendees, Announcements, and Team
+    //edit details form
+    const editForm = document.getElementById('formEditEvent');
+    const editBanner = document.getElementById('editBanner');
+    const editBannerWrapper = document.getElementById('editBannerPreviewWrapper');
+    const editBannerPreview = document.getElementById('editBannerPreview');
+
+    function showBannerPreview(src) {
+        if (!editBannerWrapper || !editBannerPreview) return;
+        editBannerPreview.src = src;
+        editBannerWrapper.classList.remove('is-hidden');
+    }
+
+    if (editForm) {
+        //the api returns dates like "2026-10-04t00:00:00.000z", the inputs want "2026-10-04"
+        document.getElementById('editTitle').value = currentEvent.title || '';
+        document.getElementById('editCategory').value = currentEvent.category || '';
+        document.getElementById('editDescription').value = currentEvent.description || '';
+        document.getElementById('editCity').value = currentEvent.city || '';
+        document.getElementById('editVenue').value = currentEvent.venue || '';
+        document.getElementById('editDate').value = currentEvent.event_date ? currentEvent.event_date.slice(0, 10) : '';
+        document.getElementById('editEndDate').value = currentEvent.end_date ? currentEvent.end_date.slice(0, 10) : '';
+        document.getElementById('editStartTime').value = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) : '';
+        document.getElementById('editEndTime').value = currentEvent.end_time ? currentEvent.end_time.slice(0, 5) : '';
+        document.getElementById('editDeadline').value = currentEvent.registration_deadline ? currentEvent.registration_deadline.slice(0, 16) : '';
+        document.getElementById('editCapacity').value = currentEvent.capacity || '';
+        document.getElementById('editIsOnline').checked = !!currentEvent.is_online;
+        document.getElementById('editRequirePhone').checked = !!currentEvent.require_phone;
+        const contact = splitPhone(currentEvent.contact_phone);
+        document.getElementById('editContactCode').value = contact.code;
+        document.getElementById('editContactNumber').value = contact.number;
+        if (currentEvent.image_url) showBannerPreview(currentEvent.image_url);
+
+        const editHostLogo = document.getElementById('editHostLogo');
+        const editHostLogoPreview = document.getElementById('editHostLogoPreview');
+        document.getElementById('editHostName').value = currentEvent.host_name || '';
+        editHostLogoPreview.addEventListener('error', () => editHostLogoPreview.classList.add('is-hidden'));
+        if (currentEvent.host_logo_url) {
+            editHostLogoPreview.src = currentEvent.host_logo_url;
+            editHostLogoPreview.classList.remove('is-hidden');
+        }
+        editHostLogo.addEventListener('change', () => {
+            const file = editHostLogo.files[0];
+            if (!file) return;
+            editHostLogoPreview.src = URL.createObjectURL(file);
+            editHostLogoPreview.classList.remove('is-hidden');
+        });
+        //hide the preview rather than show a broken image if the file is missing
+        if (editBannerPreview) editBannerPreview.addEventListener('error', () => editBannerWrapper.classList.add('is-hidden'));
+
+        editBanner.addEventListener('change', () => {
+            const file = editBanner.files[0];
+            if (file) showBannerPreview(URL.createObjectURL(file));
+        });
+
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('editTitle').value.trim();
+            const eventDate = document.getElementById('editDate').value;
+            const endDate = document.getElementById('editEndDate').value;
+
+            if (!title) {
+                showToast('Event title is required.', 'error');
+                return;
+            }
+            if (endDate && eventDate && endDate < eventDate) {
+                showToast('End date cannot be before the start date.', 'error');
+                return;
+            }
+
+            const contactCode = document.getElementById('editContactCode').value;
+            const contactNumber = document.getElementById('editContactNumber').value.trim();
+            if (contactNumber && phoneProblem(contactCode, contactNumber)) {
+                showToast(phoneProblem(contactCode, contactNumber), 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('category', document.getElementById('editCategory').value.trim());
+            formData.append('description', document.getElementById('editDescription').value.trim());
+            formData.append('city', document.getElementById('editCity').value.trim());
+            formData.append('venue', document.getElementById('editVenue').value.trim());
+            formData.append('event_date', eventDate);
+            formData.append('end_date', endDate);
+            formData.append('start_time', document.getElementById('editStartTime').value);
+            formData.append('end_time', document.getElementById('editEndTime').value);
+            formData.append('registration_deadline', document.getElementById('editDeadline').value);
+            formData.append('capacity', document.getElementById('editCapacity').value);
+            formData.append('is_online', document.getElementById('editIsOnline').checked ? 'true' : 'false');
+            formData.append('require_phone', document.getElementById('editRequirePhone').checked ? 'true' : 'false');
+            formData.append('contact_phone_code', contactCode);
+            formData.append('contact_phone_number', contactNumber);
+            if (editBanner.files[0]) formData.append('eventBanner', editBanner.files[0]);
+            formData.append('host_name', document.getElementById('editHostName').value.trim());
+            const logoFile = document.getElementById('editHostLogo').files[0];
+            if (logoFile) formData.append('hostLogo', logoFile);
+
+            const btnSave = document.getElementById('btnSaveEvent');
+            btnSave.disabled = true;
+
+            const res = await updateEvent(currentEvent.id, formData);
+
+            if (res && res.success) {
+                showToast('Event updated', 'success');
+                //reload so the header and every tab show the new details
+                setTimeout(() => { window.location.href = `manage-event.html?id=${currentEvent.id}&tab=tabDetails`; }, 800);
+            } else {
+                showToast(res?.error || res?.message || 'Could not update the event.', 'error');
+                btnSave.disabled = false;
+                btnSave.textContent = 'Save Changes';
+            }
+        });
+    }
+
     await loadAttendees();
     await loadManageAnnouncements();
     await loadManageTeam();
 
     async function loadAttendees() {
         try {
-            const attRes = await getEventAttendees(eventId);
+            const attRes = await getAttendeeDetails(eventId);
             if (attRes && attRes.success && Array.isArray(attRes.data)) {
                 attendeesList = attRes.data;
             } else {
@@ -123,20 +255,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderMetrics();
         renderAttendeesTable(attendeesList);
         renderTicketTiers();
-        renderEventSchedule();
     }
 
-    // 5. Render Metrics Cards
     function renderMetrics() {
         const totalRegistrations = attendeesList.length;
         const capacity = currentEvent.capacity || 0;
         const checkedInCount = attendeesList.filter(a => a.status === 'checked_in').length;
-        const isFree = currentEvent.is_free || !currentEvent.min_price || Number(currentEvent.min_price) === 0;
-        const ticketPrice = isFree ? 0 : Number(currentEvent.min_price);
-        const grossSales = totalRegistrations * ticketPrice;
 
         const metricRegEl = document.getElementById('metricTotalRegistrations');
-        const metricSalesEl = document.getElementById('metricGrossSales');
         const metricCheckinEl = document.getElementById('metricCheckedIn');
         const metricTrendRegEl = document.getElementById('metricTrendReg');
         const metricTrendCheckinEl = document.getElementById('metricTrendCheckin');
@@ -151,10 +277,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             metricTrendRegEl.textContent = `Open capacity`;
         }
 
-        if (metricSalesEl) {
-            metricSalesEl.textContent = isFree ? 'Free Event' : `NPR ${grossSales.toLocaleString()}`;
-        }
-
         if (metricCheckinEl) {
             metricCheckinEl.textContent = `${checkedInCount} / ${totalRegistrations}`;
         }
@@ -165,11 +287,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const totalCountLabel = document.getElementById('attendeeTotalCount');
         if (totalCountLabel) {
-            totalCountLabel.textContent = `${totalRegistrations} attendee${totalRegistrations === 1 ? '' : 's'}`;
+            const isFreeEvent = currentEvent.is_free || !Number(currentEvent.min_price);
+            const paidCount = attendeesList.filter(a => a.is_paid).length;
+            totalCountLabel.textContent = `${totalRegistrations} attendee${totalRegistrations === 1 ? '' : 's'}`
+                + (isFreeEvent ? '' : ` · ${paidCount} paid`);
         }
     }
 
-    // 6. Render Attendees Table
     function renderAttendeesTable(attendees) {
         const tbody = document.getElementById('attendeesTableBody');
         if (!tbody) return;
@@ -194,9 +318,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             const badgeClass = isCheckedIn ? 'badge-status-checked' : 'badge-status-confirmed';
             const statusLabel = isCheckedIn ? 'Checked In' : 'Going';
             const rsvpCode = `RSVP-${String(att.id).padStart(4, '0')}`;
-            const name = att.name || 'Member';
-            const email = att.email || '—';
-            const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+            const name = escapeHtml(att.name || 'Member');
+            const email = escapeHtml(att.email || '—');
+            const phone = att.phone ? escapeHtml(att.phone) : '—';
+
+            //paid events: the organiser confirms each payment by hand
+            const paymentCell = isFree
+                ? '<span class="font-bold">Free</span>'
+                : `<div class="attendee-payment">
+                       <span class="font-bold">${priceLabel}</span>
+                       <span class="badge ${att.is_paid ? 'badge-status-confirmed' : 'badge-status-unpaid'}">${att.is_paid ? 'Paid' : 'Unpaid'}</span>
+                       <button type="button" class="btn btn-outline btn-sm admin-btn-xs" data-payment="${att.is_paid ? 'unpaid' : 'paid'}" data-id="${att.id}">
+                           ${att.is_paid ? 'Mark unpaid' : 'Mark paid'}
+                       </button>
+                   </div>`;
+            const initials = escapeHtml((att.name || 'Member').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase());
 
             const actionBtn = isCheckedIn
                 ? `<span class="attendee-status-checked">
@@ -220,19 +356,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </td>
                     <td>
+                        <span class="attendee-phone">${phone}</span>
+                    </td>
+                    <td>
                         <span class="dash-mono-id">${rsvpCode}</span>
                     </td>
                     <td>
-                        <span class="font-semibold">General Admission</span>
-                    </td>
-                    <td>
-                        <span class="font-bold">${priceLabel}</span>
+                        ${paymentCell}
                     </td>
                     <td>
                         <span class="badge ${badgeClass}">${statusLabel}</span>
                     </td>
                     <td>
-                        ${actionBtn}
+                        <div class="attendee-actions">
+                            ${actionBtn}
+                            <button type="button" class="btn btn-outline btn-outline-danger btn-sm admin-btn-xs" data-action="remove-attendee" data-id="${att.id}" data-name="${name}">
+                                Remove
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -246,19 +387,55 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const rsvpId = Number(btn.getAttribute('data-id'));
                     handleCheckin(rsvpId, btn);
                 }
+
+                const removeBtn = e.target.closest('[data-action="remove-attendee"]');
+                if (removeBtn) handleRemoveAttendee(Number(removeBtn.dataset.id), removeBtn.dataset.name, removeBtn);
+
+                const paymentBtn = e.target.closest('[data-payment]');
+                if (paymentBtn) handlePayment(Number(paymentBtn.dataset.id), paymentBtn.dataset.payment === 'paid', paymentBtn);
             });
         }
     }
 
-    // 7. Check-in Handler
+    //mark an attendee as paid or unpaid
+    async function handlePayment(rsvpId, paid, btn) {
+        btn.disabled = true;
+        const res = await setAttendeePayment(currentEvent.id, rsvpId, paid);
+        if (res && res.success) {
+            showToast(res.message, 'success');
+            const att = attendeesList.find(a => a.id === rsvpId);
+            if (att) att.is_paid = paid ? 1 : 0;
+            renderMetrics();
+            applyAttendeeFilters();
+        } else {
+            showToast(res?.message || 'Could not update the payment.', 'error');
+            btn.disabled = false;
+        }
+    }
+
+    //remove an attendee from the event
+    async function handleRemoveAttendee(rsvpId, name, btn) {
+        if (!confirm(`Remove ${name} from this event? They will no longer be registered.`)) return;
+        btn.disabled = true;
+        const res = await removeEventAttendee(currentEvent.id, rsvpId);
+        if (res && res.success) {
+            showToast('Attendee removed', 'success');
+            attendeesList = attendeesList.filter(a => a.id !== rsvpId);
+            renderMetrics();
+            applyAttendeeFilters();
+        } else {
+            showToast(res?.message || 'Could not remove the attendee.', 'error');
+            btn.disabled = false;
+        }
+    }
+
     async function handleCheckin(rsvpId, btn) {
         btn.disabled = true;
-        btn.textContent = 'Processing…';
         try {
             const res = await checkinEventAttendee(currentEvent.id, rsvpId);
             if (res && res.success) {
                 showToast('Attendee checked in successfully!', 'success');
-                // Update local attendee record
+                //update local attendee record
                 const att = attendeesList.find(a => a.id === rsvpId);
                 if (att) att.status = 'checked_in';
                 renderMetrics();
@@ -276,7 +453,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 8. Search and Filter Attendees
     const searchInput = document.getElementById('attendeeSearchInput');
     const statusFilter = document.getElementById('attendeeStatusFilter');
 
@@ -285,14 +461,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const filter = statusFilter ? statusFilter.value.toLowerCase() : 'all';
 
         const filtered = attendeesList.filter(att => {
-            const nameMatch = (att.name || '').toLowerCase().includes(query);
-            const emailMatch = (att.email || '').toLowerCase().includes(query);
+            const nameMatch = escapeHtml(att.name || '').toLowerCase().includes(query);
+            const emailMatch = escapeHtml(att.email || '').toLowerCase().includes(query);
             const idMatch = String(att.id).includes(query);
-            const matchesQuery = !query || nameMatch || emailMatch || idMatch;
+            const phoneMatch = (att.phone || '').replace(/\s/g, '').includes(query.replace(/\s/g, ''));
+            const matchesQuery = !query || nameMatch || emailMatch || idMatch || phoneMatch;
 
             let matchesStatus = true;
             if (filter === 'confirmed') matchesStatus = att.status === 'confirmed';
             else if (filter === 'checked in' || filter === 'checked_in') matchesStatus = att.status === 'checked_in';
+            else if (filter === 'paid') matchesStatus = !!att.is_paid;
+            else if (filter === 'unpaid') matchesStatus = !att.is_paid;
 
             return matchesQuery && matchesStatus;
         });
@@ -303,7 +482,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (searchInput) searchInput.addEventListener('input', applyAttendeeFilters);
     if (statusFilter) statusFilter.addEventListener('change', applyAttendeeFilters);
 
-    // 9. Render Ticket Tiers Dynamically
     function renderTicketTiers() {
         const grid = document.getElementById('manageTicketTiersGrid');
         if (!grid) return;
@@ -335,81 +513,99 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="progress-track">
                     <div class="progress-fill ${fillClass} ${widthClass}"></div>
                 </div>
-                <button class="btn btn-outline btn-block btn-sm" onclick="showToast('Capacity settings active for this event', 'info')">Capacity Settings</button>
+
+                <div class="capacity-editor edit-only">
+                    <label class="form-label" for="capacityInput">Capacity</label>
+                    <div class="capacity-controls">
+                        <button type="button" class="btn btn-outline btn-sm" data-capacity="down" aria-label="Decrease capacity">−</button>
+                        <input type="number" id="capacityInput" class="form-input" min="${Math.max(sold, 1)}" placeholder="Unlimited" value="${capacity || ''}">
+                        <button type="button" class="btn btn-outline btn-sm" data-capacity="up" aria-label="Increase capacity">+</button>
+                        <button type="button" class="btn btn-primary btn-sm" data-capacity="save">Save</button>
+                    </div>
+                    <small class="form-hint">Leave empty for unlimited. It can't go below the ${sold} ${sold === 1 ? 'person' : 'people'} already registered.</small>
+                </div>
             </div>
         `;
     }
 
-    // 10. Render Event Schedule Dynamically
-    function renderEventSchedule() {
-        const timeline = document.getElementById('manageScheduleTimeline');
-        if (!timeline) return;
+    //capacity editor: the card is re-rendered often, so listen on the grid once
+    const tiersGrid = document.getElementById('manageTicketTiersGrid');
+    if (tiersGrid) {
+        tiersGrid.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-capacity]');
+            if (!btn) return;
 
-        const startTime = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) + ' NPT' : '10:00 NPT';
-        const endTime = currentEvent.end_time ? currentEvent.end_time.slice(0, 5) + ' NPT' : '';
-        const venue = currentEvent.is_online ? 'Online Platform' : (currentEvent.venue || currentEvent.city || 'Event Venue');
-        const organizer = currentEvent.organizer_name || 'Event Host';
+            const input = document.getElementById('capacityInput');
+            const registered = attendeesList.length;
+            const current = parseInt(input.value, 10);
 
-        timeline.innerHTML = `
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-time">${startTime} • ${venue}</div>
-                <div class="timeline-title">Doors Open & Registration Check-in</div>
-                <div class="timeline-speaker">Organized by ${organizer}</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-time">${startTime} ${endTime ? '- ' + endTime : 'onwards'} • Main Hall</div>
-                <div class="timeline-title">${currentEvent.title}</div>
-                <div class="timeline-speaker">${currentEvent.category || 'Community'} Session</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-time">${endTime || 'Wrap-up'} • ${venue}</div>
-                <div class="timeline-title">Community Networking & Concluding Remarks</div>
-                <div class="timeline-speaker">All Attendees & Guests</div>
-            </div>
-        `;
+            if (btn.dataset.capacity === 'up') {
+                input.value = isNaN(current) ? Math.max(registered, 1) : current + 1;
+                return;
+            }
+            if (btn.dataset.capacity === 'down') {
+                if (!isNaN(current)) input.value = Math.max(registered, 1, current - 1);
+                return;
+            }
+
+            //save
+            if (!isNaN(current) && current < Math.max(registered, 1)) {
+                showToast(`Capacity cannot be lower than the ${registered} people already registered.`, 'error');
+                return;
+            }
+            btn.disabled = true;
+            const newCapacity = isNaN(current) ? '' : current;
+            const res = await updateEvent(currentEvent.id, { capacity: newCapacity });
+            if (res && res.success) {
+                currentEvent.capacity = newCapacity === '' ? null : newCapacity;
+                const editCapacity = document.getElementById('editCapacity');
+                if (editCapacity) editCapacity.value = newCapacity;
+                showToast(newCapacity === '' ? 'Capacity set to unlimited' : `Capacity set to ${newCapacity}`, 'success');
+                renderMetrics();
+                renderTicketTiers();
+            } else {
+                showToast(res?.message || 'Could not update the capacity.', 'error');
+                btn.disabled = false;
+            }
+        });
     }
 
-    // 11. Real Cancel Event Handler
     const btnCancel = document.getElementById('btnCancelManageEvent');
     if (btnCancel) {
         btnCancel.addEventListener('click', async () => {
-            if (!confirm(`Are you sure you want to cancel and delete "${currentEvent.title}"? This cannot be undone.`)) return;
+            if (!confirm(`Are you sure you want to cancel and delete "${escapeHtml(currentEvent.title)}"? This cannot be undone.`)) return;
             btnCancel.disabled = true;
-            btnCancel.textContent = 'Processing...';
             try {
                 const res = await deleteEvent(currentEvent.id);
                 if (res && res.success) {
-                    if (typeof showToast === 'function') showToast('Event cancelled successfully.', 'success');
-                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+                    showToast('Event cancelled successfully.', 'success');
+                    setTimeout(() => { window.location.href = 'my-activities.html'; }, 1000);
                 } else {
-                    if (typeof showToast === 'function') showToast(res?.message || 'Could not cancel event.', 'error');
+                    showToast(res?.message || 'Could not cancel event.', 'error');
                     btnCancel.disabled = false;
                     btnCancel.textContent = 'Cancel Event';
                 }
             } catch (e) {
-                if (typeof showToast === 'function') showToast('Network error cancelling event.', 'error');
+                showToast('Network error cancelling event.', 'error');
                 btnCancel.disabled = false;
                 btnCancel.textContent = 'Cancel Event';
             }
         });
     }
 
-    // 12. Real Dynamic Attendee CSV Exporter
     function exportAttendeesCSV() {
         if (!attendeesList || attendeesList.length === 0) {
             showToast('No attendees registered to export.', 'info');
             return;
         }
 
-        const headers = ['RSVP Code', 'Name', 'Email', 'Tier', 'Status', 'Registered At'];
+        const headers = ['RSVP Code', 'Name', 'Email', 'Phone', 'Paid', 'Status', 'Registered At'];
         const rows = attendeesList.map(a => [
             `RSVP-${String(a.id).padStart(4, '0')}`,
             `"${(a.name || 'Member').replace(/"/g, '""')}"`,
             `"${(a.email || '').replace(/"/g, '""')}"`,
-            'General Admission',
+            `"${a.phone || ''}"`,
+            (currentEvent.is_free || !Number(currentEvent.min_price)) ? 'Free' : (a.is_paid ? 'Yes' : 'No'),
             a.status === 'checked_in' ? 'Checked In' : 'Confirmed',
             `"${a.created_at || ''}"`
         ]);
@@ -440,14 +636,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const addAgendaBtn = document.getElementById('btnAddAgendaItem');
-    if (addAgendaBtn) {
-        addAgendaBtn.addEventListener('click', () => {
-            showToast('Session agenda updated', 'info');
-        });
-    }
-
-    // 13. Announcements Management
     async function loadManageAnnouncements() {
         const container = document.getElementById('manageAnnouncementsList');
         if (!container) return;
@@ -463,14 +651,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="announcement-manage-item">
                             <div class="d-flex justify-between items-start">
                                 <div>
-                                    <h4 class="announcement-item-title">${item.title}</h4>
-                                    <span class="announcement-meta-time">Posted by ${item.author_name || 'Host'} • ${timeFormatted}</span>
+                                    <h4 class="announcement-item-title">${escapeHtml(item.title)}</h4>
+                                    <span class="announcement-meta-time">Posted by ${escapeHtml(item.author_name || 'Host')} • ${timeFormatted}</span>
                                 </div>
                                 <button type="button" class="btn btn-outline btn-outline-danger btn-sm" data-action="delete-announcement" data-id="${item.id}">
                                     <span class="material-symbols-outlined">delete</span>
                                 </button>
                             </div>
-                            <p class="announcement-item-body">${(item.message || '').replace(/\n/g, '<br>')}</p>
+                            <p class="announcement-item-body">${escapeHtml(item.message || '').replace(/\n/g, '<br>')}</p>
                         </div>
                     `;
                 }).join('');
@@ -505,7 +693,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Broadcasting...';
 
             try {
                 const res = await createEventAnnouncement(eventId, { title, message });
@@ -553,7 +740,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 14. Team & Co-Managers Management
     async function loadManageTeam() {
         const container = document.getElementById('manageTeamList');
         if (!container) return;
@@ -562,14 +748,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const res = await getEventManagers(eventId);
             if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
                 container.innerHTML = res.data.map(m => {
-                    const initials = (m.name || 'Member').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                    const initials = escapeHtml(m.name || 'Member').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
                     return `
                         <div class="team-member-item">
                             <div class="d-flex items-center gap-0-75">
                                 <div class="team-member-avatar">${initials}</div>
                                 <div>
-                                    <div class="team-member-name">${m.name}</div>
-                                    <div class="team-member-email">${m.email}</div>
+                                    <div class="team-member-name">${escapeHtml(m.name)}</div>
+                                    <div class="team-member-email">${escapeHtml(m.email)}</div>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-outline btn-outline-danger btn-sm" data-action="remove-manager" data-id="${m.user_id}">
@@ -602,12 +788,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const email = emailInput ? emailInput.value.trim() : '';
 
             if (!email) {
-                showToast('Please enter a team member email', 'info');
+                showToast('Please enter a team member email or name', 'info');
                 return;
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Adding...';
 
             try {
                 const res = await addEventManager(eventId, email);
@@ -654,7 +839,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 15. Manual Attendee by Email
     const btnAddManual = document.getElementById('btnAddManualAttendeeBtn');
     const modalManual = document.getElementById('manualAttendeeModal');
     const btnCloseManual = document.getElementById('btnCloseManualRsvp');
@@ -696,7 +880,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Registering...';
 
             try {
                 const res = await addManualAttendee(eventId, email);
