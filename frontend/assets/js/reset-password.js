@@ -1,8 +1,6 @@
 import { requestPasswordReset, resetPassword } from './api.js';
 import { showToast } from './main.js';
 
-// One page, two jobs. Arriving with ?token=... means the user followed the
-// emailed link, so show the "choose a new password" form instead.
 const token = new URLSearchParams(window.location.search).get('token');
 
 const requestForm = document.getElementById('requestResetForm');
@@ -23,7 +21,6 @@ requestForm.addEventListener('submit', async (e) => {
     const btn = document.getElementById('btnRequestReset');
 
     btn.disabled = true;
-    btn.textContent = 'Sending...';
 
     const res = await requestPasswordReset(email);
 
@@ -35,7 +32,6 @@ requestForm.addEventListener('submit', async (e) => {
     } else {
         showToast(res.message || 'Could not send the reset link.', 'error');
         btn.disabled = false;
-        btn.textContent = 'Send reset link';
     }
 });
 
@@ -52,7 +48,6 @@ passwordForm.addEventListener('submit', async (e) => {
     }
 
     btn.disabled = true;
-    btn.textContent = 'Updating...';
 
     const res = await resetPassword(token, password);
 
@@ -65,6 +60,5 @@ passwordForm.addEventListener('submit', async (e) => {
     } else {
         showToast(res.message || 'Could not update your password.', 'error');
         btn.disabled = false;
-        btn.textContent = 'Update password';
     }
 });

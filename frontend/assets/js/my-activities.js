@@ -2,15 +2,13 @@ import { isAuthenticated } from './authService.js';
 import { getMyActivities, getMyOrganizerEvents, cancelEventRsvp } from './api.js';
 import { showToast, escapeHtml } from './main.js';
 
-// My Activities & Created Events page logic
 
 let joinedData = { upcoming: [], past: [], all: [] };
 let createdData = { upcoming: [], past: [], all: [], stats: {} };
-let currentTab = 'joined'; // 'joined' | 'created'
-let currentSubFilter = 'upcoming'; // 'upcoming' | 'past' | 'all'
+let currentTab = 'joined'; //'joined' | 'created'
+let currentSubFilter = 'upcoming'; //'upcoming' | 'past' | 'all'
 let searchQuery = '';
 
-// Helper: Check authentication
 function requireAuth() {
     if (!isAuthenticated()) {
         window.location.href = 'login.html?redirect=my-activities.html';
@@ -19,7 +17,7 @@ function requireAuth() {
     return true;
 }
 
-// An event is upcoming until its last day is over. Events with no date yet (TBA) are upcoming.
+//an event is upcoming until its last day is over. events with no date yet (tba) are upcoming.
 function isUpcomingEvent(ev) {
     const dateStr = ev.end_date || ev.event_date;
     if (!dateStr) return true;
@@ -30,7 +28,6 @@ function isUpcomingEvent(ev) {
     return evDate >= now;
 }
 
-// Fetch both joined activities and created events
 async function loadActivities() {
     if (!requireAuth()) return;
 
@@ -51,7 +48,6 @@ async function loadActivities() {
             getMyOrganizerEvents()
         ]);
 
-        // 1. Process Joined Events
         if (joinedRes && joinedRes.success && joinedRes.data) {
             const up = joinedRes.data.upcoming || [];
             const pst = joinedRes.data.past || [];
@@ -64,7 +60,6 @@ async function loadActivities() {
             joinedData = { upcoming: [], past: [], all: [] };
         }
 
-        // 2. Process Created Events
         if (createdRes && createdRes.success && Array.isArray(createdRes.data)) {
             const raw = createdRes.data;
             const up = [];
@@ -100,9 +95,7 @@ async function loadActivities() {
     }
 }
 
-// Update KPI summary cards and tab badges
 function updateStatsAndBadges() {
-    // Joined stats
     const joinedTotal = joinedData.all.length;
     const joinedUp = joinedData.upcoming.length;
     const joinedPst = joinedData.past.length;
@@ -117,7 +110,6 @@ function updateStatsAndBadges() {
     if (statJoinedPast) statJoinedPast.textContent = joinedPst;
     if (badgeJoinedTotal) badgeJoinedTotal.textContent = joinedTotal;
 
-    // Created stats
     const createdTotal = createdData.all.length;
     const createdUp = createdData.upcoming.length;
     const createdPst = createdData.past.length;
@@ -136,7 +128,6 @@ function updateStatsAndBadges() {
     if (statTotalAttendees) statTotalAttendees.textContent = totalRSVPs.toLocaleString();
 }
 
-// Render dynamic subfilter pill buttons
 function renderSubfilters() {
     const container = document.getElementById('subfilterContainer');
     if (!container) return;
@@ -183,7 +174,6 @@ function renderSubfilters() {
     });
 }
 
-// Render the active items list
 function renderList() {
     const listEl = document.getElementById('activitiesList');
     if (!listEl) return;
@@ -195,14 +185,12 @@ function renderList() {
     }
 }
 
-// Render "Events I've Joined"
 function renderJoinedList(listEl) {
     let items = [];
     if (currentSubFilter === 'upcoming') items = joinedData.upcoming;
     else if (currentSubFilter === 'past') items = joinedData.past;
     else items = joinedData.all;
 
-    // Apply search query filter if typed
     if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         items = items.filter(e => 
@@ -240,7 +228,6 @@ function renderJoinedList(listEl) {
         const isFree = ev.is_free || !ev.min_price || Number(ev.min_price) === 0;
         const priceLabel = isFree ? 'Free' : `NPR ${Number(ev.min_price).toLocaleString()}`;
 
-        // Exact location representation
         let locationMarkup = '';
         if (ev.is_online) {
             locationMarkup = `
@@ -284,7 +271,7 @@ function renderJoinedList(listEl) {
                     </div>
                     <div class="activity-details">
                         <div class="activity-meta">
-                            <span>📅 ${dateFormatted} · ${timeFormatted}</span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">calendar_today</span>${dateFormatted} · ${timeFormatted}</span>
                             <span>•</span>
                             <span class="activity-category-pill">${escapeHtml(ev.category || 'Event')}</span>
                             ${groupTag}
@@ -294,7 +281,7 @@ function renderJoinedList(listEl) {
                         </a>
                         ${locationMarkup}
                         <div class="activity-sub">
-                            <span>🎟️ ${priceLabel}</span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">confirmation_number</span>${priceLabel}</span>
                         </div>
                     </div>
                 </div>
@@ -310,14 +297,12 @@ function renderJoinedList(listEl) {
     }).join('');
 }
 
-// Render "Events I've Created"
 function renderCreatedList(listEl) {
     let items = [];
     if (currentSubFilter === 'upcoming') items = createdData.upcoming;
     else if (currentSubFilter === 'past') items = createdData.past;
     else items = createdData.all;
 
-    // Apply search query filter if typed
     if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         items = items.filter(e => 
@@ -362,7 +347,6 @@ function renderCreatedList(listEl) {
         const attendeesCount = ev.attendee_count || 0;
         const capacityText = ev.capacity ? `${attendeesCount} / ${ev.capacity} Seats Filled` : `${attendeesCount} Registered Attendees`;
 
-        // Exact location representation
         let locationMarkup = '';
         if (ev.is_online) {
             locationMarkup = `
@@ -393,7 +377,7 @@ function renderCreatedList(listEl) {
                     </div>
                     <div class="activity-details">
                         <div class="activity-meta">
-                            <span>📅 ${dateFormatted} · ${timeFormatted}</span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">calendar_today</span>${dateFormatted} · ${timeFormatted}</span>
                             <span>•</span>
                             <span class="activity-category-pill">${escapeHtml(ev.category || 'Event')}</span>
                             ${groupTag}
@@ -403,9 +387,9 @@ function renderCreatedList(listEl) {
                         </a>
                         ${locationMarkup}
                         <div class="activity-sub">
-                            <span>👥 <strong>${capacityText}</strong></span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">group</span><strong>${capacityText}</strong></span>
                             <span>•</span>
-                            <span>🎟️ ${priceLabel}</span>
+                            <span><span class="material-symbols-outlined meta-icon-inline">confirmation_number</span>${priceLabel}</span>
                         </div>
                     </div>
                 </div>
@@ -424,7 +408,6 @@ function renderCreatedList(listEl) {
     }).join('');
 }
 
-// Cancel RSVP handler
 async function handleCancelActivityRsvp(eventId, eventTitle) {
     const title = eventTitle || 'this event';
     if (!confirm(`Are you sure you want to cancel your registration for "${title}"?`)) {
@@ -446,7 +429,6 @@ async function handleCancelActivityRsvp(eventId, eventTitle) {
     }
 }
 
-// Wire up events
 document.addEventListener('DOMContentLoaded', () => {
     const tabJoined = document.getElementById('tabJoined');
     const tabCreated = document.getElementById('tabCreated');

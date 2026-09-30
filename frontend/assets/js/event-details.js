@@ -3,14 +3,13 @@ import { getEvent, getEventAttendees, rsvpToEvent, cancelEventRsvp, getEventAnno
 import { showToast, escapeHtml } from './main.js';
 import { phoneProblem } from './phone.js';
 
-// Event details page logic
+//event details page logic
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Get Event ID from URL query string
     const urlParams = new URLSearchParams(window.location.search);
     const eventIdParam = urlParams.get('id');
 
-    // Cover for events without an uploaded banner, from the bundled images (same mapping as the home page)
+    //cover for events without an uploaded banner, from the bundled images (same mapping as the home page)
     function getCoverImage(cat) {
         const lower = (cat || '').toLowerCase();
         if (/tech|software|\bai\b|code/.test(lower)) return '../assets/images/tech-summit.jpg';
@@ -22,7 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentEvent = null;
 
-    // 2. Fetch event data
     if (eventIdParam) {
         try {
             const res = await getEvent(eventIdParam);
@@ -45,7 +43,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // 3. Format Date and Time
     const isTba = Boolean(currentEvent.is_date_tba || !currentEvent.event_date);
     const eventDate = currentEvent.event_date ? new Date(currentEvent.event_date) : new Date();
     const dateFormattedLong = eventDate.toLocaleDateString('en-US', {
@@ -62,18 +59,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const timeStr = currentEvent.start_time ? currentEvent.start_time.slice(0, 5) : '';
     const endTimeStr = currentEvent.end_time ? currentEvent.end_time.slice(0, 5) : '';
-    // "SAT, OCT 4 · 18:00 NPT", or just the date when no start time is set
+    //"sat, oct 4 · 18:00 npt", or just the date when no start time is set
     const shortWhen = timeStr ? `${dateFormattedShort} · ${timeStr} NPT` : dateFormattedShort;
 
-    // Price formatting
     const isFree = currentEvent.is_free || !currentEvent.min_price || currentEvent.min_price == 0;
     const priceText = isFree ? 'FREE' : `NPR ${Number(currentEvent.min_price).toLocaleString()}`;
 
-    // Host initials
     const hostName = currentEvent.host_name || currentEvent.organizer_name || 'Community Organizer';
     const hostInitials = hostName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'CO';
 
-    // 4. Hydrate DOM elements
     const topEventDate = document.getElementById('topEventDate');
     if (topEventDate) topEventDate.textContent = isTba ? 'Date to be Announced' : shortWhen;
 
@@ -90,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const logo = document.createElement('img');
             logo.src = currentEvent.host_logo_url;
             logo.alt = hostName;
-            // keep the initials if the logo file cannot be loaded
+            //keep the initials if the logo file cannot be loaded
             logo.addEventListener('load', () => {
                 topHostAvatar.textContent = '';
                 topHostAvatar.classList.add('has-logo');
@@ -102,7 +96,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const topHostName = document.getElementById('topHostName');
     if (topHostName) topHostName.textContent = `Hosted by ${hostName}`;
 
-    // Show "Manage Event" button in the banner actions if the viewer is the organiser or an admin
     const storedUserForManage = getUser();
     const isOrganizer = storedUserForManage &&
         (Number(storedUserForManage.id) === Number(currentEvent.organizer_id) ||
@@ -114,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             manageBtn.href = `manage-event.html?id=${currentEvent.id}`;
             manageBtn.className = 'btn btn-outline-teal btn-pill';
             manageBtn.innerHTML = '<span class="material-symbols-outlined">tune</span><span>Manage Event</span>';
-            // Insert before the Share button so it stays leftmost
+            //insert before the share button so it stays leftmost
             topActionsWrap.insertBefore(manageBtn, topActionsWrap.firstChild);
         }
     }
@@ -122,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const eventCoverImg = document.getElementById('eventCoverImg');
     if (eventCoverImg) {
-        // If the uploaded banner file is missing, fall back to the category cover
+        //if the uploaded banner file is missing, fall back to the category cover
         eventCoverImg.addEventListener('error', () => {
             eventCoverImg.src = getCoverImage(currentEvent.category);
         }, { once: true });
@@ -137,14 +130,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             .join('');
     }
 
-    // Sidebar widgets
-    // Only show the group card when the event really belongs to a group
+    //sidebar widgets
     const sidebarGroupName = document.getElementById('sidebarGroupName');
     if (sidebarGroupName) {
+        const widget = sidebarGroupName.closest('.meetup-sidebar-widget');
         if (currentEvent.group_name) {
             sidebarGroupName.textContent = currentEvent.group_name;
+            if (widget) widget.classList.remove('is-hidden');
         } else {
-            sidebarGroupName.closest('.meetup-sidebar-widget').classList.add('is-hidden');
+            if (widget) widget.classList.add('is-hidden');
         }
     }
 
@@ -154,12 +148,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sidebarTimeText = document.getElementById('sidebarTimeText');
     if (sidebarTimeText) sidebarTimeText.textContent = (isTba || !timeStr) ? 'Time to be Announced' : (endTimeStr ? `${timeStr} to ${endTimeStr} NPT` : `${timeStr} NPT onwards`);
 
-    // Registration deadline display
+    //registration deadline display
     const isDeadlinePassed = Boolean(
         currentEvent.registration_deadline && new Date() > new Date(currentEvent.registration_deadline)
     );
 
-    // An event that has ended cannot be registered for (the API refuses it too)
+    //an event that has ended cannot be registered for (the api refuses it too)
     const lastDay = currentEvent.end_date || currentEvent.event_date;
     const isPast = lastDay ? lastDay.slice(0, 10) < new Date().toISOString().slice(0, 10) : false;
     const sidebarDeadlineContainer = document.getElementById('sidebarDeadlineContainer');
@@ -197,7 +191,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Modal Details
     const modalEventTitle = document.getElementById('modalEventTitle');
     if (modalEventTitle) modalEventTitle.textContent = currentEvent.title;
 
@@ -207,7 +200,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalEventPrice = document.getElementById('modalEventPrice');
     if (modalEventPrice) modalEventPrice.textContent = priceText;
 
-    // Hydrate current logged in user details in RSVP modal if available
     const storedUser = getUser() || {};
     if (storedUser.name) {
         const rsvpNameInput = document.getElementById('rsvpFullName');
@@ -218,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (rsvpEmailInput) rsvpEmailInput.value = storedUser.email;
     }
 
-    // Organiser contact number, if they gave one
+    //organiser contact number, if they gave one
     if (currentEvent.contact_phone) {
         const contactLink = document.getElementById('sidebarContactText');
         contactLink.textContent = currentEvent.contact_phone;
@@ -226,7 +218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sidebarContactContainer').classList.remove('is-hidden');
     }
 
-    // Ask for a phone number in the RSVP form when the organiser requires one
+    //ask for a phone number in the rsvp form when the organiser requires one
     const rsvpPhoneCode = document.getElementById('rsvpPhoneCode');
     const rsvpPhoneNumber = document.getElementById('rsvpPhoneNumber');
     if (currentEvent.require_phone) {
@@ -234,13 +226,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('rsvpPhoneGroup').classList.remove('is-hidden');
     }
 
-    // Hydrate Attendees Faces
+    //hydrate attendees faces
     loadAttendeesList(currentEvent.id);
 
-    // Hydrate Announcements
+    //hydrate announcements
     loadEventAnnouncements(currentEvent.id);
 
-    // 5. RSVP Modal Controls
     const rsvpModal = document.getElementById('meetupRsvpModal');
 
     function openModal() {
@@ -281,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Attach open trigger to all Attend buttons
+    //attach open trigger to all attend buttons
     document.querySelectorAll('.btn-attend-trigger').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -313,15 +304,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Close button inside modal header
+    //close button inside modal header
     const closeBtn = rsvpModal?.querySelector('.modal-close');
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
 
-    // Done button inside modal
+    //done button inside modal
     const doneBtn = document.getElementById('btnDoneRsvpModal');
     if (doneBtn) doneBtn.addEventListener('click', closeModal);
 
-    // Share button
+    //share button
     const shareDetailsBtn = document.getElementById('btnShareEventDetails');
     if (shareDetailsBtn) {
         shareDetailsBtn.addEventListener('click', () => {
@@ -330,14 +321,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Backdrop click close
+    //backdrop click close
     if (rsvpModal) {
         rsvpModal.addEventListener('click', (e) => {
             if (e.target === rsvpModal) closeModal();
         });
     }
 
-    // 6. RSVP Form Submission
     const rsvpForm = document.getElementById('meetupRsvpForm');
     if (rsvpForm) {
         rsvpForm.addEventListener('submit', async (e) => {
@@ -357,7 +347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Processing RSVP…';
+
 
             try {
                 const res = await rsvpToEvent(currentEvent.id, details);
@@ -367,7 +357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (formPane) formPane.classList.add('d-none');
                     if (successPane) successPane.classList.remove('d-none');
 
-                    // Hydrate pass
+                    //hydrate pass
                     const passUserName = document.getElementById('passUserName');
                     const passEventName = document.getElementById('passEventName');
                     const passEventTime = document.getElementById('passEventTime');
@@ -382,13 +372,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const dynamicTicketCode = res.rsvpId ? `RSVP-${String(res.rsvpId).padStart(4, '0')}` : `RSVP-${currentEvent.id}`;
                     if (passTicketId) passTicketId.textContent = dynamicTicketCode;
 
-                    // Update attendee count on page
+                    //update attendee count on page
                     currentEvent.attendee_count = (currentEvent.attendee_count || 0) + 1;
                     if (attendeesHeaderCount) attendeesHeaderCount.textContent = `Attendees (${currentEvent.attendee_count})`;
 
                     updateAttendButtonsState(true);
 
-                    // Reload attendees
+                    //reload attendees
                     loadAttendeesList(currentEvent.id);
 
                     showToast('RSVP confirmed! See you at the event.', 'success');
@@ -406,7 +396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Load Attendees function
+    //load attendees function
     async function loadAttendeesList(eventId) {
         const grid = document.getElementById('attendeesFacesGrid');
         if (!grid) return;
@@ -446,7 +436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // Load Event Announcements
+    //load event announcements
     async function loadEventAnnouncements(eventId) {
         const feed = document.getElementById('eventAnnouncementsFeed');
         const countBadge = document.getElementById('announcementsCountBadge');

@@ -1,5 +1,5 @@
-import { getUser, isAuthenticated, clearAuth } from './authService.js';
-import { 
+import { getUser, isAuthenticated } from './authService.js';
+import {
     getEvents,
     getAdminUsers,
     updateUserRole,
@@ -9,382 +9,910 @@ import {
 } from './api.js';
 import { showToast, escapeHtml } from './main.js';
 
-// Admin panel logic
+//admin panel logic
 
-// Admin auth guard
+//admin authentication check
 (function checkAdminAccess() {
-    if (!isAuthenticated()) { window.location.href = 'login.html?redirect=admin.html'; return; }
+    if (!isAuthenticated()) {
+        window.location.href = 'login.html?redirect=admin.html';
+        return;
+    }
 })();
 
-// Sidebar profile hydration
-(function hydrateSidebar() {
-    var user = getUser() || {};
-    var name = user.name || 'Admin';
-    var nameEl   = document.getElementById('adminSidebarName');
-    var avatarEl = document.getElementById('adminSidebarAvatar');
-    if (nameEl)   nameEl.textContent = name;
-    if (avatarEl) avatarEl.textContent = name.split(' ').map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
+//load user information into sidebar
+(function loadSidebarProfile() {
+    const user = getUser() || {};
+    const name = user.name || 'Admin';
+
+    const nameEl = document.getElementById('adminSidebarName');
+    const avatarEl = document.getElementById('adminSidebarAvatar');
+
+    if (nameEl) {
+        nameEl.textContent = name;
+    }
+
+    if (avatarEl) {
+        avatarEl.textContent = getInitials(name);
+    }
 })();
 
-// Tab navigation
-document.querySelectorAll('.admin-nav-item[data-tab]').forEach(function(item) {
-    item.addEventListener('click', function() {
-        document.querySelectorAll('.admin-nav-item').forEach(function(i) { i.classList.remove('active'); });
-        document.querySelectorAll('.admin-tab-pane').forEach(function(p) { p.classList.remove('active'); });
+//tab navigation
+document.querySelectorAll('.admin-nav-item[data-tab]').forEach(item => {
+    item.addEventListener('click', () => {
+        document
+            .querySelectorAll('.admin-nav-item')
+            .forEach(navItem => navItem.classList.remove('active'));
+
+        document
+            .querySelectorAll('.admin-tab-pane')
+            .forEach(pane => pane.classList.remove('active'));
+
         item.classList.add('active');
-        var pane = document.getElementById(item.getAttribute('data-tab'));
-        if (pane) pane.classList.add('active');
+
+        const pane = document.getElementById(
+            item.getAttribute('data-tab')
+        );
+
+        if (pane) {
+            pane.classList.add('active');
+        }
     });
 });
 
-// Mobile sidebar toggle
-var toggleBtn = document.getElementById('btnToggleSidebar');
-if (toggleBtn) toggleBtn.addEventListener('click', function() {
-    document.getElementById('adminSidebar').classList.toggle('open');
-});
+//mobile sidebar toggle
+const toggleBtn = document.getElementById('btnToggleSidebar');
 
-// Utility functions
+if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+        document
+            .getElementById('adminSidebar')
+            .classList.toggle('open');
+    });
+}
+
+//utility functions
+
 function fmtDate(dateStr) {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (!dateStr) {
+        return '—';
+    }
+
+    return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
 }
-function initials(name) {
-    return (name || '?').split(' ').map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
+
+function getInitials(name) {
+    return (name || '?')
+        .split(' ')
+        .map(word => word[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
 }
+
 function avatarEl(name) {
-    return '<div class="admin-avatar">' + escapeHtml(initials(name)) + '</div>';
+    return (
+        '<div class="admin-avatar">' +
+        escapeHtml(getInitials(name)) +
+        '</div>'
+    );
 }
 
-// Loading skeleton helper
-function tableLoading(tbodyId, cols) {
-    var tbody = document.getElementById(tbodyId);
-    if (!tbody) return;
-    var skeletonRow = '<tr>' + Array(cols).fill('<td><div class="skeleton-loader"></div></td>').join('') + '</tr>';
-    tbody.innerHTML = skeletonRow.repeat(5);
-}
-function tableEmpty(tbodyId, cols, msg) {
-    var tbody = document.getElementById(tbodyId);
-    if (tbody) tbody.innerHTML = '<tr><td colspan="' + cols + '" class="admin-table-empty">' + msg + '</td></tr>';
+//loading helpers
+function tableLoading(tbodyId, columns) {
+    const tbody = document.getElementById(tbodyId);
+
+    if (!tbody) {
+        return;
+    }
+
+    const row =
+        '<tr>' +
+        Array(columns)
+            .fill('<td><div class="skeleton-loader"></div></td>')
+            .join('') +
+        '</tr>';
+
+    tbody.innerHTML = row.repeat(5);
 }
 
-// Overview stats and recent events
+function tableEmpty(tbodyId, columns, message) {
+    const tbody = document.getElementById(tbodyId);
+
+    if (tbody) {
+        tbody.innerHTML =
+            '<tr>' +
+            '<td colspan="' +
+            columns +
+            '" class="admin-table-empty">' +
+            message +
+            '</td>' +
+            '</tr>';
+    }
+}
+
+//overview
 async function loadOverview() {
     try {
-        var [evRes, usRes] = await Promise.all([
+        const [eventResponse, userResponse] = await Promise.all([
             getEvents(),
             getAdminUsers()
         ]);
 
-        var events = (evRes.success && evRes.data) ? evRes.data : [];
-        var users  = (usRes.success && usRes.data) ? usRes.data : [];
+        const events =
+            eventResponse.success && eventResponse.data
+                ? eventResponse.data
+                : [];
 
-        var navEvCount = document.querySelector('.admin-nav-item[data-tab="tabAdminEvents"] .nav-count');
-        var navUsCount = document.querySelector('.admin-nav-item[data-tab="tabAdminUsers"] .nav-count');
-        if (navEvCount) navEvCount.textContent = events.length;
-        if (navUsCount) navUsCount.textContent = users.length;
+        const users =
+            userResponse.success && userResponse.data
+                ? userResponse.data
+                : [];
 
-        setCounter('kpiTotalUsers',  users.length);
+        const eventCount = document.querySelector(
+            '.admin-nav-item[data-tab="tabAdminEvents"] .nav-count'
+        );
+
+        const userCount = document.querySelector(
+            '.admin-nav-item[data-tab="tabAdminUsers"] .nav-count'
+        );
+
+        if (eventCount) {
+            eventCount.textContent = events.length;
+        }
+
+        if (userCount) {
+            userCount.textContent = users.length;
+        }
+
+        setCounter('kpiTotalUsers', users.length);
         setCounter('kpiTotalEvents', events.length);
 
-        var tbody = document.getElementById('adminPendingQueue');
-        if (!tbody) return;
-        var recent = events.slice().sort(function(a,b){ return new Date(b.created_at)-new Date(a.created_at); }).slice(0,5);
-        if (!recent.length) { tableEmpty('adminPendingQueue', 4, 'No events yet.'); return; }
-        tbody.innerHTML = recent.map(function(ev) {
-            return '<tr>' +
-                '<td><div class="admin-table-title">' + escapeHtml(ev.title) + '</div><div class="admin-table-sub">' + escapeHtml(ev.city || '—') + '</div></td>' +
-                '<td>' + fmtDate(ev.event_date) + '</td>' +
-                '<td><span class="mod-badge mod-badge-published">Published</span></td>' +
-                '<td><div class="admin-action-btn-group">' +
-                    '<a href="event-details.html?id=' + ev.id + '" target="_blank" class="btn btn-outline btn-sm admin-btn-xs">View</a>' +
-                    '<button class="btn btn-sm btn-danger-light admin-btn-xs" data-action="delete-event" data-id="' + ev.id + '">Delete</button>' +
-                '</div></td>' +
-            '</tr>';
-        }).join('');
-    } catch(e) {
-        console.error('Overview load error:', e);
-        showToast('Could not load overview data.', 'error');
+        const tbody = document.getElementById('adminPendingQueue');
+
+        if (!tbody) {
+            return;
+        }
+
+        const recentEvents = events
+            .slice()
+            .sort(
+                (a, b) =>
+                    new Date(b.created_at) -
+                    new Date(a.created_at)
+            )
+            .slice(0, 5);
+
+        if (!recentEvents.length) {
+            tableEmpty(
+                'adminPendingQueue',
+                4,
+                'No events yet.'
+            );
+            return;
+        }
+
+        tbody.innerHTML = recentEvents
+            .map(event => {
+                return (
+                    '<tr>' +
+                    '<td>' +
+                    '<div class="admin-table-title">' +
+                    escapeHtml(event.title) +
+                    '</div>' +
+                    '<div class="admin-table-sub">' +
+                    escapeHtml(event.city || '—') +
+                    '</div>' +
+                    '</td>' +
+
+                    '<td>' +
+                    fmtDate(event.event_date) +
+                    '</td>' +
+
+                    '<td>' +
+                    '<span class="mod-badge mod-badge-published">Published</span>' +
+                    '</td>' +
+
+                    '<td>' +
+                    '<div class="admin-action-btn-group">' +
+
+                    '<a href="event-details.html?id=' +
+                    event.id +
+                    '" target="_blank" class="btn btn-outline btn-sm admin-btn-xs">View</a>' +
+
+                    '<button class="btn btn-sm btn-danger-light admin-btn-xs" ' +
+                    'data-action="delete-event" data-id="' +
+                    event.id +
+                    '">Delete</button>' +
+
+                    '</div>' +
+                    '</td>' +
+
+                    '</tr>'
+                );
+            })
+            .join('');
+    } catch (error) {
+        console.error('Overview load error:', error);
+        showToast(
+            'Could not load overview data.',
+            'error'
+        );
     }
 }
 
-function setCounter(id, target) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = (target || 0).toLocaleString();
+function setCounter(id, value) {
+    const element = document.getElementById(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = (value || 0).toLocaleString();
 }
 
-// Events tab
-var allAdminEvents = [];
+//events
+let allAdminEvents = [];
 
 async function loadAdminEvents() {
     tableLoading('adminEventsTableBody', 6);
+
     try {
-        var data = await getEvents();
-        allAdminEvents = (data.success && data.data) ? data.data : [];
+        const data = await getEvents();
+
+        allAdminEvents =
+            data.success && data.data
+                ? data.data
+                : [];
+
         renderAdminEvents(allAdminEvents);
-    } catch(e) {
-        tableEmpty('adminEventsTableBody', 6, 'Failed to load events.');
+    } catch (error) {
+        tableEmpty(
+            'adminEventsTableBody',
+            6,
+            'Failed to load events.'
+        );
     }
 }
 
 function renderAdminEvents(events) {
-    var tbody = document.getElementById('adminEventsTableBody');
-    if (!tbody) return;
-    if (!events.length) { tableEmpty('adminEventsTableBody', 6, 'No events found.'); return; }
-    tbody.innerHTML = events.map(function(ev) {
-        var statusBadge = ev.is_online
-            ? '<span class="mod-badge mod-badge-featured">Online</span>'
-            : '<span class="mod-badge mod-badge-published">In-Person</span>';
-        var priceTxt = (ev.is_free || !ev.min_price || ev.min_price == 0) ? 'Free' : 'NPR ' + Number(ev.min_price).toLocaleString();
-        return '<tr>' +
-            '<td><div class="admin-table-title admin-table-title-truncate">' + escapeHtml(ev.title) + '</div>' +
-                '<div class="admin-table-sub">' + fmtDate(ev.event_date) + (ev.start_time ? ' · ' + ev.start_time.slice(0,5) : '') + '</div></td>' +
-            '<td>' + escapeHtml(ev.city || '—') + '</td>' +
-            '<td>' + (ev.attendee_count || 0) + '</td>' +
-            '<td>' + priceTxt + '</td>' +
-            '<td>' + statusBadge + '</td>' +
-            '<td><div class="admin-action-btn-group">' +
-                '<a href="event-details.html?id=' + ev.id + '" target="_blank" class="btn btn-outline btn-sm admin-btn-xs">View</a>' +
-                '<button class="btn btn-sm btn-danger-light admin-btn-xs" data-action="delete-event" data-id="' + ev.id + '">Delete</button>' +
-            '</div></td>' +
-        '</tr>';
-    }).join('');
+    const tbody = document.getElementById(
+        'adminEventsTableBody'
+    );
+
+    if (!tbody) {
+        return;
+    }
+
+    if (!events.length) {
+        tableEmpty(
+            'adminEventsTableBody',
+            6,
+            'No events found.'
+        );
+        return;
+    }
+
+    tbody.innerHTML = events
+        .map(event => {
+            const statusBadge = event.is_online
+                ? '<span class="mod-badge mod-badge-featured">Online</span>'
+                : '<span class="mod-badge mod-badge-published">In-Person</span>';
+
+            const priceText =
+                event.is_free ||
+                !event.min_price ||
+                event.min_price == 0
+                    ? 'Free'
+                    : 'NPR ' +
+                      Number(event.min_price).toLocaleString();
+
+            return (
+                '<tr>' +
+
+                '<td>' +
+                '<div class="admin-table-title admin-table-title-truncate">' +
+                escapeHtml(event.title) +
+                '</div>' +
+                '<div class="admin-table-sub">' +
+                fmtDate(event.event_date) +
+                (event.start_time
+                    ? ' · ' + event.start_time.slice(0, 5)
+                    : '') +
+                '</div>' +
+                '</td>' +
+
+                '<td>' +
+                escapeHtml(event.city || '—') +
+                '</td>' +
+
+                '<td>' +
+                (event.attendee_count || 0) +
+                '</td>' +
+
+                '<td>' +
+                priceText +
+                '</td>' +
+
+                '<td>' +
+                statusBadge +
+                '</td>' +
+
+                '<td>' +
+                '<div class="admin-action-btn-group">' +
+
+                '<a href="event-details.html?id=' +
+                event.id +
+                '" target="_blank" class="btn btn-outline btn-sm admin-btn-xs">View</a>' +
+
+                '<button class="btn btn-sm btn-danger-light admin-btn-xs" ' +
+                'data-action="delete-event" data-id="' +
+                event.id +
+                '">Delete</button>' +
+
+                '</div>' +
+                '</td>' +
+
+                '</tr>'
+            );
+        })
+        .join('');
 }
 
-async function adminRemoveEvent(id, btn) {
-    if (!confirm('Delete this event? This cannot be undone.')) return;
-    btn.disabled = true; btn.textContent = '…';
-    var res = await adminDeleteEvent(id);
-    if (res.success) {
+async function adminRemoveEvent(id, button) {
+    if (!confirm('Delete this event? This cannot be undone.')) {
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = '…';
+
+    const response = await adminDeleteEvent(id);
+
+    if (response.success) {
         showToast('Event deleted.', 'success');
-        allAdminEvents = allAdminEvents.filter(function(e){ return e.id !== id; });
+
+        allAdminEvents = allAdminEvents.filter(
+            event => event.id !== id
+        );
+
         renderAdminEvents(allAdminEvents);
         loadOverview();
     } else {
-        showToast(res.message || 'Delete failed.', 'error');
-        btn.disabled = false; btn.textContent = 'Delete';
+        showToast(
+            response.message || 'Delete failed.',
+            'error'
+        );
+
+        button.disabled = false;
+        button.textContent = 'Delete';
     }
 }
 
-// Events search
-var evSearchDebounce;
-var evSearchEl = document.getElementById('searchAdminEvents');
-if (evSearchEl) {
-    evSearchEl.addEventListener('input', function() {
-        clearTimeout(evSearchDebounce);
-        evSearchDebounce = setTimeout(function() {
-            var q = evSearchEl.value.toLowerCase().trim();
-            renderAdminEvents(q ? allAdminEvents.filter(function(e){ return e.title.toLowerCase().includes(q) || (e.city||'').toLowerCase().includes(q); }) : allAdminEvents);
+//events search
+let eventSearchTimer;
+
+const eventSearchInput = document.getElementById(
+    'searchAdminEvents'
+);
+
+if (eventSearchInput) {
+    eventSearchInput.addEventListener('input', () => {
+        clearTimeout(eventSearchTimer);
+
+        eventSearchTimer = setTimeout(() => {
+            const query =
+                eventSearchInput.value
+                    .toLowerCase()
+                    .trim();
+
+            const filteredEvents = query
+                ? allAdminEvents.filter(
+                      event =>
+                          event.title
+                              .toLowerCase()
+                              .includes(query) ||
+                          (event.city || '')
+                              .toLowerCase()
+                              .includes(query)
+                  )
+                : allAdminEvents;
+
+            renderAdminEvents(filteredEvents);
         }, 250);
     });
 }
 
-// Users tab
-var allAdminUsers = [];
+//users
+let allAdminUsers = [];
 
 async function loadAdminUsers() {
     tableLoading('adminUsersTableBody', 6);
+
     try {
-        var data = await getAdminUsers();
+        const data = await getAdminUsers();
+
         if (!data.success) {
-            tableEmpty('adminUsersTableBody', 6, 'Access denied. Admin privileges required.');
-            showToast(data.message || 'Not authorized.', 'error');
+            tableEmpty(
+                'adminUsersTableBody',
+                6,
+                'Access denied. Admin privileges required.'
+            );
+
+            showToast(
+                data.message || 'Not authorized.',
+                'error'
+            );
+
             return;
         }
+
         allAdminUsers = data.data || [];
+
         renderAdminUsers(allAdminUsers);
-    } catch(e) {
-        tableEmpty('adminUsersTableBody', 6, 'Failed to load users.');
+    } catch (error) {
+        tableEmpty(
+            'adminUsersTableBody',
+            6,
+            'Failed to load users.'
+        );
     }
 }
 
 function renderAdminUsers(users) {
-    var tbody = document.getElementById('adminUsersTableBody');
-    if (!tbody) return;
-    if (!users.length) { tableEmpty('adminUsersTableBody', 6, 'No users found.'); return; }
-    tbody.innerHTML = users.map(function(u) {
-        var isAdmin = u.role === 'admin';
-        var roleBadge = isAdmin
-            ? '<span class="mod-badge mod-badge-featured">Admin</span>'
-            : '<span class="mod-badge mod-badge-active">User</span>';
-        var roleAction = isAdmin
-            ? '<button class="btn btn-outline btn-sm admin-btn-xs" data-action="toggle-role" data-id="' + u.id + '" data-role="user">Demote</button>'
-            : '<button class="btn btn-outline btn-sm admin-btn-xs" data-action="toggle-role" data-id="' + u.id + '" data-role="admin">Make Admin</button>';
-        return '<tr>' +
-            '<td><div class="admin-user-cell">' + avatarEl(u.name) + '<div><div class="admin-table-title">' + escapeHtml(u.name) + '</div><div class="admin-table-sub">' + escapeHtml(u.email) + '</div></div></div></td>' +
-            '<td>' + roleBadge + '</td>' +
-            '<td>' + fmtDate(u.created_at) + '</td>' +
-            '<td>' + (u.total_rsvps || 0) + '</td>' +
-            '<td><span class="mod-badge mod-badge-active">Active</span></td>' +
-            '<td><div class="admin-action-btn-group">' + roleAction +
-                '<button class="btn btn-sm btn-danger-light admin-btn-xs" data-action="delete-user" data-id="' + u.id + '">Delete</button>' +
-            '</div></td>' +
-        '</tr>';
-    }).join('');
+    const tbody = document.getElementById(
+        'adminUsersTableBody'
+    );
+
+    if (!tbody) {
+        return;
+    }
+
+    if (!users.length) {
+        tableEmpty(
+            'adminUsersTableBody',
+            6,
+            'No users found.'
+        );
+        return;
+    }
+
+    tbody.innerHTML = users
+        .map(user => {
+            const isAdmin = user.role === 'admin';
+
+            const roleBadge = isAdmin
+                ? '<span class="mod-badge mod-badge-featured">Admin</span>'
+                : '<span class="mod-badge mod-badge-active">User</span>';
+
+            const roleAction = isAdmin
+                ? '<button class="btn btn-outline btn-sm admin-btn-xs" ' +
+                  'data-action="toggle-role" data-id="' +
+                  user.id +
+                  '" data-role="user">Demote</button>'
+                : '<button class="btn btn-outline btn-sm admin-btn-xs" ' +
+                  'data-action="toggle-role" data-id="' +
+                  user.id +
+                  '" data-role="admin">Make Admin</button>';
+
+            return (
+                '<tr>' +
+
+                '<td>' +
+                '<div class="admin-user-cell">' +
+
+                avatarEl(user.name) +
+
+                '<div>' +
+                '<div class="admin-table-title">' +
+                escapeHtml(user.name) +
+                '</div>' +
+
+                '<div class="admin-table-sub">' +
+                escapeHtml(user.email) +
+                '</div>' +
+
+                '</div>' +
+                '</div>' +
+                '</td>' +
+
+                '<td>' +
+                roleBadge +
+                '</td>' +
+
+                '<td>' +
+                fmtDate(user.created_at) +
+                '</td>' +
+
+                '<td>' +
+                (user.total_rsvps || 0) +
+                '</td>' +
+
+                '<td>' +
+                '<span class="mod-badge mod-badge-active">Active</span>' +
+                '</td>' +
+
+                '<td>' +
+                '<div class="admin-action-btn-group">' +
+
+                roleAction +
+
+                '<button class="btn btn-sm btn-danger-light admin-btn-xs" ' +
+                'data-action="delete-user" data-id="' +
+                user.id +
+                '">Delete</button>' +
+
+                '</div>' +
+                '</td>' +
+
+                '</tr>'
+            );
+        })
+        .join('');
 }
 
-async function toggleUserRole(userId, newRole, btn) {
-    btn.disabled = true; btn.textContent = '…';
-    var res = await updateUserRole(userId, newRole);
-    if (res.success) {
-        showToast('User role updated to ' + newRole + '.', 'success');
-        allAdminUsers = allAdminUsers.map(function(u){ return u.id === userId ? Object.assign({}, u, { role: newRole }) : u; });
+async function toggleUserRole(userId, newRole, button) {
+    button.disabled = true;
+    button.textContent = '…';
+
+    const response = await updateUserRole(
+        userId,
+        newRole
+    );
+
+    if (response.success) {
+        showToast(
+            'User role updated to ' +
+                newRole +
+                '.',
+            'success'
+        );
+
+        allAdminUsers = allAdminUsers.map(user =>
+            user.id === userId
+                ? { ...user, role: newRole }
+                : user
+        );
+
         renderAdminUsers(allAdminUsers);
     } else {
-        showToast(res.message || 'Update failed.', 'error');
-        btn.disabled = false; btn.textContent = newRole === 'admin' ? 'Make Admin' : 'Demote';
+        showToast(
+            response.message || 'Update failed.',
+            'error'
+        );
+
+        button.disabled = false;
+
+        button.textContent =
+            newRole === 'admin'
+                ? 'Make Admin'
+                : 'Demote';
     }
 }
 
-async function removeUser(userId, btn) {
-    if (!confirm('Permanently delete this user account? This cannot be undone.')) return;
-    btn.disabled = true; btn.textContent = '…';
-    var res = await adminDeleteUser(userId);
-    if (res.success) {
+async function removeUser(userId, button) {
+    if (
+        !confirm(
+            'Permanently delete this user account? This cannot be undone.'
+        )
+    ) {
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = '…';
+
+    const response = await adminDeleteUser(userId);
+
+    if (response.success) {
         showToast('User deleted.', 'success');
-        allAdminUsers = allAdminUsers.filter(function(u){ return u.id !== userId; });
+
+        allAdminUsers = allAdminUsers.filter(
+            user => user.id !== userId
+        );
+
         renderAdminUsers(allAdminUsers);
         loadOverview();
     } else {
-        showToast(res.message || 'Delete failed.', 'error');
-        btn.disabled = false; btn.textContent = 'Delete';
+        showToast(
+            response.message || 'Delete failed.',
+            'error'
+        );
+
+        button.disabled = false;
+        button.textContent = 'Delete';
     }
 }
 
-// Users search
-var usSearchDebounce;
-var usSearchEl = document.getElementById('searchAdminUsers');
-if (usSearchEl) {
-    usSearchEl.addEventListener('input', function() {
-        clearTimeout(usSearchDebounce);
-        usSearchDebounce = setTimeout(function() {
-            var q = usSearchEl.value.toLowerCase().trim();
-            renderAdminUsers(q ? allAdminUsers.filter(function(u){ return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q); }) : allAdminUsers);
+//users search
+let userSearchTimer;
+
+const userSearchInput = document.getElementById(
+    'searchAdminUsers'
+);
+
+if (userSearchInput) {
+    userSearchInput.addEventListener('input', () => {
+        clearTimeout(userSearchTimer);
+
+        userSearchTimer = setTimeout(() => {
+            const query =
+                userSearchInput.value
+                    .toLowerCase()
+                    .trim();
+
+            const filteredUsers = query
+                ? allAdminUsers.filter(
+                      user =>
+                          user.name
+                              .toLowerCase()
+                              .includes(query) ||
+                          user.email
+                              .toLowerCase()
+                              .includes(query)
+                  )
+                : allAdminUsers;
+
+            renderAdminUsers(filteredUsers);
         }, 250);
     });
 }
 
-// Global search
-var globalSearchEl = document.getElementById('globalAdminSearch');
-if (globalSearchEl) {
-    globalSearchEl.addEventListener('input', function() {
-        var q = globalSearchEl.value.toLowerCase().trim();
-        if (!q) return;
-        var matchedEvents = allAdminEvents.filter(function(e){ return e.title.toLowerCase().includes(q); });
+//global search
+const globalSearchInput = document.getElementById(
+    'globalAdminSearch'
+);
+
+if (globalSearchInput) {
+    globalSearchInput.addEventListener('input', () => {
+        const query =
+            globalSearchInput.value
+                .toLowerCase()
+                .trim();
+
+        if (!query) {
+            return;
+        }
+
+        const matchedEvents = allAdminEvents.filter(
+            event =>
+                event.title
+                    .toLowerCase()
+                    .includes(query)
+        );
+
         if (matchedEvents.length) {
-            document.querySelector('.admin-nav-item[data-tab="tabAdminEvents"]').click();
+            document
+                .querySelector(
+                    '.admin-nav-item[data-tab="tabAdminEvents"]'
+                )
+                .click();
+
             renderAdminEvents(matchedEvents);
             return;
         }
-        var matchedUsers = allAdminUsers.filter(function(u){ return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q); });
+
+        const matchedUsers = allAdminUsers.filter(
+            user =>
+                user.name
+                    .toLowerCase()
+                    .includes(query) ||
+                user.email
+                    .toLowerCase()
+                    .includes(query)
+        );
+
         if (matchedUsers.length) {
-            document.querySelector('.admin-nav-item[data-tab="tabAdminUsers"]').click();
+            document
+                .querySelector(
+                    '.admin-nav-item[data-tab="tabAdminUsers"]'
+                )
+                .click();
+
             renderAdminUsers(matchedUsers);
         }
     });
 }
 
-// Export real dynamic platform report CSV
+//export report as csv
 function exportAdminReportCSV() {
-    if (!allAdminEvents || allAdminEvents.length === 0) {
-        showToast('No platform events to export.', 'info');
+    if (!allAdminEvents.length) {
+        showToast(
+            'No platform events to export.',
+            'info'
+        );
         return;
     }
 
-    var headers = ['Event ID', 'Title', 'Category', 'City', 'Venue', 'Date', 'Attendees', 'Min Price', 'Is Online'];
-    var rows = allAdminEvents.map(function(ev) {
-        return [
-            ev.id,
-            '"' + (ev.title || '').replace(/"/g, '""') + '"',
-            '"' + (ev.category || '').replace(/"/g, '""') + '"',
-            '"' + (ev.city || '').replace(/"/g, '""') + '"',
-            '"' + (ev.venue || '').replace(/"/g, '""') + '"',
-            ev.event_date || '',
-            ev.attendee_count || 0,
-            ev.min_price || 0,
-            ev.is_online ? 'Yes' : 'No'
-        ];
-    });
+    const headers = [
+        'Event ID',
+        'Title',
+        'Category',
+        'City',
+        'Venue',
+        'Date',
+        'Attendees',
+        'Min Price',
+        'Is Online'
+    ];
 
-    var csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(function(r){ return r.join(','); })].join('\n');
-    var encodedUri = encodeURI(csvContent);
-    var link = document.createElement('a');
+    const rows = allAdminEvents.map(event => [
+        event.id,
+        '"' +
+            (event.title || '').replace(/"/g, '""') +
+            '"',
+        '"' +
+            (event.category || '').replace(/"/g, '""') +
+            '"',
+        '"' +
+            (event.city || '').replace(/"/g, '""') +
+            '"',
+        '"' +
+            (event.venue || '').replace(/"/g, '""') +
+            '"',
+        event.event_date || '',
+        event.attendee_count || 0,
+        event.min_price || 0,
+        event.is_online ? 'Yes' : 'No'
+    ]);
+
+    const csvContent =
+        'data:text/csv;charset=utf-8,' +
+        [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+
+    const link = document.createElement('a');
+
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'aavahan-platform-report.csv');
+    link.setAttribute(
+        'download',
+        'aavahan-platform-report.csv'
+    );
+
     document.body.appendChild(link);
+
     link.click();
+
     link.remove();
-    showToast('Platform report exported successfully.', 'success');
+
+    showToast(
+        'Platform report exported successfully.',
+        'success'
+    );
 }
 
-// Boot
-document.addEventListener('DOMContentLoaded', function() {
+//page setup
+document.addEventListener('DOMContentLoaded', () => {
     loadOverview();
     loadAdminEvents();
     loadAdminUsers();
 
-    // Event delegation for pending queue
-    var pendingQueue = document.getElementById('adminPendingQueue');
+    //pending events table
+    const pendingQueue = document.getElementById(
+        'adminPendingQueue'
+    );
+
     if (pendingQueue) {
-        pendingQueue.addEventListener('click', function(e) {
-            var btn = e.target.closest('[data-action="delete-event"]');
-            if (btn) {
-                var id = Number(btn.getAttribute('data-id'));
-                adminRemoveEvent(id, btn);
-            }
-        });
-    }
+        pendingQueue.addEventListener('click', event => {
+            const button = event.target.closest(
+                '[data-action="delete-event"]'
+            );
 
-    // Event delegation for events table
-    var eventsTable = document.getElementById('adminEventsTableBody');
-    if (eventsTable) {
-        eventsTable.addEventListener('click', function(e) {
-            var btn = e.target.closest('[data-action="delete-event"]');
-            if (btn) {
-                var id = Number(btn.getAttribute('data-id'));
-                adminRemoveEvent(id, btn);
-            }
-        });
-    }
-
-    // Event delegation for users table
-    var usersTable = document.getElementById('adminUsersTableBody');
-    if (usersTable) {
-        usersTable.addEventListener('click', function(e) {
-            var toggleBtn = e.target.closest('[data-action="toggle-role"]');
-            if (toggleBtn) {
-                var userId = Number(toggleBtn.getAttribute('data-id'));
-                var role = toggleBtn.getAttribute('data-role');
-                toggleUserRole(userId, role, toggleBtn);
+            if (!button) {
                 return;
             }
-            var delBtn = e.target.closest('[data-action="delete-user"]');
-            if (delBtn) {
-                var userId = Number(delBtn.getAttribute('data-id'));
-                removeUser(userId, delBtn);
+
+            const id = Number(
+                button.getAttribute('data-id')
+            );
+
+            adminRemoveEvent(id, button);
+        });
+    }
+
+    //events table
+    const eventsTable = document.getElementById(
+        'adminEventsTableBody'
+    );
+
+    if (eventsTable) {
+        eventsTable.addEventListener('click', event => {
+            const button = event.target.closest(
+                '[data-action="delete-event"]'
+            );
+
+            if (!button) {
+                return;
+            }
+
+            const id = Number(
+                button.getAttribute('data-id')
+            );
+
+            adminRemoveEvent(id, button);
+        });
+    }
+
+    //users table
+    const usersTable = document.getElementById(
+        'adminUsersTableBody'
+    );
+
+    if (usersTable) {
+        usersTable.addEventListener('click', event => {
+            const roleButton = event.target.closest(
+                '[data-action="toggle-role"]'
+            );
+
+            if (roleButton) {
+                const userId = Number(
+                    roleButton.getAttribute('data-id')
+                );
+
+                const role =
+                    roleButton.getAttribute('data-role');
+
+                toggleUserRole(
+                    userId,
+                    role,
+                    roleButton
+                );
+
+                return;
+            }
+
+            const deleteButton = event.target.closest(
+                '[data-action="delete-user"]'
+            );
+
+            if (deleteButton) {
+                const userId = Number(
+                    deleteButton.getAttribute('data-id')
+                );
+
+                removeUser(
+                    userId,
+                    deleteButton
+                );
             }
         });
     }
 
-    // Export report CSV
-    var exportReportBtn = document.getElementById('btnExportAdminReport');
-    if (exportReportBtn) {
-        exportReportBtn.addEventListener('click', exportAdminReportCSV);
+    //export report
+    const exportReportButton =
+        document.getElementById(
+            'btnExportAdminReport'
+        );
+
+    if (exportReportButton) {
+        exportReportButton.addEventListener(
+            'click',
+            exportAdminReportCSV
+        );
     }
 
+    //admin logout
+    const logoutLink = document.getElementById(
+        'adminLogoutLink'
+    );
 
-    // Admin logout link
-    var logoutLink = document.getElementById('adminLogoutLink');
     if (logoutLink) {
-        logoutLink.addEventListener('click', async function(e) {
-            e.preventDefault();
-            logoutLink.style.pointerEvents = 'none';
-            if (typeof logoutUser === 'function') {
+        logoutLink.addEventListener(
+            'click',
+            async event => {
+                event.preventDefault();
+
+                logoutLink.style.pointerEvents = 'none';
+
                 await logoutUser();
-            } else {
-                clearAuth();
-                window.location.href = 'login.html';
             }
-        });
+        );
     }
 });

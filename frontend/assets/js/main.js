@@ -1,8 +1,8 @@
 import { getUser, isAuthenticated } from './authService.js';
 import { logoutUser } from './api.js';
 
-// Anything typed by a user (event titles, names, comments) is dropped into
-// innerHTML templates, so it has to be escaped first or the browser will run it.
+//anything typed by a user (event titles, names, comments) is dropped into
+//innerhtml templates, so it has to be escaped first or the browser will run it.
 export function escapeHtml(value) {
     if (value === null || value === undefined) return '';
     return String(value)
@@ -13,7 +13,7 @@ export function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
-// Toast notification
+//toast notification
 export function showToast(message, type = 'info') {
     if (!message || /loading|cancelling|removing|processing|redirecting/i.test(message)) {
         return;
@@ -35,8 +35,8 @@ export function showToast(message, type = 'info') {
     else if (type === 'error') icon = 'error';
     else if (type === 'warning') icon = 'warning';
 
-    // The message can carry text that came back from the server, so it goes in
-    // as text rather than markup.
+    //the message can carry text that came back from the server, so it goes in
+    //as text rather than markup.
     toast.innerHTML = `
         <span class="material-symbols-outlined toast-icon">${icon}</span>
         <span class="toast-message"></span>
@@ -62,7 +62,6 @@ if (typeof window !== 'undefined') {
     window.escapeHtml = escapeHtml;
 }
 
-// Navbar auth state
 function updateNavbar() {
     const isLoggedIn = isAuthenticated();
     const user = getUser() || {};
@@ -81,7 +80,6 @@ function updateNavbar() {
         navSignup.classList.add('is-hidden');
         navLogout.classList.remove('is-hidden');
 
-        // My Activities link
         let navMyActivities = document.getElementById('navMyActivities');
         if (!navMyActivities) {
             navMyActivities = document.createElement('a');
@@ -94,7 +92,6 @@ function updateNavbar() {
             navMyActivities.classList.remove('is-hidden');
         }
 
-        // Mobile drawer My Activities link
         let mobileMyActivities = document.getElementById('mobileMyActivities');
         const mobileLinks = document.querySelector('.mobile-nav-links');
         if (mobileLinks) {
@@ -110,7 +107,6 @@ function updateNavbar() {
             }
         }
 
-        // Admin badge link
         let navAdmin = document.getElementById('navAdmin');
         if (user.role === 'admin') {
             if (!navAdmin) {
@@ -142,7 +138,6 @@ function updateNavbar() {
     }
 }
 
-// Fallback component templates
 const DEFAULT_HEADER_HTML = `
 <header class="navbar">
     <div class="container nav-container">
@@ -210,7 +205,6 @@ const DEFAULT_FOOTER_HTML = `
 </footer>
 `;
 
-// Dynamic component loader
 async function loadComponents() {
     const isSubfolder = window.location.pathname.includes('/pages/');
     const basePath = isSubfolder ? '../' : './';
@@ -237,7 +231,7 @@ async function loadComponents() {
             const res = await fetch(`${basePath}components/header.html`);
             if (res.ok) headerHtml = await res.text();
         } catch (e) {
-            // Local file protocol fallback
+            //local file protocol fallback
         }
 
         headerContainer.innerHTML = replacePaths(headerHtml || DEFAULT_HEADER_HTML);
@@ -251,14 +245,13 @@ async function loadComponents() {
             const res = await fetch(`${basePath}components/footer.html`);
             if (res.ok) footerHtml = await res.text();
         } catch (e) {
-            // Local file protocol fallback
+            //local file protocol fallback
         }
 
         footerContainer.innerHTML = replacePaths(footerHtml || DEFAULT_FOOTER_HTML);
     }
 }
 
-// Bind header events
 function bindHeaderEvents() {
     const navToggleBtn = document.querySelector('.nav-toggle-btn');
     const mobileDrawer = document.querySelector('.mobile-nav-drawer');
@@ -273,7 +266,7 @@ function bindHeaderEvents() {
         navLogoutBtn.onclick = async (e) => {
             e.preventDefault();
             navLogoutBtn.disabled = true;
-            // Clears the server cookie as well as local storage, then goes home
+            //clears the server cookie as well as local storage, then goes home
             await logoutUser();
         };
     }
@@ -289,9 +282,9 @@ function bindHeaderEvents() {
     });
 }
 
+
 export { loadComponents, bindHeaderEvents, updateNavbar };
 
-// Initialize
 async function initApp() {
     await loadComponents();
     bindHeaderEvents();

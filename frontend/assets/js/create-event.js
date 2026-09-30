@@ -3,7 +3,6 @@ import { showToast } from './main.js';
 import { createEvent } from './api.js';
 import { phoneProblem } from './phone.js';
 
-// Event Creation Wizard State
 let currentStep = 1;
 const totalSteps = 3;
 
@@ -12,11 +11,9 @@ const btnBack = document.getElementById('btnWizardBack');
 const stepIndicator = document.getElementById('wizardStepIndicator');
 const progressFill = document.getElementById('wizardProgressFill');
 
-// Banner image selection state
 let selectedBannerFile = null;
 let selectedLogoFile = null;
 
-// Check authentication on page load
 function requireAuth() {
     if (!isAuthenticated()) {
         const isSubfolder = window.location.pathname.includes('/pages/');
@@ -26,7 +23,6 @@ function requireAuth() {
     return true;
 }
 
-// Category tag pill selector
 const topicPills = document.querySelectorAll('.topic-tag-pill');
 const customCategoryWrapper = document.getElementById('customCategoryWrapper');
 const customCategoryInput = document.getElementById('customCategoryInput');
@@ -35,7 +31,7 @@ topicPills.forEach(pill => {
     pill.addEventListener('click', () => {
         topicPills.forEach(p => p.classList.remove('selected'));
         pill.classList.add('selected');
-        // Show custom input only when "Other" is selected
+        //show custom input only when "other" is selected
         const isOther = pill.textContent.trim().toLowerCase().includes('other');
         if (customCategoryWrapper) {
             customCategoryWrapper.classList.toggle('is-hidden', !isOther);
@@ -54,14 +50,12 @@ function getSelectedCategory() {
     return selected.textContent.replace(/^[\p{Emoji}\s]+/u, '').trim() || 'General';
 }
 
-// Initialize past date prevention
 const dateInput = document.getElementById('eventDate');
 const today = new Date().toISOString().split('T')[0];
 if (dateInput) {
     dateInput.min = today;
 }
 
-// Date to be Announced (TBA) toggle
 const tbaCheckbox = document.getElementById('dateTBA');
 const timeInput = document.getElementById('eventStartTime');
 
@@ -79,7 +73,6 @@ if (tbaCheckbox && dateInput && timeInput) {
     });
 }
 
-// Ensure end date is never before start date
 if (dateInput) {
     dateInput.addEventListener('change', function () {
         const endDateInput = document.getElementById('eventEndDate');
@@ -90,7 +83,6 @@ if (dateInput) {
     });
 }
 
-// Custom event banner upload listener
 const bannerInput = document.getElementById("eventBanner");
 const bannerPreview = document.getElementById("bannerPreview");
 const bannerWrapper = document.getElementById("bannerPreviewWrapper");
@@ -112,14 +104,13 @@ bannerInput?.addEventListener("change", (e) => {
     bannerWrapper.classList.remove("is-hidden");
 });
 
-// The contact number is optional, but must be valid when given
+//the contact number is optional, but must be valid when given
 function contactPhoneProblem() {
     const number = document.getElementById('contactPhoneNumber')?.value.trim();
     if (!number) return '';
     return phoneProblem(document.getElementById('contactPhoneCode').value, number);
 }
 
-// Optional host logo upload listener
 const logoInput = document.getElementById("hostLogo");
 const logoPreview = document.getElementById("hostLogoPreview");
 
@@ -140,7 +131,6 @@ logoInput?.addEventListener("change", (e) => {
     logoPreview.classList.remove("is-hidden");
 });
 
-// Update live summary preview for Step 3
 function updateSummaryPreview() {
     const title = document.getElementById('eventTitle')?.value.trim() || 'Untitled Event';
     const category = getSelectedCategory();
@@ -160,14 +150,14 @@ function updateSummaryPreview() {
     const summaryPrice = document.getElementById('summaryPrice');
 
     if (summaryTitle) summaryTitle.textContent = title;
-    if (summaryCategory) summaryCategory.textContent = `📂 ${category}`;
-    if (summaryLocation) summaryLocation.textContent = `📍 ${venue}, ${city}`;
+    if (summaryCategory) summaryCategory.textContent = category;
+    if (summaryLocation) summaryLocation.textContent = `${venue}, ${city}`;
 
     if (summaryDateTime) {
         if (isTba) {
-            summaryDateTime.textContent = '📅 Date to be Announced (TBA)';
+            summaryDateTime.textContent = 'Date to be Announced (TBA)';
         } else {
-            summaryDateTime.textContent = date ? `📅 ${date} ${time ? '@ ' + time : ''}` : '📅 Date not set';
+            summaryDateTime.textContent = date ? `${date} ${time ? '@ ' + time : ''}` : 'Date not set';
         }
     }
 
@@ -175,18 +165,17 @@ function updateSummaryPreview() {
         if (deadline) {
             summaryDeadline.classList.remove('is-hidden');
             const d = new Date(deadline);
-            summaryDeadline.textContent = `⏰ Deadline: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+            summaryDeadline.textContent = `Deadline: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
         } else {
             summaryDeadline.classList.add('is-hidden');
         }
     }
 
     if (summaryPrice) {
-        summaryPrice.textContent = price === 0 ? '🎟️ Free' : `🎟️ NPR ${price.toLocaleString()}`;
+        summaryPrice.textContent = price === 0 ? 'Free' : `NPR ${price.toLocaleString()}`;
     }
 }
 
-// Show the correct step pane and update controls
 function goToStep(step) {
     for (let i = 1; i <= totalSteps; i++) {
         const pane = document.getElementById(`stepPane${i}`);
@@ -213,7 +202,6 @@ function goToStep(step) {
     }
 }
 
-// Step validation
 function validateStep(step) {
     if (step === 1) {
         const title = document.getElementById('eventTitle')?.value.trim();
@@ -288,12 +276,10 @@ function validateStep(step) {
     return true;
 }
 
-// Back button handler
 btnBack.addEventListener('click', () => {
     if (currentStep > 1) goToStep(currentStep - 1);
 });
 
-// Next / Submit button handler
 btnNext.addEventListener('click', async () => {
     if (currentStep < totalSteps) {
         if (validateStep(currentStep)) {
@@ -302,7 +288,6 @@ btnNext.addEventListener('click', async () => {
         return;
     }
 
-    // Step 3 — Final submit
     if (!requireAuth()) return;
 
     const title = document.getElementById('eventTitle').value.trim();
@@ -322,7 +307,6 @@ btnNext.addEventListener('click', async () => {
     const capacity = capacityVal ? parseInt(capacityVal, 10) : null;
     const todayStr = new Date().toISOString().split('T')[0];
 
-    // Final validation
     if (!title || !description || !city || !venue) {
         showToast('Please ensure all required fields are filled out.', 'error');
         return;
@@ -352,9 +336,8 @@ btnNext.addEventListener('click', async () => {
     }
 
     btnNext.disabled = true;
-    btnNext.textContent = 'Publishing...';
 
-    // Construct FormData
+
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
@@ -409,7 +392,7 @@ btnNext.addEventListener('click', async () => {
         }
 
         showToast('Event published successfully!', 'success');
-        // Send the organiser to their manage page to edit details or post announcements
+        //send the organiser to their manage page to edit details or post announcements
         setTimeout(() => { window.location.href = `manage-event.html?id=${eventData.data.id}&tab=tabDetails`; }, 1200);
 
     } catch (error) {
@@ -420,7 +403,6 @@ btnNext.addEventListener('click', async () => {
     }
 });
 
-// Initialize on page load
 if (requireAuth()) {
     goToStep(1);
 }

@@ -21,7 +21,6 @@
     <div id="site-header"></div>
 
     <main>
-        <!-- 2. Meetup Hero Section -->
         <section class="meetup-hero">
             <div class="container">
                 <div class="meetup-hero-grid">
@@ -43,7 +42,6 @@
             </div>
         </section>
 
-        <!-- 3. Category Exploration Badges -->
         <section class="section section-compact">
             <div class="container">
                 <div class="section-header-row">
@@ -54,42 +52,41 @@
                 </div>
                 <div class="category-badges-scroll" id="categoryPillsScroll">
                     <a href="pages/explore.html?category=technology" class="category-pill-item">
-                        <span>💻</span>
+                        <span class="material-symbols-outlined category-pill-icon">computer</span>
                         <span>Technology & AI</span>
                     </a>
                     <a href="pages/explore.html?category=music" class="category-pill-item">
-                        <span>🎸</span>
+                        <span class="material-symbols-outlined category-pill-icon">music_note</span>
                         <span>Live Music & Concerts</span>
                     </a>
                     <a href="pages/explore.html?category=business" class="category-pill-item">
-                        <span>💼</span>
+                        <span class="material-symbols-outlined category-pill-icon">business_center</span>
                         <span>Career & Business</span>
                     </a>
                     <a href="pages/explore.html?category=outdoor" class="category-pill-item">
-                        <span>🏔️</span>
+                        <span class="material-symbols-outlined category-pill-icon">landscape</span>
                         <span>Nature & Outdoors</span>
                     </a>
                     <a href="pages/explore.html?category=social" class="category-pill-item">
-                        <span>🍕</span>
+                        <span class="material-symbols-outlined category-pill-icon">restaurant</span>
                         <span>Social & Dining</span>
                     </a>
                     <a href="pages/explore.html?category=culture" class="category-pill-item">
-                        <span>🎨</span>
+                        <span class="material-symbols-outlined category-pill-icon">palette</span>
                         <span>Arts & Culture</span>
                     </a>
                     <a href="pages/explore.html?category=fitness" class="category-pill-item">
-                        <span>🧘</span>
+                        <span class="material-symbols-outlined category-pill-icon">self_improvement</span>
                         <span>Fitness & Wellness</span>
                     </a>
                     <a href="pages/explore.html?category=gaming" class="category-pill-item">
-                        <span>🎲</span>
+                        <span class="material-symbols-outlined category-pill-icon">casino</span>
                         <span>Games & Hobbies</span>
                     </a>
                 </div>
             </div>
         </section>
 
-        <!-- 4. Events in Nepal -->
         <section class="section section-pt-1">
             <div class="container">
                 <div class="section-header-row">
@@ -99,14 +96,11 @@
                     <a href="pages/explore.html" class="section-header-link">See all events</a>
                 </div>
 
-                <!-- Event Cards Grid -->
                 <div class="meetup-event-grid" id="homepageEventsGrid">
-                    <!-- Populated dynamically from API -->
                 </div>
             </div>
         </section>
 
-        <!-- 5. How Aavahan Works (Meetup 3 Core Cards) -->
         <section class="section">
             <div class="container">
                 <h2 class="section-header-title how-it-works-title">How Aavahan works</h2>
@@ -145,8 +139,6 @@
             </div>
         </section>
 
-        <!-- 6. Friendships are made on Aavahan (Community Stories) -->
-        <!-- 7. Popular Cities on Aavahan -->
         <section class="section">
             <div class="container">
                 <div class="section-header-row">
@@ -155,16 +147,14 @@
                     </div>
                     <a href="pages/explore.html" class="btn btn-outline-teal btn-pill btn-sm">
                         <span>Explore more</span>
-                        <span class="material-symbols-outlined" style="font-size: 1.1rem; line-height: 1;">arrow_forward</span>
+                        <span class="material-symbols-outlined category-pill-icon-sm">arrow_forward</span>
                     </a>
                 </div>
                 <div class="cities-grid" id="homepageCitiesGrid">
-                    <!-- Populated from API -->
                 </div>
             </div>
         </section>
 
-        <!-- 8. Start an Event Organizer CTA Banner -->
         <section class="section section-pt-0">
             <div class="container">
                 <div class="cta-banner">
@@ -184,7 +174,6 @@
         </section>
     </main>
 
-    <!-- Footer Component -->
     <div id="site-footer"></div>
 
     <!-- Scripts -->
@@ -195,7 +184,7 @@
         import { escapeHtml } from './assets/js/main.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Category cover mapper using local high-res assets with clean fallbacks
+            //category cover mapper using local high-res assets with clean fallbacks
             function getCoverImage(cat) {
                 if (!cat) return 'assets/images/tech-summit.jpg';
                 const lower = cat.toLowerCase();
@@ -228,7 +217,7 @@
                 }
             }
 
-            // 1. Render Meetup Events Grid
+            //1. render meetup events grid
             const eventsGrid = document.getElementById('homepageEventsGrid');
             if (eventsGrid) {
                 let events = [];
@@ -236,7 +225,7 @@
                     if (typeof getEvents === 'function') {
                         const res = await getEvents();
                         if (res && res.success && Array.isArray(res.data)) {
-                            // This section is "Upcoming", so leave out events whose last day has passed
+                            //this section is "upcoming", so leave out events whose last day has passed
                             const todayStr = new Date().toISOString().slice(0, 10);
                             events = res.data.filter(evt => {
                                 const lastDay = evt.end_date || evt.event_date;
@@ -248,7 +237,7 @@
                     console.log('[Home] Could not load events from API:', err);
                 }
 
-                // If no events in database, show clean empty state
+                //if no events in database, show clean empty state
                 if (events.length === 0) {
                     eventsGrid.innerHTML = `
                         <div class="events-feed-empty">
@@ -283,7 +272,7 @@
                             </h3>
                             <div class="meetup-card-group">${group}</div>
                             <div class="meetup-card-meta-row">
-                                <span>👥 ${count} attendee${count === 1 ? '' : 's'}</span>
+                                <span class="attendees-meta-item"><span class="material-symbols-outlined meta-attendees-icon">group</span>${count} attendee${count === 1 ? '' : 's'}</span>
                                 <span class="meetup-card-price ${isFree ? 'free' : ''}">
                                      ${priceStr}
                                 </span>
@@ -294,7 +283,7 @@
                 }).join('');
             }
 
-            // 3. Render Popular Cities on Aavahan
+            //3. render popular cities on aavahan
             const citiesGrid = document.getElementById('homepageCitiesGrid');
             if (citiesGrid) {
                 const knownCityImages = {
@@ -321,7 +310,7 @@
                     console.log('[Home] Could not fetch city statistics:', e);
                 }
 
-                // Nothing to show until events exist, so hide the whole section.
+                //nothing to show until events exist, so hide the whole section.
                 if (popularCities.length === 0) {
                     const section = citiesGrid.closest('section');
                     if (section) section.hidden = true;

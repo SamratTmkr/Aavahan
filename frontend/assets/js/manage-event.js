@@ -18,16 +18,14 @@ import {
 import { showToast, escapeHtml } from './main.js';
 import { phoneProblem, splitPhone } from './phone.js';
 
-// Manage event logic
+//manage event logic
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Auth Guard
     if (!isAuthenticated()) {
         window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         return;
     }
 
-    // 2. Parse Event ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('id');
 
@@ -37,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Tab switching
+    //tab switching
     const tabItems = document.querySelectorAll('.manage-tab-item');
     const tabPanes = document.querySelectorAll('.manage-tab-pane');
     tabItems.forEach(item => {
@@ -51,7 +49,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Open a specific tab when the URL asks for one (e.g. ?tab=tabDetails right after creating an event)
     const startTab = urlParams.get('tab');
     const startTabItem = startTab ? document.querySelector(`.manage-tab-item[data-tab-target="${startTab}"]`) : null;
     if (startTabItem) startTabItem.click();
@@ -59,7 +56,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentEvent = null;
     let attendeesList = [];
 
-    // 3. Fetch Event Details
     try {
         const evRes = await getEvent(eventId);
         if (evRes && evRes.success && evRes.data) {
@@ -80,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Past events are view only (the API refuses changes to them as well)
+    //past events are view only (the api refuses changes to them as well)
     const lastDay = currentEvent.end_date || currentEvent.event_date;
     const isPast = lastDay ? lastDay.slice(0, 10) < new Date().toISOString().slice(0, 10) : false;
 
@@ -95,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('detailsPanelTitle').textContent = 'Event Details';
     }
 
-    // Hydrate Header
+    //hydrate header
     document.title = `Manage — ${currentEvent.title} | Aavahan`;
     const headerTitleEl = document.getElementById('manageEventTitle');
     const headerDateEl = document.getElementById('manageEventDate');
@@ -124,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         navBtnViewPublic.href = `event-details.html?id=${currentEvent.id}`;
     }
 
-    // Edit Details form
+    //edit details form
     const editForm = document.getElementById('formEditEvent');
     const editBanner = document.getElementById('editBanner');
     const editBannerWrapper = document.getElementById('editBannerPreviewWrapper');
@@ -137,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (editForm) {
-        // The API returns dates like "2026-10-04T00:00:00.000Z", the inputs want "2026-10-04"
+        //the api returns dates like "2026-10-04t00:00:00.000z", the inputs want "2026-10-04"
         document.getElementById('editTitle').value = currentEvent.title || '';
         document.getElementById('editCategory').value = currentEvent.category || '';
         document.getElementById('editDescription').value = currentEvent.description || '';
@@ -170,7 +166,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             editHostLogoPreview.src = URL.createObjectURL(file);
             editHostLogoPreview.classList.remove('is-hidden');
         });
-        // Hide the preview rather than show a broken image if the file is missing
+        //hide the preview rather than show a broken image if the file is missing
         if (editBannerPreview) editBannerPreview.addEventListener('error', () => editBannerWrapper.classList.add('is-hidden'));
 
         editBanner.addEventListener('change', () => {
@@ -224,13 +220,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const btnSave = document.getElementById('btnSaveEvent');
             btnSave.disabled = true;
-            btnSave.textContent = 'Saving...';
 
             const res = await updateEvent(currentEvent.id, formData);
 
             if (res && res.success) {
                 showToast('Event updated', 'success');
-                // Reload so the header and every tab show the new details
+                //reload so the header and every tab show the new details
                 setTimeout(() => { window.location.href = `manage-event.html?id=${currentEvent.id}&tab=tabDetails`; }, 800);
             } else {
                 showToast(res?.error || res?.message || 'Could not update the event.', 'error');
@@ -240,7 +235,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 4. Fetch Real Attendees, Announcements, and Team
     await loadAttendees();
     await loadManageAnnouncements();
     await loadManageTeam();
@@ -263,7 +257,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderTicketTiers();
     }
 
-    // 5. Render Metrics Cards
     function renderMetrics() {
         const totalRegistrations = attendeesList.length;
         const capacity = currentEvent.capacity || 0;
@@ -301,7 +294,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 6. Render Attendees Table
     function renderAttendeesTable(attendees) {
         const tbody = document.getElementById('attendeesTableBody');
         if (!tbody) return;
@@ -330,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const email = escapeHtml(att.email || '—');
             const phone = att.phone ? escapeHtml(att.phone) : '—';
 
-            // Paid events: the organiser confirms each payment by hand
+            //paid events: the organiser confirms each payment by hand
             const paymentCell = isFree
                 ? '<span class="font-bold">Free</span>'
                 : `<div class="attendee-payment">
@@ -405,7 +397,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Mark an attendee as paid or unpaid
+    //mark an attendee as paid or unpaid
     async function handlePayment(rsvpId, paid, btn) {
         btn.disabled = true;
         const res = await setAttendeePayment(currentEvent.id, rsvpId, paid);
@@ -421,7 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Remove an attendee from the event
+    //remove an attendee from the event
     async function handleRemoveAttendee(rsvpId, name, btn) {
         if (!confirm(`Remove ${name} from this event? They will no longer be registered.`)) return;
         btn.disabled = true;
@@ -437,15 +429,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 7. Check-in Handler
     async function handleCheckin(rsvpId, btn) {
         btn.disabled = true;
-        btn.textContent = 'Processing…';
         try {
             const res = await checkinEventAttendee(currentEvent.id, rsvpId);
             if (res && res.success) {
                 showToast('Attendee checked in successfully!', 'success');
-                // Update local attendee record
+                //update local attendee record
                 const att = attendeesList.find(a => a.id === rsvpId);
                 if (att) att.status = 'checked_in';
                 renderMetrics();
@@ -463,7 +453,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 8. Search and Filter Attendees
     const searchInput = document.getElementById('attendeeSearchInput');
     const statusFilter = document.getElementById('attendeeStatusFilter');
 
@@ -493,7 +482,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (searchInput) searchInput.addEventListener('input', applyAttendeeFilters);
     if (statusFilter) statusFilter.addEventListener('change', applyAttendeeFilters);
 
-    // 9. Render Ticket Tiers Dynamically
     function renderTicketTiers() {
         const grid = document.getElementById('manageTicketTiersGrid');
         if (!grid) return;
@@ -540,7 +528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // Capacity editor: the card is re-rendered often, so listen on the grid once
+    //capacity editor: the card is re-rendered often, so listen on the grid once
     const tiersGrid = document.getElementById('manageTicketTiersGrid');
     if (tiersGrid) {
         tiersGrid.addEventListener('click', async (e) => {
@@ -560,7 +548,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Save
+            //save
             if (!isNaN(current) && current < Math.max(registered, 1)) {
                 showToast(`Capacity cannot be lower than the ${registered} people already registered.`, 'error');
                 return;
@@ -582,13 +570,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 11. Real Cancel Event Handler
     const btnCancel = document.getElementById('btnCancelManageEvent');
     if (btnCancel) {
         btnCancel.addEventListener('click', async () => {
             if (!confirm(`Are you sure you want to cancel and delete "${escapeHtml(currentEvent.title)}"? This cannot be undone.`)) return;
             btnCancel.disabled = true;
-            btnCancel.textContent = 'Processing...';
             try {
                 const res = await deleteEvent(currentEvent.id);
                 if (res && res.success) {
@@ -607,7 +593,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 12. Real Dynamic Attendee CSV Exporter
     function exportAttendeesCSV() {
         if (!attendeesList || attendeesList.length === 0) {
             showToast('No attendees registered to export.', 'info');
@@ -651,7 +636,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 13. Announcements Management
     async function loadManageAnnouncements() {
         const container = document.getElementById('manageAnnouncementsList');
         if (!container) return;
@@ -709,7 +693,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Broadcasting...';
 
             try {
                 const res = await createEventAnnouncement(eventId, { title, message });
@@ -757,7 +740,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 14. Team & Co-Managers Management
     async function loadManageTeam() {
         const container = document.getElementById('manageTeamList');
         if (!container) return;
@@ -811,7 +793,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Adding...';
 
             try {
                 const res = await addEventManager(eventId, email);
@@ -858,7 +839,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 15. Manual Attendee by Email
     const btnAddManual = document.getElementById('btnAddManualAttendeeBtn');
     const modalManual = document.getElementById('manualAttendeeModal');
     const btnCloseManual = document.getElementById('btnCloseManualRsvp');
@@ -900,7 +880,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Registering...';
 
             try {
                 const res = await addManualAttendee(eventId, email);

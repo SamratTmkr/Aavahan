@@ -4,25 +4,21 @@ import pool from '../src/db.js';
 async function seedDatabase() {
     console.log('--- Starting Aavahan Database Seeding ---');
 
-    // 1. Password hashes
     const defaultPasswordHash = await bcrypt.hash('password123', 10);
     const demoPasswordHash = await bcrypt.hash('user123', 10);
     const adminPasswordHash = await bcrypt.hash('admin123', 10);
 
-    // 2. Clear old test data cleanly (optional or upsert)
     console.log('Ensuring clean state...');
     await pool.query('DELETE FROM rsvps');
     await pool.query('DELETE FROM events');
     await pool.query('DELETE FROM `groups`');
     await pool.query('DELETE FROM users');
 
-    // Reset auto-increments
     await pool.query('ALTER TABLE users AUTO_INCREMENT = 1');
     await pool.query('ALTER TABLE `groups` AUTO_INCREMENT = 1');
     await pool.query('ALTER TABLE events AUTO_INCREMENT = 1');
     await pool.query('ALTER TABLE rsvps AUTO_INCREMENT = 1');
 
-    // 3. Insert Users (Organizers & Community Members)
     console.log('Inserting real users...');
     const usersData = [
         // Organizers & Key Leads
@@ -58,7 +54,6 @@ async function seedDatabase() {
     }
     console.log(`Seeded ${Object.keys(userIds).length} users successfully.`);
 
-    // 4. Insert Community Groups
     console.log('Inserting community groups...');
     const groupsData = [
         {
@@ -105,7 +100,6 @@ async function seedDatabase() {
     }
     console.log(`Seeded ${Object.keys(groupIds).length} groups successfully.`);
 
-    // 5. Insert Events
     console.log('Inserting real events...');
     const eventsData = [
         {
@@ -240,7 +234,6 @@ async function seedDatabase() {
     }
     console.log(`Seeded ${eventIds.length} events successfully.`);
 
-    // 6. Insert Real RSVPs (Registrations by Real People!)
     console.log('Registering attendees for events...');
     const memberEmails = [
         'pooja.m@gmail.com',
@@ -257,19 +250,12 @@ async function seedDatabase() {
         'manish.shakya@gmail.com'
     ];
 
-    // Distribute members across events with realistic RSVP dates and check-in statuses
     const rsvpPlans = [
-        // Kathmandu Tech Summit: popular!
         { eventIndex: 0, attendees: memberEmails.slice(0, 10), checkInIndices: [0, 1, 3] },
-        // AI Hacknight:
         { eventIndex: 1, attendees: memberEmails.slice(1, 8), checkInIndices: [0, 2] },
-        // Pokhara Trail Run:
         { eventIndex: 2, attendees: memberEmails.slice(3, 9), checkInIndices: [1] },
-        // Patan Live Music:
         { eventIndex: 3, attendees: memberEmails.slice(0, 7), checkInIndices: [0, 4] },
-        // Founders Pitch:
         { eventIndex: 4, attendees: memberEmails.slice(2, 12), checkInIndices: [] },
-        // Bhaktapur Heritage:
         { eventIndex: 5, attendees: memberEmails.slice(5, 11), checkInIndices: [0] }
     ];
 
@@ -298,7 +284,6 @@ async function seedDatabase() {
             totalRsvpsCreated++;
         }
 
-        // Update the event's attendee_count in the events table
         await pool.execute('UPDATE events SET attendee_count = ? WHERE id = ?', [eventCount, ev.id]);
     }
 
