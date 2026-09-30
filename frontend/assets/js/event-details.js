@@ -131,17 +131,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     //sidebar widgets
-    const sidebarGroupName = document.getElementById('sidebarGroupName');
-    if (sidebarGroupName) {
-        const widget = sidebarGroupName.closest('.meetup-sidebar-widget');
-        if (currentEvent.group_name) {
-            sidebarGroupName.textContent = currentEvent.group_name;
-            if (widget) widget.classList.remove('is-hidden');
-        } else {
-            if (widget) widget.classList.add('is-hidden');
-        }
-    }
-
     const sidebarDateText = document.getElementById('sidebarDateText');
     if (sidebarDateText) sidebarDateText.textContent = isTba ? 'Date to be Announced' : dateFormattedLong;
 

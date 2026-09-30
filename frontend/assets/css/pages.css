@@ -1461,18 +1461,6 @@
     align-items: center;
 }
 
-.dash-group-avatar {
-    width: 72px;
-    height: 72px;
-    border-radius: var(--radius-md);
-    background: linear-gradient(135deg, #00999e, #006e73);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    flex-shrink: 0;
-}
-
 .badge-organizer {
     background-color: var(--teal-light);
     color: var(--teal);
@@ -1706,36 +1694,6 @@
 .attendees-header-title {
     font-size: 1.25rem;
     font-weight: 800;
-}
-
-.sidebar-group-header {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.sidebar-group-avatar {
-    width: 54px;
-    height: 54px;
-    border-radius: var(--radius-md);
-    background: linear-gradient(135deg, #00999e, #006e73);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;
-    flex-shrink: 0;
-}
-
-.sidebar-group-name {
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.3;
-}
-
-.sidebar-group-sub {
-    font-size: 0.8rem;
-    color: var(--text-muted);
 }
 
 .sidebar-info-row {

@@ -36,7 +36,7 @@ export const getAnnouncements = async (req, res) => {
         const eventId = req.params.id;
         const [rows] = await pool.execute(
             `SELECT a.id, a.event_id, a.author_id, a.title, a.message, a.created_at,
-                    u.name AS author_name, u.avatar_url AS author_avatar
+                    u.name AS author_name
              FROM event_announcements a
              JOIN users u ON a.author_id = u.id
              WHERE a.event_id = ?

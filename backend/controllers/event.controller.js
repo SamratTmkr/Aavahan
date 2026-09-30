@@ -1,4 +1,4 @@
-import { createEvent, getAllEvents, getEventById, getEventsByGroup, updateEvent, deleteEvent } from '../models/event.model.js';
+import { createEvent, getAllEvents, getEventById, updateEvent, deleteEvent } from '../models/event.model.js';
 import pool from '../src/db.js';
 import fs from 'fs';
 import { sendRegistrationConfirmation } from '../utils/email.js';
@@ -42,17 +42,6 @@ export const getEvent = async (req, res) => {
     }
 };
 
-// GET /api/v1/events/group/:groupId — returns all events for a group
-export const getGroupEvents = async (req, res) => {
-    try {
-        const events = await getEventsByGroup(req.params.groupId);
-        return res.json({ success: true, data: events });
-    } catch (error) {
-        console.error(`${req.method} ${req.originalUrl} failed:`, error);
-        return res.status(500).json({ success: false, message: 'Server error' });
-    }
-};
-
 // POST /api/v1/events — creates a new event (protected)
 export const createNewEvent = async (req, res) => {
     const {
@@ -74,7 +63,6 @@ export const createNewEvent = async (req, res) => {
         currency,
         is_online,
         capacity,
-        group_id,
         host_name,
         contact_phone_code,
         contact_phone_number,
@@ -171,7 +159,6 @@ export const createNewEvent = async (req, res) => {
             currency: currency || 'NPR',
             is_online: is_online === true || is_online === 'true' || is_online === 1 || is_online === '1',
             capacity: capacity ? parseInt(capacity, 10) : null,
-            group_id: group_id ? parseInt(group_id, 10) : null,
             organizer_id: req.user.id,
             host_name: host_name && host_name.trim() ? host_name.trim() : null,
             host_logo_url: hostLogoUrl,
@@ -494,7 +481,7 @@ export const removeAttendee = async (req, res) => {
 export const getEventAttendees = async (req, res) => {
     try {
         const [rows] = await pool.execute(
-            `SELECT r.id, r.status, r.created_at, u.id AS user_id, u.name, u.avatar_url 
+            `SELECT r.id, r.status, r.created_at, u.id AS user_id, u.name
              FROM rsvps r 
              JOIN users u ON r.user_id = u.id 
              WHERE r.event_id = ? 
@@ -526,11 +513,9 @@ export const getMyOrganizerEvents = async (req, res) => {
     try {
         const userId = req.user.id;
         const [rows] = await pool.execute(
-            `SELECT e.*, g.name AS group_name 
-             FROM events e 
-             LEFT JOIN \`groups\` g ON e.group_id = g.id 
-             WHERE e.organizer_id = ? 
-             ORDER BY e.event_date ASC`,
+            `SELECT * FROM events
+             WHERE organizer_id = ?
+             ORDER BY event_date ASC`,
             [userId]
         );
 
@@ -548,27 +533,6 @@ export const getMyOrganizerEvents = async (req, res) => {
                 totalRSVPs
             }
         });
-    } catch (error) {
-        console.error(`${req.method} ${req.originalUrl} failed:`, error);
-        return res.status(500).json({ success: false, message: 'Server error' });
-    }
-};
-
-// GET /api/v1/events/organizer/rsvps — returns recent RSVPs across all events organized by the user
-export const getMyOrganizerRSVPs = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const [rows] = await pool.execute(
-            `SELECT r.id, r.event_id, r.status, r.created_at, u.name AS user_name, u.email AS user_email, e.title AS event_title
-             FROM rsvps r
-             JOIN events e ON r.event_id = e.id
-             JOIN users u ON r.user_id = u.id
-             WHERE e.organizer_id = ?
-             ORDER BY r.created_at DESC
-             LIMIT 20`,
-            [userId]
-        );
-        return res.json({ success: true, data: rows });
     } catch (error) {
         console.error(`${req.method} ${req.originalUrl} failed:`, error);
         return res.status(500).json({ success: false, message: 'Server error' });
@@ -620,10 +584,9 @@ export const getMyActivities = async (req, res) => {
             `SELECT r.id AS rsvp_id, r.status AS rsvp_status, r.created_at AS rsvp_created_at,
                     e.id AS event_id, e.title, e.description, e.category, e.venue, e.address, 
                     e.city, e.event_date, e.end_date, e.start_time, e.end_time, e.is_free, e.min_price,
-                    e.currency, e.is_online, e.attendee_count, g.name AS group_name
+                    e.currency, e.is_online, e.attendee_count
              FROM rsvps r
              JOIN events e ON r.event_id = e.id
-             LEFT JOIN \`groups\` g ON e.group_id = g.id
              WHERE r.user_id = ?
              ORDER BY e.event_date ASC, e.start_time ASC`,
             [userId]
@@ -701,7 +664,7 @@ export const listEventManagers = async (req, res) => {
 
         const [rows] = await pool.execute(
             `SELECT m.id, m.event_id, m.user_id, m.created_at,
-                    u.name, u.email, u.avatar_url
+                    u.name, u.email
              FROM event_managers m
              JOIN users u ON m.user_id = u.id
              WHERE m.event_id = ?

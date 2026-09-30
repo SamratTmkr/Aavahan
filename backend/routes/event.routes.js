@@ -2,7 +2,6 @@ import express from 'express';
 import { 
     getEvents, 
     getEvent, 
-    getGroupEvents, 
     createNewEvent, 
     updateExistingEvent, 
     deleteExistingEvent, 
@@ -10,7 +9,6 @@ import {
     getEventAttendees, 
     getEventCities, 
     getMyOrganizerEvents, 
-    getMyOrganizerRSVPs, 
     checkinAttendee, 
     getMyActivities, 
     cancelRsvp,
@@ -36,7 +34,6 @@ eventRouter.get('/',                 getEvents);             // public — list 
 eventRouter.get('/cities',           getEventCities);        // public — event count by cities
 eventRouter.get('/user/my-activities', userAuth, getMyActivities); // protected — user's own registered activities
 eventRouter.get('/organizer/mine',   userAuth, getMyOrganizerEvents); // protected — organizer's own events
-eventRouter.get('/organizer/rsvps',  userAuth, getMyOrganizerRSVPs);  // protected — recent RSVPs for organizer's events
 eventRouter.get('/:id',             getEvent);              // public — single event
 eventRouter.get('/:id/rsvps',    getEventAttendees);  // public — event attendees
 eventRouter.get('/:id/attendees', userAuth, getAttendeeDetails); // protected — attendee contact details for the event's managers
@@ -45,7 +42,6 @@ eventRouter.patch('/:id/rsvps/:rsvpId/payment', userAuth, setPaymentStatus); // 
 eventRouter.post('/:id/rsvp',    userAuth, rsvpEvent); // protected — RSVP to event
 eventRouter.delete('/:id/rsvp',  userAuth, cancelRsvp); // protected — cancel RSVP to event
 eventRouter.patch('/:id/rsvps/:rsvpId/checkin', userAuth, checkinAttendee); // protected — check in attendee
-eventRouter.get('/group/:groupId', getGroupEvents);   // public — events by group
 eventRouter.post('/',            userAuth, uploadEventImages, createNewEvent); // protected with banner and logo upload
 
 // Announcements routes

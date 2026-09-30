@@ -8,7 +8,6 @@ import { fileURLToPath } from 'url';
 import authRoutes from '../routes/auth.route.js';
 import userRouter from '../routes/user.routes.js';
 import eventRouter from '../routes/event.routes.js';
-import groupRouter from '../routes/group.routes.js';
 import { connectToDatabase } from './db.js';
 import errorMiddleware from '../middleware/error.middleware.js';
 
@@ -36,7 +35,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/events', eventRouter);
-app.use('/api/v1/groups', groupRouter);
 
 // Global error handling middleware (must be after all routes)
 app.use(errorMiddleware);

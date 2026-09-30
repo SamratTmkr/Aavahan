@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Aavahan - The people platform. Where interests become friendships. Discover events and groups near you.">
+    <meta name="description" content="Aavahan - The people platform. Where interests become friendships. Discover events near you.">
     <title>Aavahan — The People Platform | Where Interests Become Friendships</title>
 
     <!-- Google Fonts -->
@@ -251,7 +251,7 @@
                 }
 
                 eventsGrid.innerHTML = events.slice(0, 4).map(evt => {
-                    const group = escapeHtml(evt.group_name || evt.host_name || evt.city || '');
+                    const group = escapeHtml(evt.host_name || evt.city || '');
                     const count = evt.attendee_count || 0;
                     const isFree = evt.is_free || !evt.min_price || Number(evt.min_price) === 0;
                     const priceStr = isFree ? 'Free' : `NPR ${Number(evt.min_price).toLocaleString()}`;

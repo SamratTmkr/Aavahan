@@ -560,20 +560,6 @@ ul, ol {
     margin-bottom: 0.85rem;
 }
 
-.meetup-group-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: var(--radius-md);
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.meetup-group-name {
-    font-size: 1.05rem;
-    font-weight: 700;
-    margin-bottom: 0.2rem;
-}
-
 .meetup-group-members {
     font-size: 0.8rem;
     color: var(--text-muted);

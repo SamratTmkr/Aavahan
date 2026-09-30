@@ -12,7 +12,7 @@ userRouter.get('/', userAuth, adminAuth, async (req, res) => {
         if (search) {
             const term = `%${search}%`;
             [rows] = await pool.execute(
-                `SELECT u.id, u.name, u.email, u.role, u.avatar_url, u.created_at, 
+                `SELECT u.id, u.name, u.email, u.role, u.created_at, 
                         COUNT(r.id) AS total_rsvps
                  FROM users u 
                  LEFT JOIN rsvps r ON u.id = r.user_id
@@ -23,7 +23,7 @@ userRouter.get('/', userAuth, adminAuth, async (req, res) => {
             );
         } else {
             [rows] = await pool.execute(
-                `SELECT u.id, u.name, u.email, u.role, u.avatar_url, u.created_at, 
+                `SELECT u.id, u.name, u.email, u.role, u.created_at, 
                         COUNT(r.id) AS total_rsvps
                  FROM users u 
                  LEFT JOIN rsvps r ON u.id = r.user_id
@@ -32,21 +32,6 @@ userRouter.get('/', userAuth, adminAuth, async (req, res) => {
             );
         }
         return res.json({ success: true, data: rows });
-    } catch (error) {
-        console.error(`${req.method} ${req.originalUrl} failed:`, error);
-        return res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// GET /api/v1/users/:id — admin only: get a single user
-userRouter.get('/:id', userAuth, adminAuth, async (req, res) => {
-    try {
-        const [rows] = await pool.execute(
-            'SELECT id, name, email, role, avatar_url, created_at FROM users WHERE id = ?',
-            [req.params.id]
-        );
-        if (!rows.length) return res.status(404).json({ success: false, message: 'User not found' });
-        return res.json({ success: true, data: rows[0] });
     } catch (error) {
         console.error(`${req.method} ${req.originalUrl} failed:`, error);
         return res.status(500).json({ success: false, message: 'Server error' });

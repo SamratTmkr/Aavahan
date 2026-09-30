@@ -197,8 +197,7 @@ function renderJoinedList(listEl) {
             (e.title && e.title.toLowerCase().includes(q)) ||
             (e.venue && e.venue.toLowerCase().includes(q)) ||
             (e.city && e.city.toLowerCase().includes(q)) ||
-            (e.category && e.category.toLowerCase().includes(q)) ||
-            (e.group_name && e.group_name.toLowerCase().includes(q))
+            (e.category && e.category.toLowerCase().includes(q))
         );
     }
 
@@ -260,8 +259,6 @@ function renderJoinedList(listEl) {
             </button>
         ` : '';
 
-        const groupTag = ev.group_name ? `<span>•</span><span>by <strong>${escapeHtml(ev.group_name)}</strong></span>` : '';
-
         return `
             <div class="activity-card">
                 <div class="activity-card-left">
@@ -274,7 +271,6 @@ function renderJoinedList(listEl) {
                             <span><span class="material-symbols-outlined meta-icon-inline">calendar_today</span>${dateFormatted} · ${timeFormatted}</span>
                             <span>•</span>
                             <span class="activity-category-pill">${escapeHtml(ev.category || 'Event')}</span>
-                            ${groupTag}
                         </div>
                         <a href="event-details.html?id=${ev.event_id}" class="activity-title">
                             ${escapeHtml(ev.title)}
@@ -309,8 +305,7 @@ function renderCreatedList(listEl) {
             (e.title && e.title.toLowerCase().includes(q)) ||
             (e.venue && e.venue.toLowerCase().includes(q)) ||
             (e.city && e.city.toLowerCase().includes(q)) ||
-            (e.category && e.category.toLowerCase().includes(q)) ||
-            (e.group_name && e.group_name.toLowerCase().includes(q))
+            (e.category && e.category.toLowerCase().includes(q))
         );
     }
 
@@ -366,8 +361,6 @@ function renderCreatedList(listEl) {
             `;
         }
 
-        const groupTag = ev.group_name ? `<span>•</span><span>Community: <strong>${escapeHtml(ev.group_name)}</strong></span>` : '';
-
         return `
             <div class="activity-card activity-card-created">
                 <div class="activity-card-left">
@@ -380,7 +373,6 @@ function renderCreatedList(listEl) {
                             <span><span class="material-symbols-outlined meta-icon-inline">calendar_today</span>${dateFormatted} · ${timeFormatted}</span>
                             <span>•</span>
                             <span class="activity-category-pill">${escapeHtml(ev.category || 'Event')}</span>
-                            ${groupTag}
                         </div>
                         <a href="event-details.html?id=${ev.id}" class="activity-title">
                             ${escapeHtml(ev.title)}
